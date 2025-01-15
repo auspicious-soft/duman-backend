@@ -1,12 +1,7 @@
 import mongoose, { Mongoose } from "mongoose";
 
-const categoriesSchema = new mongoose.Schema(
+const subCategoriesSchema = new mongoose.Schema(
   {
-    identifier: {
-      type: String,
-      // required: true,    
-      unique: true,
-    },
     categoryId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "categories",
@@ -23,4 +18,4 @@ const categoriesSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export const categoriesModel = mongoose.model("events", categoriesSchema);
+export const subCategoriesModel = mongoose.model("subCategories", subCategoriesSchema);

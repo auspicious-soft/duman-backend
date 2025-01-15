@@ -1,14 +1,10 @@
 import { Router } from "express";
 import {  forgotPassword, getAdminDetails, getDashboardStats,   getNewUsers,   login,   newPassswordAfterOTPVerified,} from "../controllers/admin/admin-controller";
 import { createEventHandler, getEventByIdHandler, updateEventHandler, deleteEventHandler, getAllEventsHandler } from '../controllers/events/events-controller';
-
-
-
-// import { checkAdminAuth } from "../middleware/check-auth";
-import { upload } from "../configF/multer";
-import { checkMulter } from "../lib/errors/error-response-handler"
 import { verifyOtpPasswordReset } from "src/controllers/user/user-controller";
 import { checkAuth } from "src/middleware/check-auth";
+import { createCategory, deleteCategory, getAllCategories, getCategory, updateCategory } from "src/controllers/categories/categories-controller";
+import { createSubCategory, deleteSubCategory, getAllSubCategory, getSubCategory, updateSubCategory } from "src/controllers/sub-categories/sub-categories-controller";
 // import passport from 'passport';
 // import { loginController } from '../controllers/admin/admin-controller';
 
@@ -60,24 +56,38 @@ import { checkAuth } from "src/middleware/check-auth";
 
 const router = Router();
 
-router.post("/login", login)
-router.post("/verify-otp", verifyOtpPasswordReset)
-router.post("/forget-password", forgotPassword)
-router.patch("/new-password-otp-verified", newPassswordAfterOTPVerified)
+
 router.get("/", getAdminDetails)
 router.get("/dashboard", getDashboardStats)
 
 // get new users
-router.get("/new-users",checkAuth, getNewUsers)
+router.get("/new-users", getNewUsers)
 
 
 // events routes
 
-router.post('/', createEventHandler);
-router.get('/', getAllEventsHandler);
-router.get('/:id', getEventByIdHandler);
-router.put('/:id', updateEventHandler);
-router.delete('/:id', deleteEventHandler);
+router.post('/events', createEventHandler);
+router.get('/events', getAllEventsHandler);
+router.get('/events/:id', getEventByIdHandler);
+router.put('/events/:id', updateEventHandler);
+router.delete('/events/:id', deleteEventHandler);
+
+//categories routes
+
+router.post('/categories', createCategory);
+router.get('/categories', getAllCategories);
+router.get('/categories/:id', getCategory);
+router.put('/categories/:id', updateCategory);
+router.delete('/categories/:id', deleteCategory);
+
+
+// sub-categories routes
+
+router.post('/sub-categories', createSubCategory);
+router.get('/sub-categories', getAllSubCategory);
+router.get('/sub-categories/:id', getSubCategory);
+router.put('/sub-categories/:id', updateSubCategory);
+router.delete('/sub-categories/:id', deleteSubCategory);
 
 
 export { router }

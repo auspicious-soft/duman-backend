@@ -4,12 +4,13 @@ import cors from "cors"
 import path from "path"
 import { fileURLToPath } from 'url'
 import connectDB from "./configF/db"
-import { admin, events, user } from "./routes"
+import { admin } from "./routes"
 import { checkValidAdminRole } from "./utils"
 import bodyParser from 'body-parser'
 import { login } from "./controllers/admin/admin-controller"
 import { forgotPassword } from "./controllers/admin/admin-controller"
 import {  verifyOtpPasswordReset, newPassswordAfterOTPVerified } from "./controllers/user/user-controller";
+import { checkAuth } from "./middleware/check-auth"
 
 // Create __dirname equivalent for ES modules
 const __filename = fileURLToPath(import.meta.url) // <-- Define __filename
@@ -53,12 +54,10 @@ app.get("/", (_, res: any) => {
 });
 
 app.use("/api/admin",checkValidAdminRole, admin);
-app.use("/api/user", user);
-app.use("/api/events", events);
-// app.use("/api/login", login);
-// app.use("/api/forgot-password", forgotPassword);
-// app.use("/api/verify-otp", verifyOtpPasswordReset)
-// app.use("/api/new-password-otp-verified", newPassswordAfterOTPVerified)
+app.post("/login", login)
+app.post("/verify-otp", verifyOtpPasswordReset)
+app.post("/forget-password", forgotPassword)
+app.patch("/new-password-otp-verified", newPassswordAfterOTPVerified)
 
 
 app.listen(PORT, () => console.log(`Server is listening on port ${PORT}`));
