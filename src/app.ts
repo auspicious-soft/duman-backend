@@ -54,10 +54,10 @@ app.get("/", (_, res: any) => {
 });
 
 app.use("/api/admin",checkValidAdminRole, admin);
-app.post("/login", login)
-app.post("/verify-otp", verifyOtpPasswordReset)
-app.post("/forget-password", forgotPassword)
-app.patch("/new-password-otp-verified", newPassswordAfterOTPVerified)
+app.post("/api/login", login)
+app.post("/api/verify-otp", verifyOtpPasswordReset)
+app.post("/api/forget-password", forgotPassword)
+app.patch("/api/new-password-otp-verified", newPassswordAfterOTPVerified)
 
 
 app.listen(PORT, () => console.log(`Server is listening on port ${PORT}`));

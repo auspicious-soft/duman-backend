@@ -61,6 +61,7 @@ import { httpStatusCode } from "../../lib/constant";
 
 //Auth Controllers
 export const login = async (req: Request, res: Response) => {
+    console.log('req: ', req);
     try {
 
         const response = await loginService(req.body, res)
