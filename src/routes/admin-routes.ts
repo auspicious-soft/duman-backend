@@ -4,9 +4,10 @@ import { createEventHandler, getEventByIdHandler, updateEventHandler, deleteEven
 import { verifyOtpPasswordReset } from "src/controllers/user/user-controller";
 import { checkAuth } from "src/middleware/check-auth";
 import { createCategory, deleteCategory, getAllCategories, getCategory, updateCategory } from "src/controllers/categories/categories-controller";
-import { createSubCategory, deleteSubCategory, getAllSubCategory, getSubCategory, updateSubCategory } from "src/controllers/sub-categories/sub-categories-controller";
+import { createSubCategory, deleteSubCategory, getAllSubCategory, getSubCategoriesByCategoryId, getSubCategory, updateSubCategory } from "src/controllers/sub-categories/sub-categories-controller";
+import { createBook, deleteBook, getAllBooks, getBook, updateBook } from "../controllers/Books/books-controller";
 // import passport from 'passport';
-// import { loginController } from '../controllers/admin/admin-controller';
+// import { loginController } from '../controllers/admin/admin-controller();
 
 // const authController = new loginController();
 
@@ -87,7 +88,15 @@ router.post('/sub-categories', createSubCategory);
 router.get('/sub-categories', getAllSubCategory);
 router.get('/sub-categories/:id', getSubCategory);
 router.put('/sub-categories/:id', updateSubCategory);
+router.get('/:categoryId/sub-categories', getSubCategoriesByCategoryId);
 router.delete('/sub-categories/:id', deleteSubCategory);
 
+// books routes
+
+router.post('/books', createBook);
+router.get('/books', getAllBooks);
+router.get('/books/:id', getBook);
+router.put('/books/:id', updateBook);
+router.delete('/books/:id', deleteBook);
 
 export { router }

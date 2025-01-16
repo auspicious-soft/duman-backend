@@ -5,6 +5,7 @@ const subCategoriesSchema = new mongoose.Schema(
     categoryId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "categories",
+      // requried: true,
     },
     image: {
       type: String,

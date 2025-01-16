@@ -90,8 +90,6 @@ export const newPassswordAfterOTPVerifiedService = async (payload: { password: s
     const existingToken = await getPasswordResetTokenByToken(otp)
     if (!existingToken) return errorResponseHandler("Invalid OTP", httpStatusCode.BAD_REQUEST, res)
 
-        // console.log("existingToken", existingToken);
-
     const hasExpired = new Date(existingToken.expires) < new Date()
     if (hasExpired) return errorResponseHandler("OTP expired", httpStatusCode.BAD_REQUEST, res)
 
@@ -115,7 +113,6 @@ export const newPassswordAfterOTPVerifiedService = async (payload: { password: s
 
     }
 
-    // console.log('existingClient',existingClient)
 
     const hashedPassword = await bcrypt.hash(password, 10)
 
