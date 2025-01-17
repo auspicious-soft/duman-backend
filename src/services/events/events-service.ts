@@ -10,13 +10,12 @@ export interface Event {
   description: string;
 }
 
-export const createEvent = async (eventData: Event): Promise<Event> => {
+export const createEvent = async (eventData: Event) => {
   const identifier = customAlphabet("0123456789", 3);
   eventData.identifier = identifier();
   const event = new eventsModel(eventData);
   const savedEvent = await event.save();
-  const res = savedEvent.toObject() as unknown as Event;
-  return res;
+  return savedEvent;
 };
 
 export const getEventById = async (eventId: string): Promise<Event | null> => {

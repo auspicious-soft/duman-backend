@@ -56,7 +56,7 @@ app.get("/", (_, res: any) => {
 app.use("/api/admin",checkValidAdminRole, admin);
 app.post("/api/login", login)
 app.post("/api/verify-otp", verifyOtpPasswordReset)
-app.post("/api/forget-password", forgotPassword)
+app.post("/api/forgot-password", forgotPassword)
 app.patch("/api/new-password-otp-verified", newPassswordAfterOTPVerified)
 
 
