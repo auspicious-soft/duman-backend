@@ -10,7 +10,9 @@ router.post("/signup", signup)
 router.post("/login", login)
 router.patch("/forgot-password", forgotPassword)
 router.get("/dashboard", checkAuth, getDashboardStats)
-router.route("/:id").get(checkAuth, getUserInfo).put(checkAuth, editUserInfo)
+router.get("/:id")
+// router.get(, getUserInfo)
+// router.put(checkAuth, editUserInfo)
 
 
 

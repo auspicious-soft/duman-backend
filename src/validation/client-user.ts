@@ -2,13 +2,11 @@ import { z } from "zod";
 
 export const clientSignupSchema = z.object({
     email: z.string().email(),
-    password: z.string().min(6),
-    fullName: z.string().min(1),
-    phoneNumber: z.string().min(1),
+    password: z.string().min(5),
+    fullName: z.string().optional(),
+    phoneNumber: z.string().optional(),
     referralCode: z.string().optional(),
-}).strict({
-    message: "Bad payload present in the data"
-});
+})
 
 export const clientEditSchema = z.object({
     firstName: z.string().min(1),
