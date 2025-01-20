@@ -61,7 +61,6 @@ import { httpStatusCode } from "../../lib/constant";
 
 //Auth Controllers
 export const login = async (req: Request, res: Response) => {
-    console.log('req: ', req);
     try {
 
         const response = await loginService(req.body, res)
@@ -118,36 +117,6 @@ export const getNewUsers = async (req: Request, res: Response) => {
 }
 
 
-export const getAUser = async (req: Request, res: Response) => {
-    try {
-        const response = await getAUserService(req.params.id, res)
-        return res.status(httpStatusCode.OK).json(response)
-    } catch (error: any) {
-        const { code, message } = errorParser(error)
-        return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
-    }
-}
-
-export const deleteAUser = async (req: Request, res: Response) => {
-    try {
-        const response = await deleteAUserService(req.params.id, res)
-        return res.status(httpStatusCode.OK).json(response)
-    } catch (error: any) {
-        const { code, message } = errorParser(error)
-        return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
-    }
-}
-
-export const updateAUser = async (req: Request, res: Response) => {
-    try {
-        const response = await updateAUserService(req.params.id, req.body, res);
-        return res.status(httpStatusCode.OK).json(response)
-    } catch (error: any) {
-        const { code, message } = errorParser(error)
-        return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
-    }
-}
-
 export const getDashboardStats = async (req: Request, res: Response) => {
     try {
         const response = await getDashboardStatsService(req.query, res)
@@ -157,3 +126,35 @@ export const getDashboardStats = async (req: Request, res: Response) => {
         return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
     }
 }
+
+
+// export const getAUser = async (req: Request, res: Response) => {
+//     try {
+//         const response = await getAUserService(req.params.id, res)
+//         return res.status(httpStatusCode.OK).json(response)
+//     } catch (error: any) {
+//         const { code, message } = errorParser(error)
+//         return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
+//     }
+// }
+
+// export const deleteAUser = async (req: Request, res: Response) => {
+//     try {
+//         const response = await deleteAUserService(req.params.id, res)
+//         return res.status(httpStatusCode.OK).json(response)
+//     } catch (error: any) {
+//         const { code, message } = errorParser(error)
+//         return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
+//     }
+// }
+
+// export const updateAUser = async (req: Request, res: Response) => {
+//     try {
+//         const response = await updateAUserService(req.params.id, req.body, res);
+//         return res.status(httpStatusCode.OK).json(response)
+//     } catch (error: any) {
+//         const { code, message } = errorParser(error)
+//         return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
+//     }
+// }
+

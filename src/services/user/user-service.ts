@@ -8,17 +8,17 @@ import { sendPasswordResetEmail } from "../../utils/mails/mail"
 import { generatePasswordResetTokenByPhoneWithTwilio } from "../../utils/sms/sms"
 import { httpStatusCode } from "../../lib/constant"
 import { customAlphabet } from "nanoid"
+import { queryBuilder } from "src/utils";
 
 
 export const signupService = async (payload: any, res: Response) => {
     console.log('payload: ', payload);
-    const countryCode = "+45";
     const emailExists  = await usersModel.findOne({ email: payload.email })
     if (emailExists ) return errorResponseHandler("Email already exists", httpStatusCode.BAD_REQUEST, res)
-    const phoneExists = await usersModel.findOne({ phoneNumber: `${countryCode}${payload.phoneNumber}` });
+    const phoneExists = await usersModel.findOne({ phoneNumber: `${payload.phoneNumber}` });
     if (phoneExists ) return errorResponseHandler("phone Number already exists", httpStatusCode.BAD_REQUEST, res)
 
-    payload.phoneNumber = `${countryCode}${payload.phoneNumber}`;
+    payload.phoneNumber = `${payload.phoneNumber}`;
     const newPassword = bcrypt.hashSync(payload.password, 10)
     payload.password = newPassword
     const genId = customAlphabet('1234567890', 8)
@@ -177,8 +177,7 @@ export const getUserInfoByEmailService = async (email: string, res: Response) =>
 export const editUserInfoService = async (id: string, payload: any, res: Response) => {
     const user = await usersModel.findById(id);
     if (!user) return errorResponseHandler("User not found", httpStatusCode.NOT_FOUND, res);
-    const countryCode = "+45";
-    payload.phoneNumber = `${countryCode}${payload.phoneNumber}`;
+    payload.phoneNumber = `${payload.phoneNumber}`;
     const updateduser = await usersModel.findByIdAndUpdate(id,{ ...payload },{ new: true});
 
     return {
@@ -188,31 +187,80 @@ export const editUserInfoService = async (id: string, payload: any, res: Respons
     };
 }
 
+export const createUserService = async (payload: any, res: Response) => {
+    const emailExists = await usersModel.findOne({ email: payload.email });
+    if (emailExists) return errorResponseHandler("Email already exists", httpStatusCode.BAD_REQUEST, res);
 
-
-// Dashboard
-export const getDashboardStatsService = async (payload: any, res: Response) => {
-    // //Ongoing project count
-    // const userId = payload.currentUser
-
-    // // console.log("userid",userId);
-
-    // const ongoingProjectCount = await projectsModel.countDocuments({ userId, status: { $ne: "1" } })
-
-    // const completedProjectCount = await projectsModel.countDocuments({ userId,status: "1" })
-
-    // const workingProjectDetails = await projectsModel.find({ userId, status: { $ne: "1" } }).select("projectName projectimageLink status"); // Adjust the fields as needed
+    const phoneExists = await usersModel.findOne({ phoneNumber: payload.phoneNumber });
+    if (phoneExists) return errorResponseHandler("Phone number already exists", httpStatusCode.BAD_REQUEST, res);
     
 
-    // const response = {
-    //     success: true,
-    //     message: "Dashboard stats fetched successfully",
-    //     data: {
-    //         ongoingProjectCount,
-    //         completedProjectCount,
-    //          workingProjectDetails,
-    //     }
-    // }
+    // Hash the password before saving the user
+    const hashedPassword = bcrypt.hashSync(payload.password, 10);
+    payload.password = hashedPassword;
 
-    // return response
+   
+    const newUser = new usersModel(payload);
+    const response= await newUser.save();
+    console.log('response: ', response);
+
+    return { success: true, message: "User created successfully", data: response };
+};
+
+export const getUserService = async (id: string, res: Response) => {
+    const user = await usersModel.findById(id);
+    if (!user) return errorResponseHandler("User not found", httpStatusCode.NOT_FOUND, res);
+
+    return { success: true, message: "User retrieved successfully", data: user };
+};
+
+export const updateUserService = async (id: string, payload: any, res: Response) => {
+    console.log('id: ', id);
+    const user = await usersModel.findById(id);
+    if (!user) return errorResponseHandler("User not found", httpStatusCode.NOT_FOUND, res);
+
+    const updatedUser = await usersModel.findByIdAndUpdate(id, payload, { new: true });
+    return { success: true, message: "User updated successfully", data: updatedUser };
+};
+
+export const deleteUserService = async (id: string, res: Response) => {
+    const user = await usersModel.findById(id);
+    if (!user) return errorResponseHandler("User not found", httpStatusCode.NOT_FOUND, res);
+
+    const deletedUser= await usersModel.findByIdAndDelete(id);
+    return { success: true, message: "User deleted successfully" ,data:deletedUser};
+};
+
+export const getAllUserService = async (payload: any, res: Response) => {
+    const page = parseInt(payload.page as string) || 1
+    const limit = parseInt(payload.limit as string) || 0
+    const offset = (page - 1) * limit
+    let { query, sort } = queryBuilder(payload, ['fullName'])
+    if (payload.duration) {
+        const durationDays = parseInt(payload.duration);
+        if (durationDays === 30 || durationDays === 7) {
+            const date = new Date();
+            date.setDate(date.getDate() - durationDays);
+            console.log('date: ', date);
+            (query as any) = { ...query, createdAt: { $gte: date } };
+        }
+    }
+    const totalDataCount = Object.keys(query).length < 1 ? await usersModel.countDocuments() : await usersModel.countDocuments(query)
+    const results = await usersModel.find(query).sort(sort).skip(offset).limit(limit).select("-__v")
+    if (results.length) return {
+        page,
+        limit,
+        success: true,
+        total: totalDataCount,
+        data: results
+    }
+    else {
+        return {
+            data: [],
+            page,
+            limit,
+            success: false,
+            total: 0
+        }
+    }
 }

@@ -1,7 +1,7 @@
 import { Router } from "express";
 import {  forgotPassword, getAdminDetails, getDashboardStats,   getNewUsers,   login,   newPassswordAfterOTPVerified,} from "../controllers/admin/admin-controller";
 import { createEventHandler, getEventByIdHandler, updateEventHandler, deleteEventHandler, getAllEventsHandler } from '../controllers/events/events-controller';
-import { verifyOtpPasswordReset } from "src/controllers/user/user-controller";
+import { createUser, deleteUser, getAllUser, getUser, updateUser, verifyOtpPasswordReset } from "src/controllers/user/user-controller";
 import { checkAuth } from "src/middleware/check-auth";
 import { createCategory, deleteCategory, getAllCategories, getCategory, updateCategory } from "src/controllers/categories/categories-controller";
 import { createSubCategory, deleteSubCategory, getAllSubCategory, getSubCategoriesByCategoryId, getSubCategory, updateSubCategory } from "src/controllers/sub-categories/sub-categories-controller";
@@ -98,5 +98,12 @@ router.get('/books', getAllBooks);
 router.get('/books/:id', getBook);
 router.put('/books/:id', updateBook);
 router.delete('/books/:id', deleteBook);
+
+// users route
+router.post('/users', createUser);
+router.get("/users", getAllUser)
+router.get("/users/:id", getUser)
+router.put("/users/:id", updateUser)
+router.delete('/users/:id', deleteUser);
 
 export { router }
