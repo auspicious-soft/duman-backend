@@ -1,24 +1,28 @@
 import mongoose, { Schema } from "mongoose";
 
-const usersSchema = new mongoose.Schema(
+const publishersSchema = new mongoose.Schema(
   {
     name: {
       type: String,
       requried: true,
     },
-     categoryId: [{
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "categories",
-          // requried: true,
-        }],
-    // bookCount:[{
-    //   type: mongoose.Schema.Types.ObjectId,
-    //       ref: "categories",
-    // }],
-    Description: {
+    categoryId: 
+      {
+        type: [mongoose.Schema.Types.ObjectId],
+        ref: "categories",
+        // requried: true,
+      },
+      // bookCount:[{
+      //   type: mongoose.Schema.Types.ObjectId,
+      //       ref: "categories",
+      // }],
+    description: {
       type: String,
     },
-    
+    country: {
+      type: String,
+    },
+
     image: {
       type: String,
       default: null,
@@ -27,4 +31,4 @@ const usersSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export const usersModel = mongoose.model("users", usersSchema);
+export const publishersModel = mongoose.model("publishers", publishersSchema);

@@ -1,24 +1,26 @@
 import mongoose, { Schema } from "mongoose";
 
-const usersSchema = new mongoose.Schema(
+const authorsSchema = new mongoose.Schema(
   {
     name: {
       type: String,
       requried: true,
     },
-     categoryId: [{
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "categories",
-          // requried: true,
-        }],
-    // bookCount:[{
-    //   type: mongoose.Schema.Types.ObjectId,
-    //       ref: "categories",
-    // }],
-    Description: {
+   
+    profession:{
+      type: [String],
+    },
+    country: {
       type: String,
     },
     
+    dob: {
+      type: Date,
+    },
+    genres: {
+      type: [String],
+    },
+
     image: {
       type: String,
       default: null,
@@ -27,4 +29,4 @@ const usersSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export const usersModel = mongoose.model("users", usersSchema);
+export const authorsModel = mongoose.model("authors", authorsSchema);

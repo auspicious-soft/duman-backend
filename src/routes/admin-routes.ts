@@ -7,6 +7,9 @@ import { createCategory, deleteCategory, getAllCategories, getCategory, updateCa
 import { createSubCategory, deleteSubCategory, getAllSubCategory, getSubCategoriesByCategoryId, getSubCategory, updateSubCategory } from "src/controllers/sub-categories/sub-categories-controller";
 import { createBook, deleteBook, getAllBooks, getBook, updateBook } from "../controllers/products/products-controller";
 import { createOrder, deleteOrder, getAllOrders, getOrder, updateOrder } from "src/controllers/orders/orders-controller";
+import { createPublisher, deletePublisher, getAllPublishers, getPublisher, updatePublisher } from "src/controllers/publisher/publishers-controller";
+import { createAuthor, deleteAuthor, getAllAuthors, getAuthor, updateAuthor } from "src/controllers/authors/authors-controller";
+import { createAuthorService } from "src/services/authors/authors-service";
 // import passport from 'passport';
 // import { loginController } from '../controllers/admin/admin-controller();
 
@@ -115,5 +118,19 @@ router.get("/order", getAllOrders)
 router.get("/order/:id", getOrder)
 router.put("/order/:id", updateOrder)
 router.delete('/order/:id', deleteOrder);
+
+// publishers route
+router.post('/publishers', createPublisher);
+router.get("/publishers", getAllPublishers)
+router.get("/publishers/:id", getPublisher)
+router.put("/publishers/:id", updatePublisher)
+router.delete('/publishers/:id', deletePublisher);
+
+// authors route
+router.post('/authors', createAuthor);
+router.get("/authors", getAllAuthors)
+router.get("/authors/:id", getAuthor)
+router.put("/authors/:id", updateAuthor)
+router.delete('/authors/:id', deleteAuthor);
 
 export { router }

@@ -11,20 +11,20 @@ const productsSchema = new mongoose.Schema(
       requried: true,
     },
     authorId: [{
-      type: mongoose.Schema.Types.ObjectId,
+      type: [mongoose.Schema.Types.ObjectId],
       ref: "users",
       required: true,
     }],
-    categoryId: [{
-      type: mongoose.Schema.Types.ObjectId,
+    categoryId: {
+      type: [mongoose.Schema.Types.ObjectId],
       ref: "categories",
       required: true,
-    }],
-    subCategoryId:[{
-      type: mongoose.Schema.Types.ObjectId,
+    },
+    subCategoryId:{
+      type: [mongoose.Schema.Types.ObjectId],
       ref: 'subCategories',
       required: true,
-  }],
+  },
     language: {
       type: [String],
       requried: true,
@@ -47,7 +47,11 @@ const productsSchema = new mongoose.Schema(
       type: String,
       enum: ["e-book", "podcast", "audiobook","course"], 
       required: true,
-    }
+    },
+    publisherId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'publishers',
+    },
   },
   { timestamps: true }
 );
