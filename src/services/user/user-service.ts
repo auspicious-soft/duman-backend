@@ -13,6 +13,9 @@ import { generatePasswordResetTokenByPhoneWithTwilio } from "../../utils/sms/sms
 import { httpStatusCode } from "../../lib/constant";
 import { customAlphabet } from "nanoid";
 import { queryBuilder } from "src/utils";
+import { ordersModel } from "../../models/orders/orders-schema";
+import { productsModel } from "../../models/products/products-schema";
+import { eventsModel } from "../../models/events/events-schema";
 
 export const signupService = async (payload: any, res: Response) => {
   console.log("payload: ", payload);
@@ -291,7 +294,7 @@ export const createUserService = async (payload: any, res: Response) => {
       httpStatusCode.BAD_REQUEST,
       res
     );
-    const phoneNumber =`${payload.countryCode}${payload.phoneNumber}`
+  const phoneNumber = `${payload.countryCode}${payload.phoneNumber}`;
   const phoneExists = await usersModel.findOne({
     phoneNumber: phoneNumber,
   });
@@ -338,7 +341,7 @@ export const getUserService = async (id: string, res: Response) => {
       amountPaid,
       booksPurchasedCount,
       countCount,
-      Events
+      Events,
     },
   };
 };
@@ -383,6 +386,69 @@ export const deleteUserService = async (id: string, res: Response) => {
   };
 };
 
+export const getUserProfileDetailService = async (
+  id: string,
+  payload: any,
+  res: Response
+) => {
+  console.log('payload: ', payload);
+  const user = await usersModel.findById(id);
+  if (!user)
+    return errorResponseHandler(
+      "User not found",
+      httpStatusCode.NOT_FOUND,
+      res
+    );
+
+  const year = payload.duration; 
+  const userOrders = await ordersModel
+    .find({ userId: id })
+    .populate("productIds");
+
+  const filteredOrders = userOrders.filter((order: any) => {
+    const parsedDate = new Date(order.createdAt);
+  if (isNaN(parsedDate.getTime())) {
+    console.warn('Invalid createdAt for order:', order);
+    return false;
+  }
+
+  const orderYear = parsedDate.getFullYear().toString();
+    return orderYear === year;
+  });
+
+  const totalAmountPaid = filteredOrders.reduce(
+    (acc, order) => acc + order.totalAmount,
+    0
+  );
+
+  const coursesPurchased = filteredOrders
+    .flatMap((order) => order.productIds)
+    .filter((product: any) => product?.type === "course")
+    .map((product) => product._id);
+
+  const booksPurchased = filteredOrders
+    .flatMap((order) => order.productIds)
+    .filter((product: any) => product?.type === "e-book")
+    .map((product) => product._id);
+
+  const booksPurchasedCount = booksPurchased.length;
+  const coursesCount = coursesPurchased.length;
+
+  return {
+    success: true,
+    message: "User profile details retrieved successfully",
+    data: {
+      user,
+      userOrders: userOrders, 
+      totalAmountPaid: totalAmountPaid || 0,
+      booksPurchasedCount: booksPurchasedCount || 0,
+      coursesCount: coursesCount || 0,
+      eventsCount: 0,
+    },
+  };
+};
+
+
 export const getAllUserService = async (payload: any, res: Response) => {
   const page = parseInt(payload.page as string) || 1;
   const limit = parseInt(payload.limit as string) || 0;
@@ -393,7 +459,6 @@ export const getAllUserService = async (payload: any, res: Response) => {
     if (durationDays === 30 || durationDays === 7) {
       const date = new Date();
       date.setDate(date.getDate() - durationDays);
-      console.log("date: ", date);
       (query as any) = { ...query, createdAt: { $gte: date } };
     }
   }

@@ -43,6 +43,11 @@ const productsSchema = new mongoose.Schema(
     file: {
       type: String,
     },
+    type: {
+      type: String,
+      enum: ["e-book", "podcast", "audiobook","course"], 
+      required: true,
+    }
   },
   { timestamps: true }
 );

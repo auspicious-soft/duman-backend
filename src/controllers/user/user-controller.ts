@@ -3,7 +3,7 @@ import { httpStatusCode } from "../../lib/constant"
 import { errorParser } from "../../lib/errors/error-response-handler"
 import { clientSignupSchema, passswordResetSchema } from "../../validation/client-user"
 import { formatZodErrors } from "../../validation/format-zod-errors"
-import { loginService, signupService, forgotPasswordService, newPassswordAfterOTPVerifiedService, passwordResetService, getUserInfoService, getUserInfoByEmailService, editUserInfoService, verifyOtpPasswordResetService, deleteUserService, getAllUserService, updateUserService, getUserService, createUserService } from "../../services/user/user-service"
+import { loginService, signupService, forgotPasswordService, newPassswordAfterOTPVerifiedService, passwordResetService, getUserInfoService, getUserInfoByEmailService, editUserInfoService, verifyOtpPasswordResetService, deleteUserService, getAllUserService, updateUserService, getUserService, createUserService, getUserProfileDetailService } from "../../services/user/user-service"
 import { z } from "zod"
 import mongoose from "mongoose"
 
@@ -112,15 +112,16 @@ export const editUserInfo = async (req: Request, res: Response) => {
 }
 
 // Dashboard
-// export const getDashboardStats = async (req: Request, res: Response) => {
-//     try {
-//         const response = await getDashboardStatsService(req, res)
-//         return res.status(httpStatusCode.OK).json(response)
-//     } catch (error: any) {
-//         const { code, message } = errorParser(error)
-//         return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
-//     }
-// }
+export const getUserDashboardStats = async (req: Request, res: Response) => {
+    try {
+        
+        const response = await getUserProfileDetailService(req.params.id,req.query, res)
+        return res.status(httpStatusCode.OK).json(response)
+    } catch (error: any) {
+        const { code, message } = errorParser(error)
+        return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
+    }
+}
 
 export const createUser = async (req: Request, res: Response) => {
     try {

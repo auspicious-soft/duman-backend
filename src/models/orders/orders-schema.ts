@@ -2,28 +2,21 @@ import mongoose, { Schema } from "mongoose";
 
 const ordersSchema = new mongoose.Schema(
   {
-    categoryId: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "categories",
-        // requried: true,
-      },
-    ],
-    productId: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "products",
-      },
-    ],
-    couponId: {
-      type: String,
+    productIds: {
+      type: [mongoose.Schema.Types.ObjectId],
+      ref: "products",
+    },
+    discountId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'discounts'
     },
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "users",
     },
     totalAmount: {
-      type: String,
+      type: Number,
+      required: true
     },
   },
   { timestamps: true }

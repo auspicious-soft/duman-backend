@@ -1,11 +1,12 @@
 import { Router } from "express";
 import {  forgotPassword, getAdminDetails, getDashboardStats,   getNewUsers,   login,   newPassswordAfterOTPVerified,} from "../controllers/admin/admin-controller";
 import { createEventHandler, getEventByIdHandler, updateEventHandler, deleteEventHandler, getAllEventsHandler } from '../controllers/events/events-controller';
-import { createUser, deleteUser, getAllUser, getUser, updateUser, verifyOtpPasswordReset } from "src/controllers/user/user-controller";
+import { createUser, deleteUser, getAllUser, getUser, getUserDashboardStats, updateUser, verifyOtpPasswordReset } from "src/controllers/user/user-controller";
 import { checkAuth } from "src/middleware/check-auth";
 import { createCategory, deleteCategory, getAllCategories, getCategory, updateCategory } from "src/controllers/categories/categories-controller";
 import { createSubCategory, deleteSubCategory, getAllSubCategory, getSubCategoriesByCategoryId, getSubCategory, updateSubCategory } from "src/controllers/sub-categories/sub-categories-controller";
-import { createBook, deleteBook, getAllBooks, getBook, updateBook } from "../controllers/Books/books-controller";
+import { createBook, deleteBook, getAllBooks, getBook, updateBook } from "../controllers/products/products-controller";
+import { createOrder, deleteOrder, getAllOrders, getOrder, updateOrder } from "src/controllers/orders/orders-controller";
 // import passport from 'passport';
 // import { loginController } from '../controllers/admin/admin-controller();
 
@@ -61,8 +62,10 @@ const router = Router();
 router.get("/", getAdminDetails)
 router.get("/dashboard", getDashboardStats)
 
-// get new users
+//users routes
 router.get("/new-users", getNewUsers)
+// router.get("/", getNewUsers)
+router.get("/user/:id", getUserDashboardStats)
 
 
 // events routes
@@ -105,5 +108,12 @@ router.get("/users", getAllUser)
 router.get("/users/:id", getUser)
 router.put("/users/:id", updateUser)
 router.delete('/users/:id', deleteUser);
+
+// order route
+router.post('/order', createOrder);
+router.get("/order", getAllOrders)
+router.get("/order/:id", getOrder)
+router.put("/order/:id", updateOrder)
+router.delete('/order/:id', deleteOrder);
 
 export { router }
