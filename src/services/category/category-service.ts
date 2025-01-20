@@ -3,7 +3,7 @@ import { errorResponseHandler } from "../../lib/errors/error-response-handler";
 import { httpStatusCode } from "../../lib/constant";
 import { categoriesModel } from "../../models/categories/categroies-schema";
 import { subCategoriesModel } from "src/models/sub-categories/sub-categories-schema";
-import { booksModel } from "src/models/books/books-schema";
+import { productsModel } from "src/models/products/products-schema";
 import { queryBuilder } from "src/utils";
 
 export const createCategoryService = async (payload: any, res: Response) => {
@@ -88,7 +88,7 @@ export const updateCategoryService = async (
 
 export const deleteCategoryService = async (id: string, res: Response) => {
   const subCategories = await subCategoriesModel.find({ categoryId: id });
-  const books = await booksModel.find({ categoryId: id });
+  const books = await productsModel.find({ categoryId: id });
   if (subCategories.length > 0) {
     return errorResponseHandler(
       "Cannot delete category with existing sub-categories",

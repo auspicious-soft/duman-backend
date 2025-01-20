@@ -2,7 +2,7 @@ import { Response } from "express";
 import { errorResponseHandler } from "../../lib/errors/error-response-handler";
 import { httpStatusCode } from "../../lib/constant";
 import { subCategoriesModel } from "../../models/sub-categories/sub-categories-schema";
-import { booksModel } from "src/models/books/books-schema";
+import { productsModel } from "src/models/products/products-schema";
 import { queryBuilder } from "src/utils";
 import { categoriesModel } from "src/models/categories/categroies-schema";
 
@@ -102,7 +102,7 @@ export const updateSubCategoryService = async (id: string, payload: any, res: Re
 
 export const deleteSubCategoryService = async (id: string, res: Response) => {
     // try {
-        const books = await booksModel.find({ subCategoryId: id });
+        const books = await productsModel.find({ subCategoryId: id });
         if (books.length > 0) return errorResponseHandler("Sub-category cannot be deleted because it has books", httpStatusCode.BAD_REQUEST, res);
 
         const deletedSubCategory = await subCategoriesModel.findByIdAndDelete(id).populate('categoryId');

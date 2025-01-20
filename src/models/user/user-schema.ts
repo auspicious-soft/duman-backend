@@ -2,11 +2,6 @@ import mongoose, { Schema } from "mongoose";
 
 const usersSchema = new mongoose.Schema(
   {
-    identifier: {
-      type: String,
-      // required: true,
-      unique: true,
-    },
     role: {
       type: String,
       required: true,
