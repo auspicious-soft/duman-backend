@@ -6,16 +6,14 @@ const publishersSchema = new mongoose.Schema(
       type: String,
       requried: true,
     },
-    categoryId: 
-      {
-        type: [mongoose.Schema.Types.ObjectId],
-        ref: "categories",
-        // requried: true,
-      },
-      // bookCount:[{
-      //   type: mongoose.Schema.Types.ObjectId,
-      //       ref: "categories",
-      // }],
+    categoryId: {
+      type: [mongoose.Schema.Types.ObjectId],
+      ref: "categories",
+      // requried: true,
+    },
+    email: {
+      type: String,
+    },
     description: {
       type: String,
     },
