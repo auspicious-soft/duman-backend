@@ -8,7 +8,6 @@ import { categoriesModel } from "src/models/categories/categroies-schema";
 
 
 export const createSubCategoryService = async (payload: any, res: Response) => {
-    console.log('payload: ', payload);
     const isCategory = await categoriesModel.findOne({ _id: payload.categoryId });
     if (!isCategory) {
         return errorResponseHandler("Category not found", httpStatusCode.NOT_FOUND, res);
@@ -43,7 +42,6 @@ export const getAllSubCategoriesService = async (payload:any, res: Response) => 
      
       const totalDataCount = Object.keys(query).length < 1 ? await subCategoriesModel.countDocuments() : await subCategoriesModel.countDocuments(query)
       const results = await subCategoriesModel.find(query).sort(sort).skip(offset).limit(limit).populate('categoryId');
-      console.log('results: ', results);
       if (results.length) return {
           page,
           limit,

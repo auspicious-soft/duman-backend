@@ -9,7 +9,6 @@ import mongoose from "mongoose"
 
 export const signup = async (req: Request, res: Response) => {
     const validation = clientSignupSchema.safeParse(req.body)
-    console.log('validation: ', validation);
     if (!validation.success) return res.status(httpStatusCode.BAD_REQUEST).json({ success: false, message: formatZodErrors(validation.error) })
     try {
         const response: any = await signupService(req.body, res)

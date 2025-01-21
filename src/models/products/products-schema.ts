@@ -10,24 +10,20 @@ const productsSchema = new mongoose.Schema(
       type: String,
       requried: true,
     },
-    authorId: [{
+    authorId: {
       type: [mongoose.Schema.Types.ObjectId],
-      ref: "users",
+      ref: "authors",
       required: true,
-    }],
+    },
     categoryId: {
       type: [mongoose.Schema.Types.ObjectId],
       ref: "categories",
       required: true,
     },
-    subCategoryId:{
+    subCategoryId: {
       type: [mongoose.Schema.Types.ObjectId],
-      ref: 'subCategories',
+      ref: "subCategories",
       required: true,
-  },
-    language: {
-      type: [String],
-      requried: true,
     },
     price: {
       type: Number,
@@ -41,16 +37,17 @@ const productsSchema = new mongoose.Schema(
       type: String,
     },
     file: {
-      type: String,
+      type: Map,
+      of: { type: String },
     },
     type: {
       type: String,
-      enum: ["e-book", "podcast", "audiobook","course"], 
+      enum: ["e-book", "podcast", "audiobook", "course"],
       required: true,
     },
     publisherId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'publishers',
+      ref: "publishers",
     },
   },
   { timestamps: true }

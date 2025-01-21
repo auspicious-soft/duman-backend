@@ -1,6 +1,6 @@
 import { Router } from "express";
-import {  forgotPassword, getAdminDetails, getDashboardStats,   getNewUsers,   login,   newPassswordAfterOTPVerified,} from "../controllers/admin/admin-controller";
-import { createEventHandler, getEventByIdHandler, updateEventHandler, deleteEventHandler, getAllEventsHandler } from '../controllers/events/events-controller';
+import { forgotPassword, getAdminDetails, getDashboardStats, getNewUsers, login, newPassswordAfterOTPVerified } from "../controllers/admin/admin-controller";
+import { createEventHandler, getEventByIdHandler, updateEventHandler, deleteEventHandler, getAllEventsHandler } from "../controllers/events/events-controller";
 import { createUser, deleteUser, getAllUser, getUser, getUserDashboardStats, updateUser, verifyOtpPasswordReset } from "src/controllers/user/user-controller";
 import { checkAuth } from "src/middleware/check-auth";
 import { createCategory, deleteCategory, getAllCategories, getCategory, updateCategory } from "src/controllers/categories/categories-controller";
@@ -57,80 +57,75 @@ import { createAuthorService } from "src/services/authors/authors-service";
 //     authController.socialCallback.bind(authController)
 // );
 
-
-
 const router = Router();
 
-
-router.get("/", getAdminDetails)
-router.get("/dashboard", getDashboardStats)
+router.get("/", getAdminDetails);
+router.get("/dashboard", getDashboardStats);
 
 //users routes
-router.get("/new-users", getNewUsers)
+router.get("/new-users", getNewUsers);
 // router.get("/", getNewUsers)
-router.get("/user/:id", getUserDashboardStats)
-
+router.get("/user/:id", getUserDashboardStats);
 
 // events routes
 
-router.post('/events', createEventHandler);
-router.get('/events', getAllEventsHandler);
-router.get('/events/:id', getEventByIdHandler);
-router.put('/events/:id', updateEventHandler);
-router.delete('/events/:id', deleteEventHandler);
+router.post("/events", createEventHandler);
+router.get("/events", getAllEventsHandler);
+router.get("/events/:id", getEventByIdHandler);
+router.put("/events/:id", updateEventHandler);
+router.delete("/events/:id", deleteEventHandler);
 
 //categories routes
 
-router.post('/categories', createCategory);
-router.get('/categories', getAllCategories);
-router.get('/categories/:id', getCategory);
-router.put('/categories/:id', updateCategory);
-router.delete('/categories/:id', deleteCategory);
-
+router.post("/categories", createCategory);
+router.get("/categories", getAllCategories);
+router.get("/categories/:id", getCategory);
+router.put("/categories/:id", updateCategory);
+router.delete("/categories/:id", deleteCategory);
 
 // sub-categories routes
 
-router.post('/sub-categories', createSubCategory);
-router.get('/sub-categories', getAllSubCategory);
-router.get('/sub-categories/:id', getSubCategory);
-router.put('/sub-categories/:id', updateSubCategory);
-router.get('/:categoryId/sub-categories', getSubCategoriesByCategoryId);
-router.delete('/sub-categories/:id', deleteSubCategory);
+router.post("/sub-categories", createSubCategory);
+router.get("/sub-categories", getAllSubCategory);
+router.get("/sub-categories/:id", getSubCategory);
+router.put("/sub-categories/:id", updateSubCategory);
+router.get("/:categoryId/sub-categories", getSubCategoriesByCategoryId);
+router.delete("/sub-categories/:id", deleteSubCategory);
 
 // books routes
 
-router.post('/books', createBook);
-router.get('/books', getAllBooks);
-router.get('/books/:id', getBook);
-router.put('/books/:id', updateBook);
-router.delete('/books/:id', deleteBook);
+router.post("/books", createBook);
+router.get("/books", getAllBooks);
+router.get("/books/:id", getBook);
+router.put("/books/:id", updateBook);
+router.delete("/books/:id", deleteBook);
 
 // users route
-router.post('/users', createUser);
-router.get("/users", getAllUser)
-router.get("/users/:id", getUser)
-router.put("/users/:id", updateUser)
-router.delete('/users/:id', deleteUser);
+router.post("/users", createUser);
+router.get("/users", getAllUser);
+router.get("/users/:id", getUser);
+router.put("/users/:id", updateUser);
+router.delete("/users/:id", deleteUser);
 
 // order route
-router.post('/order', createOrder);
-router.get("/order", getAllOrders)
-router.get("/order/:id", getOrder)
-router.put("/order/:id", updateOrder)
-router.delete('/order/:id', deleteOrder);
+router.post("/order", createOrder);
+router.get("/order", getAllOrders);
+router.get("/order/:id", getOrder);
+router.put("/order/:id", updateOrder);
+router.delete("/order/:id", deleteOrder);
 
 // publishers route
-router.post('/publishers', createPublisher);
-router.get("/publishers", getAllPublishers)
-router.get("/publishers/:id", getPublisher)
-router.put("/publishers/:id", updatePublisher)
-router.delete('/publishers/:id', deletePublisher);
+router.post("/publishers", createPublisher);
+router.get("/publishers", getAllPublishers);
+router.get("/publishers/:id", getPublisher);
+router.put("/publishers/:id", updatePublisher);
+router.delete("/publishers/:id", deletePublisher);
 
 // authors route
-router.post('/authors', createAuthor);
-router.get("/authors", getAllAuthors)
-router.get("/authors/:id", getAuthor)
-router.put("/authors/:id", updateAuthor)
-router.delete('/authors/:id', deleteAuthor);
+router.post("/authors", createAuthor);
+router.get("/authors", getAllAuthors);
+router.get("/authors/:id", getAuthor);
+router.put("/authors/:id", updateAuthor);
+router.delete("/authors/:id", deleteAuthor);
 
-export { router }
+export { router };

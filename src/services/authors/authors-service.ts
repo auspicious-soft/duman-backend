@@ -20,12 +20,7 @@ export const createPublisherService = async (payload: any, res: Response) => {
 
 export const getPublisherService = async (id: string, res: Response) => {
   const publisher = await publishersModel.findById(id).populate("categoryId");
-  if (!publisher)
-    return errorResponseHandler(
-      "Publisher not found",
-      httpStatusCode.NOT_FOUND,
-      res
-    );
+  if (!publisher) return errorResponseHandler("Publisher not found", httpStatusCode.NOT_FOUND, res);
   return {
     success: true,
     message: "Publisher retrieved successfully",
@@ -39,17 +34,8 @@ export const getAllPublishersService = async (payload: any, res: Response) => {
   const offset = (page - 1) * limit;
   const { query, sort } = queryBuilder(payload, ["name"]);
 
-  const totalDataCount =
-    Object.keys(query).length < 1
-      ? await publishersModel.countDocuments()
-      : await publishersModel.countDocuments(query);
-  const results = await publishersModel
-    .find(query)
-    .sort(sort)
-    .skip(offset)
-    .limit(limit)
-    .populate("categoryId")
-    .select("-__v");
+  const totalDataCount = Object.keys(query).length < 1 ? await publishersModel.countDocuments() : await publishersModel.countDocuments(query);
+  const results = await publishersModel.find(query).sort(sort).skip(offset).limit(limit).populate("categoryId").select("-__v");
   if (results.length)
     return {
       page,
@@ -69,20 +55,11 @@ export const getAllPublishersService = async (payload: any, res: Response) => {
   }
 };
 
-export const updatePublisherService = async (
-  id: string,
-  payload: any,
-  res: Response
-) => {
+export const updatePublisherService = async (id: string, payload: any, res: Response) => {
   const updatedPublisher = await publishersModel.findByIdAndUpdate(id, payload, {
     new: true,
   });
-  if (!updatedPublisher)
-    return errorResponseHandler(
-      "Publisher not found",
-      httpStatusCode.NOT_FOUND,
-      res
-    );
+  if (!updatedPublisher) return errorResponseHandler("Publisher not found", httpStatusCode.NOT_FOUND, res);
   return {
     success: true,
     message: "Publisher updated successfully",
@@ -92,12 +69,7 @@ export const updatePublisherService = async (
 
 export const deletePublisherService = async (id: string, res: Response) => {
   const deletedPublisher = await publishersModel.findByIdAndDelete(id);
-  if (!deletedPublisher)
-    return errorResponseHandler(
-      "Publisher not found",
-      httpStatusCode.NOT_FOUND,
-      res
-    );
+  if (!deletedPublisher) return errorResponseHandler("Publisher not found", httpStatusCode.NOT_FOUND, res);
 
   return {
     success: true,
@@ -118,16 +90,13 @@ export const createAuthorService = async (payload: any, res: Response) => {
 
 export const getAuthorService = async (id: string, res: Response) => {
   const author = await authorsModel.findById(id);
-  if (!author)
-    return errorResponseHandler(
-      "Author not found",
-      httpStatusCode.NOT_FOUND,
-      res
-    );
+  if (!author) return errorResponseHandler("Author not found", httpStatusCode.NOT_FOUND, res);
+  const authorBooks = await productsModel.find({ authorId: id }).populate([{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }]);
   return {
     success: true,
     message: "Author retrieved successfully",
     data: author,
+    authorBooks,
   };
 };
 
@@ -137,16 +106,8 @@ export const getAllAuthorsService = async (payload: any, res: Response) => {
   const offset = (page - 1) * limit;
   const { query, sort } = queryBuilder(payload, ["name"]);
 
-  const totalDataCount =
-    Object.keys(query).length < 1
-      ? await authorsModel.countDocuments()
-      : await authorsModel.countDocuments(query);
-  const results = await authorsModel
-    .find(query)
-    .sort(sort)
-    .skip(offset)
-    .limit(limit)
-    .select("-__v");
+  const totalDataCount = Object.keys(query).length < 1 ? await authorsModel.countDocuments() : await authorsModel.countDocuments(query);
+  const results = await authorsModel.find(query).sort(sort).skip(offset).limit(limit).select("-__v");
   if (results.length)
     return {
       page,
@@ -166,20 +127,11 @@ export const getAllAuthorsService = async (payload: any, res: Response) => {
   }
 };
 
-export const updateAuthorService = async (
-  id: string,
-  payload: any,
-  res: Response
-) => {
+export const updateAuthorService = async (id: string, payload: any, res: Response) => {
   const updatedAuthor = await authorsModel.findByIdAndUpdate(id, payload, {
     new: true,
   });
-  if (!updatedAuthor)
-    return errorResponseHandler(
-      "Author not found",
-      httpStatusCode.NOT_FOUND,
-      res
-    );
+  if (!updatedAuthor) return errorResponseHandler("Author not found", httpStatusCode.NOT_FOUND, res);
   return {
     success: true,
     message: "Author updated successfully",
@@ -189,12 +141,7 @@ export const updateAuthorService = async (
 
 export const deleteAuthorService = async (id: string, res: Response) => {
   const deletedAuthor = await authorsModel.findByIdAndDelete(id);
-  if (!deletedAuthor)
-    return errorResponseHandler(
-      "Author not found",
-      httpStatusCode.NOT_FOUND,
-      res
-    );
+  if (!deletedAuthor) return errorResponseHandler("Author not found", httpStatusCode.NOT_FOUND, res);
 
   return {
     success: true,

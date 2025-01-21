@@ -24,7 +24,6 @@ export const checkAuth = async (req: Request, res: Response, next: NextFunction)
         })
         if (!decoded) return res.status(httpStatusCode.UNAUTHORIZED).json({ success: false, message: "Unauthorized token invalid or expired" });
         (req as any).currentUser = decoded.id
-        // console.log("id",decoded.id);
         next()
     } catch (error) {
         console.log('error: ', error);

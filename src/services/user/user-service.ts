@@ -18,7 +18,6 @@ import { productsModel } from "../../models/products/products-schema";
 import { eventsModel } from "../../models/events/events-schema";
 
 export const signupService = async (payload: any, res: Response) => {
-  console.log("payload: ", payload);
   const emailExists = await usersModel.findOne({ email: payload.email });
   if (emailExists)
     return errorResponseHandler(
@@ -312,7 +311,6 @@ export const createUserService = async (payload: any, res: Response) => {
 
   const newUser = new usersModel(payload);
   const response = await newUser.save();
-  console.log("response: ", response);
 
   return {
     success: true,
@@ -391,7 +389,6 @@ export const getUserProfileDetailService = async (
   payload: any,
   res: Response
 ) => {
-  console.log('payload: ', payload);
   const user = await usersModel.findById(id);
   if (!user)
     return errorResponseHandler(

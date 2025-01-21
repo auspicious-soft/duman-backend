@@ -6,7 +6,6 @@ import { queryBuilder } from "src/utils";
 
 
 export const createBookService = async (payload: any, res: Response) => {
-    console.log('payload: ', payload);
         const newBook = new productsModel(payload);
         const savedBook = await newBook.save();
         return {
@@ -34,8 +33,13 @@ export const getAllBooksService = async (payload:any ,res: Response) => {
     const page = parseInt(payload.page as string) || 1
           const limit = parseInt(payload.limit as string) || 0
           const offset = (page - 1) * limit
-          const { query, sort } = queryBuilder(payload, ['name'])
+          const { query, sort } = queryBuilder(payload, ['name']) as { query: any, sort: any };
          
+          // Add filter based on type
+          if (payload.type) {
+              query.type = payload.type;
+          }
+
           const totalDataCount = Object.keys(query).length < 1 ? await productsModel.countDocuments() : await productsModel.countDocuments(query)
           const results = await productsModel.find(query).sort(sort).skip(offset).limit(limit).populate('categoryId');
           if (results.length) return {

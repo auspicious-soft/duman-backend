@@ -4,6 +4,7 @@ import { httpStatusCode } from "../../lib/constant";
 
 import { queryBuilder } from "src/utils";
 import { publishersModel } from "../../models/publishers/publishers-schema";
+import { productsModel } from "src/models/products/products-schema";
 
 export const createPublisherService = async (payload: any, res: Response) => {
   const newPublisher = new publishersModel(payload);
@@ -23,10 +24,13 @@ export const getPublisherService = async (id: string, res: Response) => {
       httpStatusCode.NOT_FOUND,
       res
     );
+      const publisherBooks = await productsModel.find({ publisherId: id }).populate([{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }]);
+    
   return {
     success: true,
     message: "Publisher retrieved successfully",
     data: publisher,
+    publisherBooks
   };
 };
 

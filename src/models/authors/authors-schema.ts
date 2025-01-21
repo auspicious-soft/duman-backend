@@ -25,6 +25,10 @@ const authorsSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    description:{
+      type: String,
+      required: true
+    }
   },
   { timestamps: true }
 );
