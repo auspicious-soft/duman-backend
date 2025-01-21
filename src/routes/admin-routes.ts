@@ -10,6 +10,7 @@ import { createOrder, deleteOrder, getAllOrders, getOrder, updateOrder } from "s
 import { createPublisher, deletePublisher, getAllPublishers, getPublisher, updatePublisher } from "src/controllers/publisher/publishers-controller";
 import { createAuthor, deleteAuthor, getAllAuthors, getAuthor, updateAuthor } from "src/controllers/authors/authors-controller";
 import { createAuthorService } from "src/services/authors/authors-service";
+import { createStory, deleteStory, getAllStories, getStory, updateStory } from "src/controllers/stories/stories-controller";
 // import passport from 'passport';
 // import { loginController } from '../controllers/admin/admin-controller();
 
@@ -127,5 +128,12 @@ router.get("/authors", getAllAuthors);
 router.get("/authors/:id", getAuthor);
 router.put("/authors/:id", updateAuthor);
 router.delete("/authors/:id", deleteAuthor);
+
+// stories route
+router.post("/stories", createStory);
+router.get("/stories", getAllStories);
+router.get("/stories/:id", getStory);
+router.put("/stories/:id", updateStory);
+router.delete("/stories/:id", deleteStory);
 
 export { router };

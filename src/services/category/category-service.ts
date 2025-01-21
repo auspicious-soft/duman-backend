@@ -5,6 +5,7 @@ import { categoriesModel } from "../../models/categories/categroies-schema";
 import { subCategoriesModel } from "src/models/sub-categories/sub-categories-schema";
 import { productsModel } from "src/models/products/products-schema";
 import { queryBuilder } from "src/utils";
+import { deleteFileFromS3 } from "src/configF/s3";
 
 export const createCategoryService = async (payload: any, res: Response) => {
   const newCategory = new categoriesModel(payload);
@@ -110,7 +111,9 @@ export const deleteCategoryService = async (id: string, res: Response) => {
       httpStatusCode.NOT_FOUND,
       res
     );
-
+  if(deletedCategory?.image){
+    await deleteFileFromS3(deletedCategory?.image)
+  }
   return {
     success: true,
     message: "Category deleted successfully",

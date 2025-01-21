@@ -7,6 +7,7 @@ import { productsModel } from "src/models/products/products-schema";
 import { queryBuilder } from "src/utils";
 import { publishersModel } from "../../models/publishers/publishers-schema";
 import { authorsModel } from "../../models/authors/authors-schema";
+import { deleteFileFromS3 } from "src/configF/s3";
 
 export const createPublisherService = async (payload: any, res: Response) => {
   const newPublisher = new publishersModel(payload);
@@ -142,7 +143,7 @@ export const updateAuthorService = async (id: string, payload: any, res: Respons
 export const deleteAuthorService = async (id: string, res: Response) => {
   const deletedAuthor = await authorsModel.findByIdAndDelete(id);
   if (!deletedAuthor) return errorResponseHandler("Author not found", httpStatusCode.NOT_FOUND, res);
-
+  await deleteFileFromS3(deletedAuthor?.image)
   return {
     success: true,
     message: "Author deleted successfully",

@@ -38,7 +38,7 @@ export const updateEventHandler = async (req: Request, res: Response) => {
 export const deleteEventHandler = async (req: Request, res: Response) => {
  
     try {
-      const response = await deleteEvent(req.params.id);
+      const response = await deleteEvent(req.params.id , res);
       return res.status(httpStatusCode.OK).json(response)
   } catch (error: any) {
       const { code, message } = errorParser(error)

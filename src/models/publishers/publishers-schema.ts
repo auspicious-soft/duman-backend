@@ -14,6 +14,9 @@ const publishersSchema = new mongoose.Schema(
     email: {
       type: String,
     },
+    password: {
+      type: String,
+    },
     description: {
       type: String,
     },

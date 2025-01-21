@@ -2,6 +2,9 @@ import mongoose, { Schema } from "mongoose";
 
 const ordersSchema = new mongoose.Schema(
   {
+    identifier:{
+      type:String
+    },
     productIds: {
       type: [mongoose.Schema.Types.ObjectId],
       ref: "products",
@@ -17,6 +20,12 @@ const ordersSchema = new mongoose.Schema(
     totalAmount: {
       type: Number,
       required: true
+    },
+    paymentMethod: {
+      type: String,
+    },
+    transactionId: {
+      type: String,
     },
   },
   { timestamps: true }

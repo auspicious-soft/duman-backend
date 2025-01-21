@@ -5,6 +5,7 @@ import { subCategoriesModel } from "../../models/sub-categories/sub-categories-s
 import { productsModel } from "src/models/products/products-schema";
 import { queryBuilder } from "src/utils";
 import { categoriesModel } from "src/models/categories/categroies-schema";
+import { deleteFileFromS3 } from "src/configF/s3";
 
 
 export const createSubCategoryService = async (payload: any, res: Response) => {
@@ -80,12 +81,11 @@ export const getSubCategoryByIdService = async (id: string, res: Response) => {
             data: subCategory,
         };
     } catch (error) {
-        console.error('Error fetching sub-category:', error); // Log the error for debugging
+        console.error('Error fetching sub-category:', error); 
         return errorResponseHandler('Failed to fetch sub-category', httpStatusCode.INTERNAL_SERVER_ERROR, res);
     }
 };
 export const updateSubCategoryService = async (id: string, payload: any, res: Response) => {
-    // try {
         const updatedSubCategory = await subCategoriesModel.findByIdAndUpdate(id, payload, { new: true });
         if (!updatedSubCategory) return errorResponseHandler("Sub-category not found", httpStatusCode.NOT_FOUND, res);
         return {
@@ -93,24 +93,22 @@ export const updateSubCategoryService = async (id: string, payload: any, res: Re
             message: "Sub-category updated successfully",
             data: updatedSubCategory,
         };
-    // } catch (error) {
-    //     return errorResponseHandler('Failed to update sub-category', httpStatusCode.INTERNAL_SERVER_ERROR, res);
-    // }
+ 
 };
 
 export const deleteSubCategoryService = async (id: string, res: Response) => {
-    // try {
         const books = await productsModel.find({ subCategoryId: id });
         if (books.length > 0) return errorResponseHandler("Sub-category cannot be deleted because it has books", httpStatusCode.BAD_REQUEST, res);
 
         const deletedSubCategory = await subCategoriesModel.findByIdAndDelete(id).populate('categoryId');
         if (!deletedSubCategory) return errorResponseHandler("Sub-category not found", httpStatusCode.NOT_FOUND, res);
+         if(deletedSubCategory?.image){
+            await deleteFileFromS3(deletedSubCategory?.image)
+          }
         return {
             success: true,
             message: "Sub-category deleted successfully",
             data: deletedSubCategory,
         };
-    // } catch (error) {
-    //     return errorResponseHandler('Failed to delete sub-category', httpStatusCode.INTERNAL_SERVER_ERROR, res);
-    // }
+ 
 };

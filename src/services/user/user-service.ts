@@ -12,6 +12,7 @@ import { queryBuilder } from "src/utils";
 import { ordersModel } from "../../models/orders/orders-schema";
 import { productsModel } from "../../models/products/products-schema";
 import { eventsModel } from "../../models/events/events-schema";
+import { deleteFileFromS3 } from "src/configF/s3";
 
 export const signupService = async (payload: any, res: Response) => {
   const emailExists = await usersModel.findOne({ email: payload.email });
@@ -250,6 +251,9 @@ export const deleteUserService = async (id: string, res: Response) => {
   if (!user) return errorResponseHandler("User not found", httpStatusCode.NOT_FOUND, res);
 
   const deletedUser = await usersModel.findByIdAndDelete(id);
+  if(deletedUser?.profilePic){
+    await deleteFileFromS3(deletedUser?.profilePic)
+  }
   return {
     success: true,
     message: "User deleted successfully",
@@ -262,7 +266,13 @@ export const getUserProfileDetailService = async (id: string, payload: any, res:
   if (!user) return errorResponseHandler("User not found", httpStatusCode.NOT_FOUND, res);
 
   const year = payload.duration;
-  const userOrders = await ordersModel.find({ userId: id }).populate("productIds");
+  const userOrders = await ordersModel.find({ userId: id }).populate({
+    path: "productIds",
+    populate: [
+      { path: "authorId", model: "authors" },
+      { path: "categoryId", model: "categories" },
+    ],
+  });;
 
   let filteredOrders = userOrders;
 

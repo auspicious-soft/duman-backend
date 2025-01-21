@@ -1,6 +1,10 @@
 import { customAlphabet } from "nanoid";
 import { eventsModel } from "../../models/events/events-schema";
 import { queryBuilder } from "src/utils";
+import { errorResponseHandler } from "src/lib/errors/error-response-handler";
+import { httpStatusCode } from "src/lib/constant";
+import { deleteFileFromS3 } from "src/configF/s3";
+import { Response } from "express";
 
 export interface Event {
   _id?: string;
@@ -28,9 +32,17 @@ export const updateEvent = async (
 ): Promise<Event | null> => {
   return await eventsModel.findByIdAndUpdate(eventId, eventData, { new: true });
 };
-
-export const deleteEvent = async (eventId: string): Promise<Event | null> => {
-  return await eventsModel.findByIdAndDelete(eventId);
+export const deleteEvent = async (eventId: string, res :Response ) => {
+  const deletedEvent= await eventsModel.findByIdAndDelete(eventId);
+  if (!deletedEvent) return errorResponseHandler("Book Event not found", httpStatusCode.NOT_FOUND, res);
+  if (deletedEvent?.image) {
+    await deleteFileFromS3(deletedEvent.image);
+    }
+    return {
+      success: true,
+      message: "Book Event deleted successfully",
+      data: deletedEvent,
+    };
 };
 
 export const getAllEvents = async (payload: any) => {

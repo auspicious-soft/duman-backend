@@ -3,6 +3,7 @@ import { errorResponseHandler } from "../../lib/errors/error-response-handler";
 import { httpStatusCode } from "../../lib/constant";
 import { productsModel } from "../../models/products/products-schema";
 import { queryBuilder } from "src/utils";
+import { deleteFileFromS3 } from "src/configF/s3";
 
 
 export const createBookService = async (payload: any, res: Response) => {
@@ -91,6 +92,9 @@ export const deleteBookService = async (id: string, res: Response) => {
     try {
         const deletedBook = await productsModel.findByIdAndDelete(id);
         if (!deletedBook) return errorResponseHandler("Book not found", httpStatusCode.NOT_FOUND, res);
+        if (deletedBook?.image) {
+            await deleteFileFromS3(deletedBook.image);
+        }
         return {
             success: true,
             message: "Book deleted successfully",

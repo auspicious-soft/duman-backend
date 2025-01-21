@@ -3,9 +3,13 @@ import { errorResponseHandler } from "../../lib/errors/error-response-handler";
 import { httpStatusCode } from "../../lib/constant";
 import { queryBuilder } from "src/utils";
 import { ordersModel } from "../../models/orders/orders-schema";
+import { customAlphabet } from "nanoid";
 
 export const createOrderService = async (payload: any, res: Response) => {
+  const identifier = customAlphabet("0123456789", 5);
+  payload.identifier = identifier();
   const newOrder = new ordersModel(payload);
+  console.log('payload: ', payload);
   const savedOrder = await newOrder.save();
   return {
     success: true,
