@@ -319,42 +319,6 @@ export const deleteAUserService = async (id: string, res: Response) => {
 // Dashboard
 export const getDashboardStatsService = async (payload: any, res: Response) => {
 
-  // try {
-  //     const overviewDuration  = parseInt(payload.overviewDuration);
-  //     const usersDuration = parseInt(payload.usersDuration);
-  //     let overviewDate = new Date();
-  //     if (overviewDuration === 30 || overviewDuration === 7) {
-  //         overviewDate.setDate(overviewDate.getDate() - overviewDuration);
-  //     }
-
-  //     let usersDate = new Date();
-  //     if (usersDuration === 30 || usersDuration === 7) {
-  //         usersDate.setDate(usersDate.getDate() - usersDuration);
-  //     }
-
-  //     const newestUsers = await usersModel.find({ createdAt: { $gte: usersDate } }).sort({ createdAt: -1 }).limit(10).select("-__v");
-  //     const newestEvents = await eventsModel.find({ createdAt: { $gte: usersDate } }).sort({ createdAt: -1 }).limit(10).select("-__v");
-  //     const newUsersCount = await usersModel.countDocuments({ createdAt: { $gte: overviewDate } });
-  //     const eventsCount = await eventsModel.countDocuments({ createdAt: { $gte: overviewDate } });
-  //     const otherData = {
-  //         newBooks: 0,
-  //         totalRevenue: 0,
-  //     };
-
-  //     return {
-  //         success: true,
-  //         message: "Dashboard stats fetched successfully",
-  //         data: {
-  //             newestUsers,
-  //             newestEvents,
-  //             newUsersCount,
-  //             eventsCount,
-  //             ...otherData,
-  //         },
-  //     };
-  // } catch (error) {
-  //     return errorResponseHandler('Failed to fetch dashboard stats', httpStatusCode.INTERNAL_SERVER_ERROR, res);
-  // }
   try {
     const overviewDuration = payload.overviewDuration ? parseInt(payload.overviewDuration) : null;
     const usersDuration = payload.usersDuration ? parseInt(payload.usersDuration) : null;
