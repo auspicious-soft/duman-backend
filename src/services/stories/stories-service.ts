@@ -30,7 +30,7 @@ export const getAllStoriesService = async (payload: any, res: Response) => {
   const page = parseInt(payload.page as string) || 1;
   const limit = parseInt(payload.limit as string) || 0;
   const offset = (page - 1) * limit;
-  const { query, sort } = queryBuilder(payload, ["title"]);
+  const { query, sort } = queryBuilder(payload, ["name"]);
 
   const totalDataCount = Object.keys(query).length < 1 ? await storiesModel.countDocuments() : await storiesModel.countDocuments(query);
   const results = await storiesModel.find(query).sort(sort).skip(offset).limit(limit).select("-__v");
