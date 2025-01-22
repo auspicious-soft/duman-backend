@@ -17,6 +17,7 @@ export const createDiscountVoucherService = async (payload: any, res: Response) 
 
 export const getDiscountVoucherService = async (id: string, res: Response) => {
   const voucher = await discountVouchersModel.findById(id);
+  console.log('voucher: ', voucher);
   if (!voucher) return errorResponseHandler("Discount voucher not found", httpStatusCode.NOT_FOUND, res);
   return {
     success: true,
@@ -29,7 +30,7 @@ export const getAllDiscountVouchersService = async (payload: any, res: Response)
   const page = parseInt(payload.page as string) || 1;
   const limit = parseInt(payload.limit as string) || 0;
   const offset = (page - 1) * limit;
-  const { query, sort } = queryBuilder(payload, ["code"]);
+  const { query, sort } = queryBuilder(payload, ["couponCode","percentage"]);
 
   const totalDataCount = Object.keys(query).length < 1 ? await discountVouchersModel.countDocuments() : await discountVouchersModel.countDocuments(query);
   const results = await discountVouchersModel.find(query).sort(sort).skip(offset).limit(limit).select("-__v");

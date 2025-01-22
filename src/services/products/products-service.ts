@@ -4,6 +4,7 @@ import { httpStatusCode } from "../../lib/constant";
 import { productsModel } from "../../models/products/products-schema";
 import { queryBuilder } from "src/utils";
 import { deleteFileFromS3 } from "src/configF/s3";
+import mongoose from "mongoose";
 
 export const createBookService = async (payload: any, res: Response) => {
   const newBook = new productsModel(payload);
@@ -85,49 +86,86 @@ export const updateBookService = async (id: string, payload: any, res: Response)
     return errorResponseHandler("Failed to update book", httpStatusCode.INTERNAL_SERVER_ERROR, res);
   }
 };
-export const addBookToDiscountsService = async (id: string, payload: any, res: Response) => {
-  try {
-    const { discountPercentage } = payload;
-    const updatedBook = await productsModel.findByIdAndUpdate(
-      id,
-      {
-        discountPercentage,
-        isDiscounted: true,
-      },
-      { new: true }
-    );
-    if (!updatedBook) return errorResponseHandler("Book not found", httpStatusCode.NOT_FOUND, res);
-    return {
-      success: true,
-      message: "Book updated successfully",
-      data: updatedBook,
-    };
-  } catch (error) {
-    return errorResponseHandler("Failed to update book", httpStatusCode.INTERNAL_SERVER_ERROR, res);
-  }
-};
+// export const addBookToDiscountsService = async ( payload: any, res: Response) => {
+// //   try {
+//     const { discountPercentage,booksId } = payload;
+//     const objectIdArray = booksId.map((id: string) => new mongoose.Types.ObjectId(id));
+//     const updatedBook = await productsModel.findByIdAndUpdate(
+//         { _id: { $in: objectIdArray } },
+//       {
+//         discountPercentage,
+//         isDiscounted: true,
+//       },
+//       { new: true }
+//     );
+//     console.log('updatedBook: ', updatedBook);
+//     if (!updatedBook) return errorResponseHandler("Book not found", httpStatusCode.NOT_FOUND, res);
+//     return {
+//       success: true,
+//       message: "Book updated successfully",
+//       data: updatedBook,
+//     };
+// //   } catch (error) {
+// //     return errorResponseHandler("Failed to update book", httpStatusCode.INTERNAL_SERVER_ERROR, res);
+// //   }
+// };
 
-export const removeBookFromDiscountsService = async (id: string, res: Response) => {
-  try {
-    const updatedBook = await productsModel.findByIdAndUpdate(
-      id,
-      {
-        discountPercentage: null,
-        isDiscounted: false,
-      },
-      { new: true }
-    );
-    if (!updatedBook) return errorResponseHandler("Book not found", httpStatusCode.NOT_FOUND, res);
-    return {
-      success: true,
-      message: "Book updated successfully",
-      data: updatedBook,
-    };
-  } catch (error) {
-    return errorResponseHandler("Failed to update book", httpStatusCode.INTERNAL_SERVER_ERROR, res);
-  }
-};
+export const addBookToDiscountsService = async (payload: any, res: Response) => {
+    try {
+      const { booksId, discountPercentage } = payload;
+  
+      // Convert booksId to ObjectId
+    //   const objectIdArray = booksId.map((id: string) => new mongoose.Types.ObjectId(id));
+  
+      const updatedBooks = await productsModel.updateMany(
+        { _id: { $in: booksId } },
+        {
+          $set: {
+            discountPercentage,
+            isDiscounted: true,
+          },
+        }
+      );
+  
+      if (updatedBooks.modifiedCount === 0) return errorResponseHandler("No books found to update", httpStatusCode.NOT_FOUND, res);
+  
+      return {
+        success: true,
+        message: "Books updated successfully",
+        data: updatedBooks,
+      };
+    } catch (error) {
+      console.error('Error updating books:', error); // Log the error for debugging
+      return errorResponseHandler("Failed to update books", httpStatusCode.INTERNAL_SERVER_ERROR, res);
+    }
+  };
 
+export const removeBookFromDiscountsService = async (payload:any, res: Response) => {
+    try {
+        const { booksId  } = payload;
+    
+        const updatedBooks = await productsModel.updateMany(
+          { _id: { $in: booksId } },
+          {
+            $set: {
+              discountPercentage:null,
+              isDiscounted: false,
+            },
+          }
+        );
+    
+        if (updatedBooks.modifiedCount === 0) return errorResponseHandler("No books found to update", httpStatusCode.NOT_FOUND, res);
+    
+        return {
+          success: true,
+          message: "Books updated successfully",
+          data: updatedBooks,
+        };
+      } catch (error) {
+        console.error('Error updating books:', error); // Log the error for debugging
+        return errorResponseHandler("Failed to update books", httpStatusCode.INTERNAL_SERVER_ERROR, res);
+      }
+    };
 export const deleteBookService = async (id: string, res: Response) => {
   try {
     const deletedBook = await productsModel.findByIdAndDelete(id);

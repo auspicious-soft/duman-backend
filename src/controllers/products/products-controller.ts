@@ -44,7 +44,7 @@ export const updateBook = async (req: Request, res: Response) => {
 };
 export const addBookToDiscounts = async (req: Request, res: Response) => {
   try {
-    const response = await addBookToDiscountsService(req.params.id, req.body, res);
+    const response = await addBookToDiscountsService( req.body, res);
     return res.status(httpStatusCode.OK).json(response);
   } catch (error: any) {
     const { code, message } = errorParser(error);
@@ -54,7 +54,7 @@ export const addBookToDiscounts = async (req: Request, res: Response) => {
 
 export const removeBookFromDiscounts = async (req: Request, res: Response) => {
   try {
-    const response = await removeBookFromDiscountsService(req.params.id,  res);
+    const response = await removeBookFromDiscountsService(req.body,  res);
     return res.status(httpStatusCode.OK).json(response);
   } catch (error: any) {
     const { code, message } = errorParser(error);

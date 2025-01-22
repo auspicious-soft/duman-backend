@@ -15,6 +15,7 @@ import { createBanner, deleteBanner, getAllBanners, getBanner, updateBanner } fr
 import { addBooksToCollection, createCollection, deleteCollection, getAllCollections, getCollection, updateCollection } from "src/controllers/collections/collections-controller";
 import { addBooksToSummary, createSummary, deleteSummary, getAllSummaries, getSummary, updateSummary } from "src/controllers/summaries/summaries-controller";
 import { addBookToDiscountsService } from "src/services/products/products-service";
+import { createDiscountVoucher, deleteDiscountVoucher, getAllDiscountVouchers, getDiscountVoucher, updateDiscountVoucher } from "src/controllers/discount-vouchers/discount-vouchers-controller";
 // import passport from 'passport';
 // import { loginController } from '../controllers/admin/admin-controller();
 
@@ -105,8 +106,8 @@ router.put("/books/:id", updateBook);
 router.delete("/books/:id", deleteBook);
 
 // booksToDiscount routes
-router.put("/booksToDiscount/:id", addBookToDiscounts);
-router.put("/booksToDiscount/:id", removeBookFromDiscounts);
+router.put("/booksToDiscount", addBookToDiscounts);
+router.put("/removeBooksFromDiscounts", removeBookFromDiscounts);
 
 // users route
 router.post("/users", createUser);
@@ -165,6 +166,13 @@ router.get("/summaries/:id", getSummary);
 router.put("/summaries/:id", updateSummary);
 router.put("/summaries/:id/books", addBooksToSummary);
 router.delete("/summaries/:id", deleteSummary);
+
+// discount-vouchers route
+router.post("/vouchers", createDiscountVoucher);
+router.get("/vouchers", getAllDiscountVouchers);
+router.get("/vouchers/:id", getDiscountVoucher);
+router.put("/vouchers/:id", updateDiscountVoucher);
+router.delete("/vouchers/:id", deleteDiscountVoucher);
 
 
 export { router };

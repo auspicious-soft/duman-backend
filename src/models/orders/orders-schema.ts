@@ -9,7 +9,7 @@ const ordersSchema = new mongoose.Schema(
       type: [mongoose.Schema.Types.ObjectId],
       ref: "products",
     },
-    discountId: {
+    voucherId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'discounts'
     },
