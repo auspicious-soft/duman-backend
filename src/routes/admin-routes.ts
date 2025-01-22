@@ -13,6 +13,7 @@ import { createAuthorService } from "src/services/authors/authors-service";
 import { createStory, deleteStory, getAllStories, getStory, updateStory } from "src/controllers/stories/stories-controller";
 import { createBanner, deleteBanner, getAllBanners, getBanner, updateBanner } from "src/controllers/banners/banners-controller";
 import { addBooksToCollection, createCollection, deleteCollection, getAllCollections, getCollection, updateCollection } from "src/controllers/collections/collections-controller";
+import { addBooksToSummary, createSummary, deleteSummary, getAllSummaries, getSummary, updateSummary } from "src/controllers/summaries/summaries-controller";
 // import passport from 'passport';
 // import { loginController } from '../controllers/admin/admin-controller();
 
@@ -152,6 +153,14 @@ router.get("/collections/:id", getCollection);
 router.put("/collections/:id", updateCollection);
 router.put("/collections/:id/books", addBooksToCollection);
 router.delete("/collections/:id", deleteCollection);
+
+// summaries route
+router.post("/summaries", createSummary);
+router.get("/summaries", getAllSummaries);
+router.get("/summaries/:id", getSummary);
+router.put("/summaries/:id", updateSummary);
+router.put("/summaries/:id/books", addBooksToSummary);
+router.delete("/summaries/:id", deleteSummary);
 
 
 export { router };

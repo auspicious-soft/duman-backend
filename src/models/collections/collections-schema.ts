@@ -10,9 +10,9 @@ const collectionsSchema = new mongoose.Schema(
       type: String,
       requried: true,
     },
-    books: {
+    booksId: {
       type: [Schema.Types.ObjectId],
-      ref: 'books'
+      ref: 'products'
     }
   },
   { timestamps: true }

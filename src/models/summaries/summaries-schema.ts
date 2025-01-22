@@ -6,18 +6,14 @@ const summariesSchema = new mongoose.Schema(
       type: String,
       requried: true,
     },
-   
-    link: {
-      type: String,
-      requried: true,
-
-    },
-    
     image: {
       type: String,
       requried: true,
     },
-    
+    booksId: {
+      type: [Schema.Types.ObjectId],
+      ref: 'products'
+    }
   },
   { timestamps: true }
 );

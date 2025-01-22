@@ -19,7 +19,7 @@ export const createSummaryService = async (payload: any, res: Response) => {
 };
 
 export const getSummaryService = async (id: string, res: Response) => {
-  const summary = await summariesModel.findById(id);
+  const summary = await summariesModel.findById(id).populate('booksId');
   if (!summary) return errorResponseHandler("Summary not found", httpStatusCode.NOT_FOUND, res);
   return {
     success: true,
@@ -64,6 +64,21 @@ export const updateSummaryService = async (id: string, payload: any, res: Respon
   return {    
     success: true,
     message: "Summary updated successfully",
+    data: updatedSummary,
+  };
+};
+
+export const addBooksToSummaryService = async (id: string, payload: any, res: Response) => {
+  const updatedSummary = await summariesModel.findByIdAndUpdate(
+    id,
+    { $addToSet: { booksId: { $each: payload.booksId } } },
+    { new: true }
+  );
+  if (!updatedSummary) return errorResponseHandler("Summary not found", httpStatusCode.NOT_FOUND, res);
+  
+  return {    
+    success: true,
+    message: "Collection updated successfully",
     data: updatedSummary,
   };
 };

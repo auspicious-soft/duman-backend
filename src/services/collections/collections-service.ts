@@ -19,7 +19,7 @@ export const createCollectionService = async (payload: any, res: Response) => {
 
 
 export const getCollectionService = async (id: string, res: Response) => {
-  const collection = await collectionsModel.findById(id);
+  const collection = await collectionsModel.findById(id).populate('booksId');
   if (!collection) return errorResponseHandler("Collection not found", httpStatusCode.NOT_FOUND, res);
   return {
     success: true,
@@ -70,7 +70,7 @@ export const updateCollectionService = async (id: string, payload: any, res: Res
 export const addBooksToCollectionService = async (id: string, payload: any, res: Response) => {
   const updatedCollection = await collectionsModel.findByIdAndUpdate(
     id,
-    { $addToSet: { books: { $each: payload.books } } },
+    { $addToSet: { booksId: { $each: payload.booksId } } },
     { new: true }
   );
   if (!updatedCollection) return errorResponseHandler("Collection not found", httpStatusCode.NOT_FOUND, res);
