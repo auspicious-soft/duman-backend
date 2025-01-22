@@ -11,6 +11,8 @@ import { createPublisher, deletePublisher, getAllPublishers, getPublisher, updat
 import { createAuthor, deleteAuthor, getAllAuthors, getAuthor, updateAuthor } from "src/controllers/authors/authors-controller";
 import { createAuthorService } from "src/services/authors/authors-service";
 import { createStory, deleteStory, getAllStories, getStory, updateStory } from "src/controllers/stories/stories-controller";
+import { createBanner, deleteBanner, getAllBanners, getBanner, updateBanner } from "src/controllers/banners/banners-controller";
+import { addBooksToCollection, createCollection, deleteCollection, getAllCollections, getCollection, updateCollection } from "src/controllers/collections/collections-controller";
 // import passport from 'passport';
 // import { loginController } from '../controllers/admin/admin-controller();
 
@@ -135,5 +137,21 @@ router.get("/stories", getAllStories);
 router.get("/stories/:id", getStory);
 router.put("/stories/:id", updateStory);
 router.delete("/stories/:id", deleteStory);
+
+// banners route
+router.post("/banners", createBanner);
+router.get("/banners", getAllBanners);
+router.get("/banners/:id", getBanner);
+router.put("/banners/:id", updateBanner);
+router.delete("/banners/:id", deleteBanner);
+
+// collections route
+router.post("/collections", createCollection);
+router.get("/collections", getAllCollections);
+router.get("/collections/:id", getCollection);
+router.put("/collections/:id", updateCollection);
+router.put("/collections/:id/books", addBooksToCollection);
+router.delete("/collections/:id", deleteCollection);
+
 
 export { router };
