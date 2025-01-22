@@ -13,7 +13,11 @@ const collectionsSchema = new mongoose.Schema(
     booksId: {
       type: [Schema.Types.ObjectId],
       ref: 'products'
-    }
+    },
+    displayOnMobile: {
+      type: Boolean,
+      default: false, 
+    },
   },
   { timestamps: true }
 );

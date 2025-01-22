@@ -5,7 +5,7 @@ import { createUser, deleteUser, getAllUser, getUser, getUserDashboardStats, upd
 import { checkAuth } from "src/middleware/check-auth";
 import { createCategory, deleteCategory, getAllCategories, getCategory, updateCategory } from "src/controllers/categories/categories-controller";
 import { createSubCategory, deleteSubCategory, getAllSubCategory, getSubCategoriesByCategoryId, getSubCategory, updateSubCategory } from "src/controllers/sub-categories/sub-categories-controller";
-import { createBook, deleteBook, getAllBooks, getBook, updateBook } from "../controllers/products/products-controller";
+import { addBookToDiscounts, createBook, deleteBook, getAllBooks, getBook, removeBookFromDiscounts, updateBook } from "../controllers/products/products-controller";
 import { createOrder, deleteOrder, getAllOrders, getOrder, updateOrder } from "src/controllers/orders/orders-controller";
 import { createPublisher, deletePublisher, getAllPublishers, getPublisher, updatePublisher } from "src/controllers/publisher/publishers-controller";
 import { createAuthor, deleteAuthor, getAllAuthors, getAuthor, updateAuthor } from "src/controllers/authors/authors-controller";
@@ -14,6 +14,7 @@ import { createStory, deleteStory, getAllStories, getStory, updateStory } from "
 import { createBanner, deleteBanner, getAllBanners, getBanner, updateBanner } from "src/controllers/banners/banners-controller";
 import { addBooksToCollection, createCollection, deleteCollection, getAllCollections, getCollection, updateCollection } from "src/controllers/collections/collections-controller";
 import { addBooksToSummary, createSummary, deleteSummary, getAllSummaries, getSummary, updateSummary } from "src/controllers/summaries/summaries-controller";
+import { addBookToDiscountsService } from "src/services/products/products-service";
 // import passport from 'passport';
 // import { loginController } from '../controllers/admin/admin-controller();
 
@@ -84,6 +85,7 @@ router.delete("/events/:id", deleteEventHandler);
 router.post("/categories", createCategory);
 router.get("/categories", getAllCategories);
 router.get("/categories/:id", getCategory);
+router.get("/categories/:categoryId/sub-categories", getSubCategoriesByCategoryId);
 router.put("/categories/:id", updateCategory);
 router.delete("/categories/:id", deleteCategory);
 
@@ -93,16 +95,18 @@ router.post("/sub-categories", createSubCategory);
 router.get("/sub-categories", getAllSubCategory);
 router.get("/sub-categories/:id", getSubCategory);
 router.put("/sub-categories/:id", updateSubCategory);
-router.get("/:categoryId/sub-categories", getSubCategoriesByCategoryId);
 router.delete("/sub-categories/:id", deleteSubCategory);
 
 // books routes
-
 router.post("/books", createBook);
 router.get("/books", getAllBooks);
 router.get("/books/:id", getBook);
 router.put("/books/:id", updateBook);
 router.delete("/books/:id", deleteBook);
+
+// booksToDiscount routes
+router.put("/booksToDiscount/:id", addBookToDiscounts);
+router.put("/booksToDiscount/:id", removeBookFromDiscounts);
 
 // users route
 router.post("/users", createUser);

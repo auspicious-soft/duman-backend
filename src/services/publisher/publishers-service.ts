@@ -19,18 +19,6 @@ export const createPublisherService = async (payload: any, res: Response) => {
 };
 
 export const getPublisherService = async (id: string, res: Response) => {
-//   const publisher = await publishersModel.findById(id).populate("categoryId");
-//   if (!publisher) return errorResponseHandler("Publisher not found", httpStatusCode.NOT_FOUND, res);
-//   const publisherBooks = await productsModel.find({ publisherId: id }).populate([{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }]);
-
-//   return {
-//     success: true,
-//     message: "Publisher retrieved successfully",
-//     data: publisher,
-//     publisherBooks,
-//   };
-// };
-
 const publisher = await publishersModel.findById(id).populate("categoryId");
 if (!publisher) return errorResponseHandler("Publisher not found", httpStatusCode.NOT_FOUND, res);
 

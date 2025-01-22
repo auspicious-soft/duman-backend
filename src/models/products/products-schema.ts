@@ -49,6 +49,14 @@ const productsSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "publishers",
     },
+    isDiscounted: {
+      type: Boolean,
+      default: false,
+    },
+    discountPercentage: {
+      type: Number,
+      default: null,
+    }
   },
   { timestamps: true }
 );
