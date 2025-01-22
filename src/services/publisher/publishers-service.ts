@@ -19,34 +19,39 @@ export const createPublisherService = async (payload: any, res: Response) => {
 };
 
 export const getPublisherService = async (id: string, res: Response) => {
-  const publisher = await publishersModel.findById(id).populate("categoryId");
-  if (!publisher) return errorResponseHandler("Publisher not found", httpStatusCode.NOT_FOUND, res);
-  const publisherBooks = await productsModel.find({ publisherId: id }).populate([{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }]);
+//   const publisher = await publishersModel.findById(id).populate("categoryId");
+//   if (!publisher) return errorResponseHandler("Publisher not found", httpStatusCode.NOT_FOUND, res);
+//   const publisherBooks = await productsModel.find({ publisherId: id }).populate([{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }]);
 
-  return {
-    success: true,
-    message: "Publisher retrieved successfully",
-    data: publisher,
+//   return {
+//     success: true,
+//     message: "Publisher retrieved successfully",
+//     data: publisher,
+//     publisherBooks,
+//   };
+// };
+
+const publisher = await publishersModel.findById(id).populate("categoryId");
+if (!publisher) return errorResponseHandler("Publisher not found", httpStatusCode.NOT_FOUND, res);
+
+const publisherBooks = await productsModel.find({ publisherId: id }).populate([
+  { path: "authorId" },
+  { path: "categoryId" },
+  { path: "subCategoryId" },
+  { path: "publisherId" },
+]);
+
+const booksCount = await productsModel.countDocuments({ publisherId: id });
+
+return {
+  success: true,
+  message: "Publisher retrieved successfully",
+  data: {
+    publisher,
+    booksCount,
     publisherBooks,
-  };
+  },
 };
-
-
-interface QueryBuilderPayload {
-  page?: string | number;
-  limit?: string | number;
-  sortField?: string;
-  sortOrder?: "asc" | "desc";
-  [key: string]: any;
-}
-
-interface PublisherServiceResponse {
-  page: number;
-  limit: number;
-  success: boolean;
-  total: number;
-  data: any[];
-  error?: string;
 }
 
 export const getAllPublishersService = async (
