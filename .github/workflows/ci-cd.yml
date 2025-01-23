@@ -87,16 +87,6 @@ jobs:
 
             echo 'Container running successfully'
     
-            # Prune unused Docker resources to free up space
-            echo "Cleaning up unused Docker resources..."
-            docker system prune -af --volumes || { echo "Docker system prune failed"; exit 1; }
-            # Clean up temporary files and logs
-            echo "Cleaning up temporary files and logs..."
-            sudo rm -rf /tmp/*
-            sudo truncate -s 0 /var/log/*.log
-            echo "Cleaning up log files..."
-            sudo find /var/log/ -type f -name "*.log" -exec truncate -s 0 {} \;
-            echo "Checking disk usage after cleanup..."
-            df -h
+  
 
           ENDSSH
