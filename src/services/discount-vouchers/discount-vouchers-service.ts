@@ -35,28 +35,31 @@ export const getAllDiscountVouchersService = async (payload: any, res: Response)
   if (payload.sortField) {
     sort[payload.sortField] = payload.sortOrder === "desc" ? -1 : 1 as 1 | -1;
   } else {
-    sort["publisherDetails.name"] = -1; // Default sort by publisher name
+    sort['createdAt'] = 1; 
   }
 
   try {
-    // Aggregation pipeline to fetch publishers and book counts
+    // Aggregation pipeline to fetch discount vouchers and activation counts
     const pipeline: PipelineStage[] = [
       {
         $match: query, // Filter by search query
       },
       {
         $lookup: {
-          from: "orders", // Join with products collection
-          localField: "_id", // Field in publishers
-          foreignField: "voucherId", // Field in products
+          from: "orders", // Join with orders collection
+          localField: "_id", // Field in discount vouchers
+          foreignField: "voucherId", // Field in orders
           as: "voucher", // Name the joined array
         },
       },
       {
         $addFields: {
-          activationCount: { $size: "$voucher" }, // Calculate the count of books
+          activationCount: { $size: "$voucher" }, // Calculate the count of activations
         },
       },
+      // {
+      //   $sort: sort, // Apply sorting
+      // },
     ];
 
     // Conditionally add pagination stages
@@ -67,7 +70,7 @@ export const getAllDiscountVouchersService = async (payload: any, res: Response)
       );
     }
 
-    // Fetch the total number of publishers
+    // Fetch the total number of discount vouchers
     const totalDataCount = await discountVouchersModel.countDocuments(query);
 
     // Execute the aggregation pipeline
@@ -94,110 +97,6 @@ export const getAllDiscountVouchersService = async (payload: any, res: Response)
     };
   }
 };
-
-// export const getAllDiscountVouchersService = async (payload: any, res: Response) => {
-//   const page = parseInt(payload.page as string) || 1;
-//   const limit = parseInt(payload.limit as string) || 0;
-//   const offset = (page - 1) * limit;
-//   const { query, sort } = queryBuilder(payload, ["couponCode","percentage"]);
-
-//   // const totalDataCount = Object.keys(query).length < 1 ? await discountVouchersModel.countDocuments() : await discountVouchersModel.countDocuments(query);
-//   // const results = await discountVouchersModel.find(query).sort(sort).skip(offset).limit(limit).select("-__v");
-//   // if (results.length)
-//   //   return {
-//   //     page,
-//   //     limit,
-//   //     success: true,
-//   //     total: totalDataCount,
-//   //     data: results,
-//   //   };
-//   // else {
-//   //   return {
-//   //     data: [],
-//   //     page,
-//   //     limit,
-//   //     success: false,
-//   //     total: 0,
-//   //   };
-//   // }
-
-
-// // const sort: Record<string, 1 | -1> = {};
-//   // if (payload.sortField) {
-//   //   sort[payload.sortField] = payload.sortOrder === "desc" ? -1 : 1 as 1 | -1;
-//   // } else {
-//   //   sort["publisherDetails.name"] = -1; // Default sort by publisher name
-//   // }
-//   if (payload.sortField) {
-//     sort[payload.sortField] = payload.sortOrder === "desc" ? -1 : 1 as 1 | -1;
-//   } else {
-//     sort["publisherDetails.name"] = -1; // Default sort by publisher name
-//   }
-//   try {
-//     // Aggregation pipeline to fetch publishers and book counts
-//     const pipeline: PipelineStage[] = [
-//       {
-//         $match: query, // Filter by search query
-//       },
-//       {
-//         $lookup: {
-//           from: "orders", // Join with products collection
-//           localField: "_id", // Field in publishers
-//           foreignField: "voucherId", // Field in products
-//           as: "voucher", // Name the joined array
-//         },
-//       },
-//       {
-//         $addFields: {
-//           activationCount: { $size: "$voucher" }, // Calculate the count of books
-//         },
-//       },
-//       // {
-//       //   $sort: Object.keys(sort).reduce((acc, key) => {
-//       //     acc[key] = sort[key] === "asc" ? 1 : -1;
-//       //     return acc;
-//       //   }, {} as Record<string, 1 | -1>), // Apply sorting
-//       // },
-//       // {
-//       //   $sort: sort, // Apply sorting
-//       // },
-//       {
-//         $skip: offset, // Apply pagination: skip to the offset
-//       },
-//       {
-//         $limit: limit, // Apply pagination: limit the number of results
-//       },
-//     ];
-
-//     // Fetch the total number of publishers
-//     const totalDataCount = await discountVouchersModel.countDocuments();
-
-//     // Execute the aggregation pipeline
-//     const results = await discountVouchersModel.aggregate(pipeline);
-
-//     return {
-//       page,
-//       limit,
-//       success: true,
-//       total: totalDataCount,
-//       data: results.map((voucher) => ({
-//         voucher,
-        
-//       })),
-//     }}
-//     catch (error: any) {
-//       console.error("Error in getAllPublishersService:", error.message);
-//       return {
-//         page,
-//         limit,
-//         success: false,
-//         total: 0,
-//         data: [],
-//         error: error.message,
-//       };
-//     }
-//   };
-
 
 export const updateDiscountVoucherService = async (id: string, payload: any, res: Response) => {
   const updatedVoucher = await discountVouchersModel.findByIdAndUpdate(id, payload, {

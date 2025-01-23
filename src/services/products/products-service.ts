@@ -60,6 +60,39 @@ export const getAllBooksService = async (payload: any, res: Response) => {
   }
 };
 
+export const getAllDiscountedBooksService = async (payload: any, res: Response) => {
+  const page = parseInt(payload.page as string) || 1;
+  const limit = parseInt(payload.limit as string) || 0;
+  const offset = (page - 1) * limit;
+  const { query, sort } = queryBuilder(payload, ["name"]) as { query: any; sort: any };
+
+  if (payload.isDiscounted) {
+    query.isDiscounted = payload.isDiscounted;
+  }
+  if (payload.type) {
+    query.type = payload.type;
+  }
+  const totalDataCount = Object.keys(query).length < 1 ? await productsModel.countDocuments() : await productsModel.countDocuments(query);
+  const results = await productsModel.find(query).sort(sort).skip(offset).limit(limit).populate("categoryId");
+  if (results.length)
+    return {
+      page,
+      limit,
+      success: true,
+      total: totalDataCount,
+      data: results,
+    };
+  else {
+    return {
+      data: [],
+      page,
+      limit,
+      success: false,
+      total: 0,
+    };
+  }
+};
+
 export const getBookByIdService = async (id: string, res: Response) => {
   try {
     const book = await productsModel.findById(id);
@@ -86,29 +119,6 @@ export const updateBookService = async (id: string, payload: any, res: Response)
     return errorResponseHandler("Failed to update book", httpStatusCode.INTERNAL_SERVER_ERROR, res);
   }
 };
-// export const addBookToDiscountsService = async ( payload: any, res: Response) => {
-// //   try {
-//     const { discountPercentage,booksId } = payload;
-//     const objectIdArray = booksId.map((id: string) => new mongoose.Types.ObjectId(id));
-//     const updatedBook = await productsModel.findByIdAndUpdate(
-//         { _id: { $in: objectIdArray } },
-//       {
-//         discountPercentage,
-//         isDiscounted: true,
-//       },
-//       { new: true }
-//     );
-//     console.log('updatedBook: ', updatedBook);
-//     if (!updatedBook) return errorResponseHandler("Book not found", httpStatusCode.NOT_FOUND, res);
-//     return {
-//       success: true,
-//       message: "Book updated successfully",
-//       data: updatedBook,
-//     };
-// //   } catch (error) {
-// //     return errorResponseHandler("Failed to update book", httpStatusCode.INTERNAL_SERVER_ERROR, res);
-// //   }
-// };
 
 export const addBookToDiscountsService = async (payload: any, res: Response) => {
     try {

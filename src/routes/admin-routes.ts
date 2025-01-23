@@ -5,7 +5,7 @@ import { createUser, deleteUser, getAllUser, getUser, getUserDashboardStats, upd
 import { checkAuth } from "src/middleware/check-auth";
 import { createCategory, deleteCategory, getAllCategories, getCategory, updateCategory } from "src/controllers/categories/categories-controller";
 import { createSubCategory, deleteSubCategory, getAllSubCategory, getSubCategoriesByCategoryId, getSubCategory, updateSubCategory } from "src/controllers/sub-categories/sub-categories-controller";
-import { addBookToDiscounts, createBook, deleteBook, getAllBooks, getBook, removeBookFromDiscounts, updateBook } from "../controllers/products/products-controller";
+import { addBookToDiscounts, createBook, deleteBook, getAllBooks, getAllDiscountedBooks, getBook, removeBookFromDiscounts, updateBook } from "../controllers/products/products-controller";
 import { createOrder, deleteOrder, getAllOrders, getOrder, updateOrder } from "src/controllers/orders/orders-controller";
 import { createPublisher, deletePublisher, getAllPublishers, getPublisher, updatePublisher } from "src/controllers/publisher/publishers-controller";
 import { createAuthor, deleteAuthor, getAllAuthors, getAuthor, updateAuthor } from "src/controllers/authors/authors-controller";
@@ -14,8 +14,9 @@ import { createStory, deleteStory, getAllStories, getStory, updateStory } from "
 import { createBanner, deleteBanner, getAllBanners, getBanner, updateBanner } from "src/controllers/banners/banners-controller";
 import { addBooksToCollection, createCollection, deleteCollection, getAllCollections, getCollection, updateCollection } from "src/controllers/collections/collections-controller";
 import { addBooksToSummary, createSummary, deleteSummary, getAllSummaries, getSummary, updateSummary } from "src/controllers/summaries/summaries-controller";
-import { addBookToDiscountsService } from "src/services/products/products-service";
+import { addBookToDiscountsService, getAllDiscountedBooksService } from "src/services/products/products-service";
 import { createDiscountVoucher, deleteDiscountVoucher, getAllDiscountVouchers, getDiscountVoucher, updateDiscountVoucher } from "src/controllers/discount-vouchers/discount-vouchers-controller";
+import { createBookSchool, deleteBookSchool, getAllBookSchools, getBookSchool, updateBookSchool } from "src/controllers/book-schools/book-schools-controller";
 // import passport from 'passport';
 // import { loginController } from '../controllers/admin/admin-controller();
 
@@ -104,6 +105,9 @@ router.get("/books", getAllBooks);
 router.get("/books/:id", getBook);
 router.put("/books/:id", updateBook);
 router.delete("/books/:id", deleteBook);
+ 
+// discounted-books route
+router.get("/discounted-books", getAllDiscountedBooks);
 
 // booksToDiscount routes
 router.put("/booksToDiscount", addBookToDiscounts);
@@ -173,6 +177,13 @@ router.get("/vouchers", getAllDiscountVouchers);
 router.get("/vouchers/:id", getDiscountVoucher);
 router.put("/vouchers/:id", updateDiscountVoucher);
 router.delete("/vouchers/:id", deleteDiscountVoucher);
+
+// book-schools route
+router.post("/book-schools", createBookSchool);
+router.get("/book-schools", getAllBookSchools);
+router.get("/book-schools/:id", getBookSchool);
+router.put("/book-schools/:id", updateBookSchool);
+router.delete("/book-schools/:id", deleteBookSchool);
 
 
 export { router };

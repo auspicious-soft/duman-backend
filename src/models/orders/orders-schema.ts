@@ -11,7 +11,7 @@ const ordersSchema = new mongoose.Schema(
     },
     voucherId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'discounts'
+      ref: 'discountVouchers'
     },
     userId: {
       type: mongoose.Schema.Types.ObjectId,
