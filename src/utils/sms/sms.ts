@@ -1,9 +1,9 @@
 // import twilio
 import { customAlphabet } from "nanoid";
 import { passwordResetTokenModel } from "../../models/password-token-schema";
-import twilio from "twilio";
+// import twilio from "twilio";
 
-const client = twilio(process.env.ACCOUNTSID as string, process.env.AUTHTOKEN as string);
+// const client = twilio(process.env.ACCOUNTSID as string, process.env.AUTHTOKEN as string);
 
 export const generatePasswordResetTokenByPhoneWithTwilio = async (phoneNumber: string ,token: string) => {
 
@@ -25,11 +25,11 @@ export const generatePasswordResetTokenByPhoneWithTwilio = async (phoneNumber: s
     await newPasswordResetToken.save();
 
     const message = `Your password reset token is: ${token}. It is valid for 1 hour.`;
-    const res =  await client.messages.create({
-        body: message,
-        from: process.env.FROMPHONENUMBER as string,
-        to: phoneNumber,
-        });
+    // const res =  await client.messages.create({
+    //     body: message,
+    //     from: process.env.FROMPHONENUMBER as string,
+    //     to: phoneNumber,
+    //     });
 
     return {
       success: true,

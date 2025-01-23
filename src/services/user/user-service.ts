@@ -74,7 +74,7 @@ export const forgotPasswordService = async (payload: any, res: Response) => {
     const generatePasswordResetTokenBysms = await generatePasswordResetTokenByPhone(phoneNumber);
 
     if (generatePasswordResetTokenBysms !== null) {
-      await generatePasswordResetTokenByPhoneWithTwilio(phoneNumber, generatePasswordResetTokenBysms.token);
+      // await generatePasswordResetTokenByPhoneWithTwilio(phoneNumber, generatePasswordResetTokenBysms.token);
       return { success: true, message: "Password reset sms sent with otp" };
     }
   }
