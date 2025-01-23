@@ -73,7 +73,7 @@ export const getAllDiscountedBooksService = async (payload: any, res: Response) 
     query.type = payload.type;
   }
   const totalDataCount = Object.keys(query).length < 1 ? await productsModel.countDocuments() : await productsModel.countDocuments(query);
-  const results = await productsModel.find(query).sort(sort).skip(offset).limit(limit).populate("categoryId");
+  const results = await productsModel.find(query).sort(sort).skip(offset).limit(limit).populate("categoryId").populate("publisherId").populate("authorId");
   if (results.length)
     return {
       page,
