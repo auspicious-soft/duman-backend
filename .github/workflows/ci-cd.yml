@@ -34,7 +34,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/andreas-backend:latest
+          tags: ${{ secrets.DOCKER_USERNAME }}/bookstagram-backend:latest
 
       # Step 7: Setup SSH for EC2
       - name: Setup SSH for EC2
@@ -61,14 +61,14 @@ jobs:
             fi
             
             echo 'Pulling Docker image...'
-            docker pull ${{ secrets.DOCKER_USERNAME }}/andreas-backend:latest || { echo 'Docker pull failed'; exit 1; }
+            docker pull ${{ secrets.DOCKER_USERNAME }}/bookstagram-backend:latest || { echo 'Docker pull failed'; exit 1; }
     
             echo 'Stopping existing container...'
-            docker stop andreas-backend || true 
-            docker rm andreas-backend || true
+            docker stop bookstagram-backend || true 
+            docker rm bookstagram-backend || true
     
             echo 'Running new container...'
-            docker run -d -p 8000:8000 --name andreas-backend \
+            docker run -d -p 8000:8000 --name bookstagram-backend \
               -e MONGO_URL='${{ secrets.MONGO_URL }}' \
               -e PORT='${{ secrets.PORT }}' \
               -e NEXT_PUBLIC_APP_URL='${{ secrets.NEXT_PUBLIC_APP_URL }}' \
@@ -82,7 +82,7 @@ jobs:
               -e AWS_REGION='${{ secrets.AWS_REGION }}' \
               -e AWS_SECRET_ACCESS_KEY='${{ secrets.AWS_SECRET_ACCESS_KEY }}' \
               -e AWS_BUCKET_NAME='${{ secrets.AWS_BUCKET_NAME }}' \
-              ${{ secrets.DOCKER_USERNAME }}/andreas-backend:latest || { echo 'Docker run failed'; exit 1; }
+              ${{ secrets.DOCKER_USERNAME }}/bookstagram-backend:latest || { echo 'Docker run failed'; exit 1; }
 
             echo 'Container running successfully'
     
