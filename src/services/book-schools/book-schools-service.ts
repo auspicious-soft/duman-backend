@@ -26,56 +26,31 @@ export const getBookSchoolService = async (id: string, res: Response) => {
 };
 
 export const getAllBookSchoolsService = async (payload: any, res: Response) => {
-  const page = parseInt(payload.page as string) || 1;
-  const limit = parseInt(payload.limit as string) || 0;
-  const offset = (page - 1) * limit;
-  const { query, sort } = queryBuilder(payload, ["name", "location"]);
-
-  if (payload.sortField) {
-    sort[payload.sortField] = payload.sortOrder === "desc" ? -1 : 1 as 1 | -1;
-  } else {
-    sort['createdAt'] = 1; 
-  }
-
-  try {
-    const pipeline: PipelineStage[] = [
-      {
-        $match: query,
-      },
-      // {
-      //   $sort: sort,
-      // },
-    ];
-
-    if (limit > 0) {
-      pipeline.push(
-        { $skip: offset },
-        { $limit: limit }
-      );
+    const page = parseInt(payload.page as string) || 1;
+    const limit = parseInt(payload.limit as string) || 0;
+    const offset = (page - 1) * limit;
+    const { query, sort } = queryBuilder(payload,["name"]);
+  
+    const totalDataCount = Object.keys(query).length < 1 ? await bookSchoolsModel.countDocuments() : await bookSchoolsModel.countDocuments(query);
+    const results = await bookSchoolsModel.find(query).sort(sort).skip(offset).limit(limit).select("-__v");
+    if (results.length)
+      return {
+        page,
+        limit,
+        success: true,
+        total: totalDataCount,
+        data: results,
+      };
+    else {
+      return {
+        data: [],
+        page,
+        limit,
+        success: false,
+        total: 0,
+      };
     }
-
-    const totalDataCount = await bookSchoolsModel.countDocuments(query);
-    const results = await bookSchoolsModel.aggregate(pipeline);
-
-    return {
-      page,
-      limit,
-      success: true,
-      total: totalDataCount,
-      data: results,
-    };
-  } catch (error: any) {
-    console.error("Error in getAllBookSchoolsService:", error.message);
-    return {
-      page,
-      limit,
-      success: false,
-      total: 0,
-      data: [],
-      error: error.message,
-    };
-  }
-};
+  };
 
 export const updateBookSchoolService = async (id: string, payload: any, res: Response) => {
   const updatedBookSchool = await bookSchoolsModel.findByIdAndUpdate(id, payload, {
