@@ -20,7 +20,7 @@ const bookSchoolsSchema = new Schema(
         type: Number,
         required: true
     },
-    codeActivation:{
+    codeActivated:{
         type: Number,
         default:0,
         required: true
