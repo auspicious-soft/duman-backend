@@ -17,6 +17,11 @@ import { addBooksToSummary, createSummary, deleteSummary, getAllSummaries, getSu
 import { addBookToDiscountsService, getAllDiscountedBooksService } from "src/services/products/products-service";
 import { createDiscountVoucher, deleteDiscountVoucher, getAllDiscountVouchers, getDiscountVoucher, updateDiscountVoucher } from "src/controllers/discount-vouchers/discount-vouchers-controller";
 import { createBookSchool, deleteBookSchool, getAllBookSchools, getBookSchool, updateBookSchool } from "src/controllers/book-schools/book-schools-controller";
+import { createBookMaster, deleteBookMaster, getAllBookMasters, getBookMaster, updateBookMaster } from "src/controllers/book-masters/book-masters-controller";
+import { createBookStudy, deleteBookStudy, getAllBookStudies, getBookStudy, updateBookStudy } from "src/controllers/book-studies/book-studies-controller";
+import { createBookUniversity, deleteBookUniversity, getAllBookUniversities, getBookUniversity, updateBookUniversity } from "src/controllers/book-universities/book-universities-controller";
+import { createBookLive, deleteBookLive, getAllBookLives, getBookLive, updateBookLive } from "src/controllers/book-lives/book-lives-controller";
+import { createBlog, deleteBlog, getAllBlogs, getBlogById, updateBlog } from "src/controllers/blogs/blogs-controller";
 // import passport from 'passport';
 // import { loginController } from '../controllers/admin/admin-controller();
 
@@ -184,6 +189,41 @@ router.get("/book-schools", getAllBookSchools);
 router.get("/book-schools/:id", getBookSchool);
 router.put("/book-schools/:id", updateBookSchool);
 router.delete("/book-schools/:id", deleteBookSchool);
+
+// book-masters route
+router.post("/book-masters", createBookMaster);
+router.get("/book-masters", getAllBookMasters);
+router.get("/book-masters/:id", getBookMaster);
+router.put("/book-masters/:id", updateBookMaster);
+router.delete("/book-masters/:id", deleteBookMaster);
+
+// book-studies route
+router.post("/book-studies", createBookStudy);
+router.get("/book-studies", getAllBookStudies);
+router.get("/book-studies/:id", getBookStudy);
+router.put("/book-studies/:id", updateBookStudy);
+router.delete("/book-studies/:id", deleteBookStudy);
+
+// book-universities route
+router.post("/book-universities", createBookUniversity);
+router.get("/book-universities", getAllBookUniversities);
+router.get("/book-universities/:id", getBookUniversity);
+router.put("/book-universities/:id", updateBookUniversity);
+router.delete("/book-universities/:id", deleteBookUniversity);
+
+// book-lives route
+router.post("/book-lives", createBookLive);
+router.get("/book-lives", getAllBookLives);
+router.get("/book-lives/:id", getBookLive);
+router.put("/book-lives/:id", updateBookLive);
+router.delete("/book-lives/:id", deleteBookLive);
+
+// blogs route
+router.post("/blogs", createBlog);
+router.get("/blogs", getAllBlogs);
+router.get("/blogs/:id", getBlogById);
+router.put("/blogs/:id", updateBlog);
+router.delete("/blogs/:id", deleteBlog);
 
 
 export { router };
