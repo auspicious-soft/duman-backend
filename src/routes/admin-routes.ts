@@ -4,7 +4,7 @@ import { createEventHandler, getEventByIdHandler, updateEventHandler, deleteEven
 import { createUser, deleteUser, getAllUser, getUser, getUserDashboardStats, updateUser } from "src/controllers/user/user-controller";
 import { createCategory, deleteCategory, getAllCategories, getCategory, updateCategory } from "src/controllers/categories/categories-controller";
 import { createSubCategory, deleteSubCategory, getAllSubCategory, getSubCategoriesByCategoryId, getSubCategory, updateSubCategory } from "src/controllers/sub-categories/sub-categories-controller";
-import { addBookToDiscounts, createBook, deleteBook, getAllBooks, getAllDiscountedBooks, getBook, removeBookFromDiscounts, updateBook } from "../controllers/products/products-controller";
+import { AddBookRating, addBookToDiscounts, createBook, deleteBook, getAllBooks, getAllDiscountedBooks, getBook, removeBookFromDiscounts, updateBook } from "../controllers/products/products-controller";
 import { createOrder, deleteOrder, getAllOrders, getOrder, updateOrder } from "src/controllers/orders/orders-controller";
 import { createPublisher, deletePublisher, getAllPublishers, getPublisher, updatePublisher } from "src/controllers/publisher/publishers-controller";
 import { createAuthor, deleteAuthor, getAllAuthors, getAuthor, updateAuthor } from "src/controllers/authors/authors-controller";
@@ -107,6 +107,7 @@ router.post("/books", createBook);
 router.get("/books", getAllBooks);
 router.get("/books/:id", getBook);
 router.put("/books/:id", updateBook);
+router.put("/books/rating/:id", AddBookRating);
 router.delete("/books/:id", deleteBook);
  
 // discounted-books route

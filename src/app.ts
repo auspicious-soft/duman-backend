@@ -4,7 +4,8 @@ import cors from "cors"
 import path from "path"
 import { fileURLToPath } from 'url'
 import connectDB from "./configF/db"
-import { admin, publisher,user } from "./routes"
+import { admin, publisher, user } from "./routes"
+// import admin from "firebase-admin"
 import { checkValidAdminRole, checkValidPublisherRole } from "./utils"
 import bodyParser from 'body-parser'
 import { login } from "./controllers/admin/admin-controller"
@@ -15,6 +16,7 @@ import { checkAuth } from "./middleware/check-auth"
 // Create __dirname equivalent for ES modules
 const __filename = fileURLToPath(import.meta.url) // <-- Define __filename
 const __dirname = path.dirname(__filename)        // <-- Define __dirname
+// const serviceAccount = require(path.join(__dirname, 'config/firebase-adminsdk.json'));
 
 const PORT = process.env.PORT || 8000
 const app = express()
@@ -22,13 +24,16 @@ const app = express()
 app.use(express.json());
 app.set("trust proxy", true)
 app.use(bodyParser.json({
-    verify: (req: any, res, buf) => {
-      req.rawBody = buf.toString();
-    }
-  }));
+  verify: (req: any, res, buf) => {
+    req.rawBody = buf.toString();
+  }
+}));
 // app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+// admin.initializeApp({
+//   credential: admin.credential.cert(serviceAccount),
+// });
 
 app.use(
     cors({

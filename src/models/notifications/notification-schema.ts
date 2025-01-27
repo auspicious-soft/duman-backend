@@ -1,13 +1,28 @@
 import { Schema, model } from 'mongoose';
 
-const discountedBooksSchema = new Schema({
-    booksId: {
+const notificationsSchema = new Schema({
+    userId: {
         type: [Schema.ObjectId],
-        ref: "products"
+        ref: "users"
     },
-   
+    title: {
+        type: String,
+        required: true
+    },
+    description: {
+        type: String,
+        required: true
+    },
+    read: {
+        type: Boolean,
+        default: false
+    },
+    date: {
+        type: Date,
+        default: Date.now
+    },
 },
     { timestamps: true }
 )
 
-export const discountedBooksModel = model('discountedBooks', discountedBooksSchema)
+export const notificationsModel = model('notifications', notificationsSchema)

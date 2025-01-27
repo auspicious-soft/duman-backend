@@ -1,9 +1,11 @@
 import { Response } from "express";
+import mongoose from "mongoose";
 import { errorResponseHandler } from "../../lib/errors/error-response-handler";
 import { httpStatusCode } from "../../lib/constant";
-import { productsModel } from "../../models/products/products-schema";
+import { productsModel, } from "../../models/products/products-schema";
 import { queryBuilder } from "src/utils";
 import { deleteFileFromS3 } from "src/configF/s3";
+import { productRatingsModel } from "src/models/ratings/ratings-schema";
 
 export const createBookService = async (payload: any, res: Response) => {
   const newBook = new productsModel(payload);
@@ -189,5 +191,45 @@ export const deleteBookService = async (id: string, res: Response) => {
     };
   } catch (error) {
     return errorResponseHandler("Failed to delete book", httpStatusCode.INTERNAL_SERVER_ERROR, res);
+  }
+};
+
+export const addBookRatingService = async (
+  productId: string,
+  ratingData: { userId: string; rating: number; comment?: string },
+  res: Response
+) => {
+  try {
+    // Find the product
+    const product = await productsModel.findById(productId);
+
+    if (!product) {
+      return errorResponseHandler("Product not found", httpStatusCode.NOT_FOUND, res);
+    }
+
+    // Add the new rating to the productRatingsModel
+    const newRating = new productRatingsModel({
+      productId: new mongoose.Types.ObjectId(productId),
+      userId: new mongoose.Types.ObjectId(ratingData.userId),
+      rating: ratingData.rating,
+      comment: ratingData.comment || "",
+    });
+    await newRating.save();
+
+    // Recalculate the average rating
+    const ratings = await productRatingsModel.find({ productId: productId });
+    const averageRating: number = ratings.reduce((acc: number, rating: { rating: number }) => acc + rating.rating, 0) / ratings.length;
+
+    // Update the product's average rating
+    product.averageRating = averageRating;
+    await product.save();
+
+    return {
+      success: true,
+      message: "Rating added successfully",
+      data: product,
+    };
+  } catch (error) {
+    return errorResponseHandler("Failed to add rating", httpStatusCode.INTERNAL_SERVER_ERROR, res);
   }
 };
