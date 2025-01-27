@@ -67,10 +67,8 @@ export const updateStoryService = async (id: string, payload: any, res: Response
 
 export const deleteStoryService = async (id: string, res: Response) => {
   const deletedStory = await storiesModel.findByIdAndDelete(id);
-  console.log('storyDetails: ', deletedStory);
   if (!deletedStory) return errorResponseHandler("Story not found", httpStatusCode.NOT_FOUND, res);
   const fileKeys = Object.keys(deletedStory.file);
-  console.log('fileKeys: ', fileKeys);
 
   // Pass the keys to deleteFileFromS3
   for (const key of fileKeys) {

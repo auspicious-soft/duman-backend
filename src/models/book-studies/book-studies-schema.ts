@@ -3,7 +3,7 @@ import mongoose, { Schema, model } from "mongoose";
 const bookStudiesSchema = new Schema(
   {
     productsId: {
-      type: [mongoose.Schema.Types.ObjectId],
+      type: mongoose.Schema.Types.ObjectId,
       ref: "products",
       required: true
     },

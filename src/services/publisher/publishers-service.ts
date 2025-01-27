@@ -6,7 +6,7 @@ import { queryBuilder } from "src/utils";
 import { publishersModel } from "../../models/publishers/publishers-schema";
 import { productsModel } from "src/models/products/products-schema";
 import { deleteFileFromS3 } from "src/configF/s3";
-import { PipelineStage } from "mongoose";
+import mongoose, { PipelineStage } from "mongoose";
 import { ordersModel } from "src/models/orders/orders-schema"; // Add this import
 import moment from "moment"; // Add this import for date manipulation
 
@@ -143,20 +143,18 @@ export const getAllPublishersService = async (payload: any, res: Response) => {
 //   }
 // };
 
-
-
-export const getBooksByPublisherService = async (payload: any, req:any ,res: Response) => {
+export const getBooksByPublisherService = async (payload: any, req: any, res: Response) => {
   try {
     const page = parseInt(payload.page as string) || 1;
     const limit = parseInt(payload.limit as string) || 0;
     const offset = (page - 1) * limit;
     const { query, sort } = queryBuilder(payload, ["name"]) as { query: any; sort: any };
-    
+
     if (payload.type) {
       query.type = payload.type;
     }
     // query.publisherId = req.currentUser;
-    
+
     const totalDataCount = Object.keys(query).length < 1 ? await productsModel.countDocuments() : await productsModel.countDocuments(query);
     const results = await productsModel.find(query).sort(sort).skip(offset).limit(limit).populate("categoryId");
     return {
@@ -175,52 +173,86 @@ export const getBooksByPublisherService = async (payload: any, req:any ,res: Res
   }
 };
 
-export const getBookByIdPublisherService = async (bookId: string, res: Response) => {
+
+export const getBookByIdPublisherService = async (bookId: string,payload:any,currentUser:any, res: Response) => {
   try {
-    const book = await productsModel.findById(bookId).populate("categoryId");
-    if (!book) return errorResponseHandler("Book not found", httpStatusCode.NOT_FOUND, res);
+    // const publisher = currentUser
+    const selectedYear = payload?.year ? parseInt(payload?.year as string, 10) : new Date().getFullYear();
+    const currentYear =  new Date().getFullYear();
+    const currentMonth = new Date().getMonth() + 1; // January = 0, so add 1
 
-    const currentMonth = moment().startOf('month');
-    const currentYear = moment().startOf('year');
+    // Step 1: Fetch the book details by ID
+    const book = await productsModel.findById(bookId);
+    if (!book) {
+      throw new Error("Book not found");
+    }
 
-    const monthlyCount = await ordersModel.countDocuments({
+    // Step 2: Count orders containing this book
+
+    // Count for the current month
+    const startOfMonth = new Date(currentYear, currentMonth - 1, 1);
+    const endOfMonth = new Date(currentYear, currentMonth, 0); // Last day of current month
+
+    const currentMonthCount = await ordersModel.countDocuments({
       productIds: bookId,
-      createdAt: { $gte: currentMonth.toDate() }
+      createdAt: { $gte: startOfMonth, $lt: endOfMonth },
     });
 
-    const overallCount = await ordersModel.countDocuments({ productIds: bookId });
+    // Total count (all-time)
+    const totalCount = await ordersModel.countDocuments({
+      productIds: bookId,
+    });
 
-    const yearlyCounts = await ordersModel.aggregate([
-      { $match: { productIds: bookId } }, // Corrected field to match productIds
+    // Monthly breakdown for the current year
+
+    const monthlyCounts = await ordersModel.aggregate([
+      {
+        $match: {
+          productIds: new mongoose.Types.ObjectId(bookId), // Correct field name
+          createdAt: {
+            $gte: new Date(`${selectedYear}-01-01`), // Start of the current year
+            $lt: new Date(`${selectedYear + 1}-01-01`), // Start of the next year
+          },
+        },
+      },
       {
         $group: {
-          _id: { $month: "$createdAt" },
-          count: { $sum: 1 }
-        }
+          _id: { $month: "$createdAt" }, // Group by month
+          count: { $sum: 1 }, // Count occurrences
+        },
       },
-      { $sort: { "_id": 1 } }
+      { $sort: { _id: 1 } },
     ]);
 
+    // Correctly transform aggregation result into a 12-month array
+    // const monthlyCountArray = Array(12).fill(0); // Initialize array with 12 zeros
+    // monthlyCounts.forEach(({ _id, count }) => {
+    //   monthlyCountArray[_id - 1] = count; // _id is the month (1 = January, so subtract 1 for index)
+    // });
+
+    const monthlyCountArray = monthlyCounts.map(({ _id, count }) => {
+      const month = new Date(selectedYear, _id - 1); // _id is the month, 1 = January
+      const formattedMonth = month.toLocaleString("default", { year: "numeric", month: "2-digit" }); // Format as "YYYY-MM"
+      return {
+        month: formattedMonth,
+        count,
+      };
+    });
+
+    // Step 3: Return the combined data
     return {
-      success: true,
-      message: "Book retrieved successfully",
-      data: {
-        book,
-        monthlyCount,
-        overallCount,
-        yearlyCounts
-      }
+      book,
+      analytics: {
+        currentMonthCount,
+        totalCount,
+        monthlyCounts: monthlyCountArray, // Array with counts for each month
+      },
     };
-  } catch (error: any) {
-    console.error("Error in getBookByIdPublisherService:", error.message);
-    return {
-      success: false,
-      message: "Error retrieving book",
-      error: error.message,
-    };
+  } catch (error) {
+    console.error("Error in getBookByIdPublisherService:", error);
+    throw new Error("Failed to fetch book analytics");
   }
 };
-
 export const updatePublisherService = async (id: string, payload: any, res: Response) => {
   const updatedPublisher = await publishersModel.findByIdAndUpdate(id, payload, {
     new: true,

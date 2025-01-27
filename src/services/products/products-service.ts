@@ -17,7 +17,7 @@ export const createBookService = async (payload: any, res: Response) => {
 
 export const getBooksService = async (id: string, res: Response) => {
   try {
-    const books = await productsModel.find({ _id: id }).populate("categoryId");
+    const books = await productsModel.find({ _id: id }).populate([{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }]);
     return {
       success: true,
       data: books,

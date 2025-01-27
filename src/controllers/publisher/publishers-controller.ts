@@ -64,7 +64,7 @@ export const getAllBooksByPublisherId = async (req: Request, res: Response) => {
 
 export const getBookByIdPublisher = async (req: Request, res: Response) => {
     try {
-        const response = await getBookByIdPublisherService(req.params.id, res);
+        const response = await getBookByIdPublisherService(req.params.id,req.query,req, res);
         return res.status(httpStatusCode.OK).json(response);
     } catch (error: any) {
         const { code, message } = errorParser(error);

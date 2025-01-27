@@ -47,7 +47,6 @@ export const deleteEventHandler = async (req: Request, res: Response) => {
 };
 
 export const getAllEventsHandler = async (req: Request, res: Response) => {
-  console.log('req: ', req);
     try {
       const response = await getAllEvents(req.query);
       return res.status(httpStatusCode.OK).json(response)
