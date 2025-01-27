@@ -3,11 +3,11 @@ import mongoose, { Mongoose } from "mongoose";
 const productsSchema = new mongoose.Schema(
   {
     name: {
-      type: String,
+      type: Object,
       requried: true,
     },
     description: {
-      type: String,
+      type: Object,
       requried: true,
     },
     authorId: {

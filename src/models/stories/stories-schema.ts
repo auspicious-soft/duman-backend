@@ -3,7 +3,7 @@ import mongoose, { Schema } from "mongoose";
 const storiesSchema = new mongoose.Schema(
   {
     name: {
-      type: String,
+      type: Object,
       requried: true,
     },
     file: {

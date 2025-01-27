@@ -7,6 +7,8 @@ import { publishersModel } from "../../models/publishers/publishers-schema";
 import { productsModel } from "src/models/products/products-schema";
 import { deleteFileFromS3 } from "src/configF/s3";
 import { PipelineStage } from "mongoose";
+import { ordersModel } from "src/models/orders/orders-schema"; // Add this import
+import moment from "moment"; // Add this import for date manipulation
 
 export const createPublisherService = async (payload: any, res: Response) => {
   const newPublisher = new publishersModel(payload);
@@ -19,33 +21,25 @@ export const createPublisherService = async (payload: any, res: Response) => {
 };
 
 export const getPublisherService = async (id: string, res: Response) => {
-const publisher = await publishersModel.findById(id).populate("categoryId");
-if (!publisher) return errorResponseHandler("Publisher not found", httpStatusCode.NOT_FOUND, res);
+  const publisher = await publishersModel.findById(id).populate("categoryId");
+  if (!publisher) return errorResponseHandler("Publisher not found", httpStatusCode.NOT_FOUND, res);
 
-const publisherBooks = await productsModel.find({ publisherId: id }).populate([
-  { path: "authorId" },
-  { path: "categoryId" },
-  { path: "subCategoryId" },
-  { path: "publisherId" },
-]);
+  const publisherBooks = await productsModel.find({ publisherId: id }).populate([{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }]);
 
-const booksCount = await productsModel.countDocuments({ publisherId: id });
+  const booksCount = await productsModel.countDocuments({ publisherId: id });
 
-return {
-  success: true,
-  message: "Publisher retrieved successfully",
-  data: {
-    publisher,
-    booksCount,
-    publisherBooks,
-  },
+  return {
+    success: true,
+    message: "Publisher retrieved successfully",
+    data: {
+      publisher,
+      booksCount,
+      publisherBooks,
+    },
+  };
 };
-}
 
-export const getAllPublishersService = async (
-  payload: any,
-  res: Response
-)=> {
+export const getAllPublishersService = async (payload: any, res: Response) => {
   const page = parseInt(payload.page as string) || 1;
   const limit = parseInt(payload.limit as string) || 10; // Default limit
   const offset = (page - 1) * limit;
@@ -53,7 +47,7 @@ export const getAllPublishersService = async (
   // Sorting logic
   const sort: Record<string, 1 | -1> = {};
   if (payload.sortField) {
-    sort[payload.sortField] = payload.sortOrder === "desc" ? -1 : 1 as 1 | -1;
+    sort[payload.sortField] = payload.sortOrder === "desc" ? -1 : (1 as 1 | -1);
   } else {
     sort["publisherDetails.name"] = -1; // Default sort by publisher name
   }
@@ -106,8 +100,7 @@ export const getAllPublishersService = async (
       success: true,
       total: totalDataCount,
       data: results.map((publisher) => ({
-         publisher,
-        
+        publisher,
       })),
     };
   } catch (error: any) {
@@ -122,7 +115,6 @@ export const getAllPublishersService = async (
     };
   }
 };
-
 
 // export const getAllPublishersService = async (payload: any, res: Response) => {
 //   const page = parseInt(payload.page as string) || 1;
@@ -150,6 +142,84 @@ export const getAllPublishersService = async (
 //     };
 //   }
 // };
+
+
+
+export const getBooksByPublisherService = async (payload: any, req:any ,res: Response) => {
+  try {
+    const page = parseInt(payload.page as string) || 1;
+    const limit = parseInt(payload.limit as string) || 0;
+    const offset = (page - 1) * limit;
+    const { query, sort } = queryBuilder(payload, ["name"]) as { query: any; sort: any };
+    
+    if (payload.type) {
+      query.type = payload.type;
+    }
+    // query.publisherId = req.currentUser;
+    
+    const totalDataCount = Object.keys(query).length < 1 ? await productsModel.countDocuments() : await productsModel.countDocuments(query);
+    const results = await productsModel.find(query).sort(sort).skip(offset).limit(limit).populate("categoryId");
+    return {
+      success: true,
+      message: "Books retrieved successfully",
+      total: totalDataCount,
+      data: results,
+    };
+  } catch (error: any) {
+    console.error("Error in getBooksByPublisherService:", error.message);
+    return {
+      success: false,
+      message: "Error retrieving books",
+      error: error.message,
+    };
+  }
+};
+
+export const getBookByIdPublisherService = async (bookId: string, res: Response) => {
+  try {
+    const book = await productsModel.findById(bookId).populate("categoryId");
+    if (!book) return errorResponseHandler("Book not found", httpStatusCode.NOT_FOUND, res);
+
+    const currentMonth = moment().startOf('month');
+    const currentYear = moment().startOf('year');
+
+    const monthlyCount = await ordersModel.countDocuments({
+      productIds: bookId,
+      createdAt: { $gte: currentMonth.toDate() }
+    });
+
+    const overallCount = await ordersModel.countDocuments({ productIds: bookId });
+
+    const yearlyCounts = await ordersModel.aggregate([
+      { $match: { productIds: bookId } }, // Corrected field to match productIds
+      {
+        $group: {
+          _id: { $month: "$createdAt" },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { "_id": 1 } }
+    ]);
+
+    return {
+      success: true,
+      message: "Book retrieved successfully",
+      data: {
+        book,
+        monthlyCount,
+        overallCount,
+        yearlyCounts
+      }
+    };
+  } catch (error: any) {
+    console.error("Error in getBookByIdPublisherService:", error.message);
+    return {
+      success: false,
+      message: "Error retrieving book",
+      error: error.message,
+    };
+  }
+};
 
 export const updatePublisherService = async (id: string, payload: any, res: Response) => {
   const updatedPublisher = await publishersModel.findByIdAndUpdate(id, payload, {

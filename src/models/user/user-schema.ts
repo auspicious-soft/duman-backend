@@ -8,7 +8,7 @@ const usersSchema = new mongoose.Schema(
       default: "user",
     },
     fullName: {
-      type: String,
+      type: Object,
       requried: true,
     },
     email: {
@@ -22,6 +22,7 @@ const usersSchema = new mongoose.Schema(
     },
     phoneNumber: {
       type: String,
+      unique: true,
     },
     level: {
       type: String,

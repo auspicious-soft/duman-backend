@@ -4,7 +4,6 @@ import { httpStatusCode } from "../../lib/constant";
 import { productsModel } from "../../models/products/products-schema";
 import { queryBuilder } from "src/utils";
 import { deleteFileFromS3 } from "src/configF/s3";
-import mongoose from "mongoose";
 
 export const createBookService = async (payload: any, res: Response) => {
   const newBook = new productsModel(payload);
@@ -18,7 +17,7 @@ export const createBookService = async (payload: any, res: Response) => {
 
 export const getBooksService = async (id: string, res: Response) => {
   try {
-    const books = await productsModel.findById(id);
+    const books = await productsModel.find({ _id: id }).populate("categoryId");
     return {
       success: true,
       data: books,
@@ -40,7 +39,7 @@ export const getAllBooksService = async (payload: any, res: Response) => {
   }
 
   const totalDataCount = Object.keys(query).length < 1 ? await productsModel.countDocuments() : await productsModel.countDocuments(query);
-  const results = await productsModel.find(query).sort(sort).skip(offset).limit(limit).populate("categoryId");
+  const results = await productsModel.find(query).sort(sort).skip(offset).limit(limit).populate("authorId");
   if (results.length)
     return {
       page,

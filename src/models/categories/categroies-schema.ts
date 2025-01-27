@@ -8,7 +8,7 @@ const categoriesSchema = new mongoose.Schema({
       // requried: true,
     },
     name: {
-      type: String,
+      type: Object,
       requried: true,
       unique: true,
     },

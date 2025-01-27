@@ -4,8 +4,8 @@ import cors from "cors"
 import path from "path"
 import { fileURLToPath } from 'url'
 import connectDB from "./configF/db"
-import { admin, user } from "./routes"
-import { checkValidAdminRole } from "./utils"
+import { admin, publisher,user } from "./routes"
+import { checkValidAdminRole, checkValidPublisherRole } from "./utils"
 import bodyParser from 'body-parser'
 import { login } from "./controllers/admin/admin-controller"
 import { forgotPassword } from "./controllers/admin/admin-controller"
@@ -54,6 +54,7 @@ app.get("/", (_, res: any) => {
 });
 
 app.use("/api/admin",checkValidAdminRole, admin);
+app.use("/api/publisher",checkValidPublisherRole, publisher);
 app.use("/api/user", user);
 app.post("/api/login", login)
 app.post("/api/verify-otp", verifyOtpPasswordReset)

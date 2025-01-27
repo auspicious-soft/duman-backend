@@ -3,7 +3,7 @@ import mongoose, { Schema } from "mongoose";
 const authorsSchema = new mongoose.Schema(
   {
     name: {
-      type: String,
+      type: Object,
       requried: true,
     },
    
@@ -26,7 +26,7 @@ const authorsSchema = new mongoose.Schema(
       default: null,
     },
     description:{
-      type: String,
+      type: Object,
       required: true
     }
   },

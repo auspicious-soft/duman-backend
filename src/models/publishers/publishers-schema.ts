@@ -3,13 +3,13 @@ import mongoose, { Schema } from "mongoose";
 const publishersSchema = new mongoose.Schema(
   {
     name: {
-      type: String,
+      type: Object,
       requried: true,
     },
     categoryId: {
       type: [mongoose.Schema.Types.ObjectId],
       ref: "categories",
-      // requried: true,
+      requried: true,
     },
     email: {
       type: String,
@@ -18,7 +18,7 @@ const publishersSchema = new mongoose.Schema(
       type: String,
     },
     description: {
-      type: String,
+      type: Object,
     },
     country: {
       type: String,
