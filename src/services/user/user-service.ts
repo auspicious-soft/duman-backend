@@ -191,16 +191,14 @@ export const editUserInfoService = async (id: string, payload: any, res: Respons
 export const createUserService = async (payload: any, res: Response) => {
   const emailExists = await usersModel.findOne({ email: payload.email });
   if (emailExists) return errorResponseHandler("Email already exists", httpStatusCode.BAD_REQUEST, res);
-  const phoneNumber = `${payload.countryCode}${payload.phoneNumber}`;
   const phoneExists = await usersModel.findOne({
-    phoneNumber: phoneNumber,
+    phoneNumber: payload.phoneNumber,
   });
   if (phoneExists) return errorResponseHandler("Phone number already exists", httpStatusCode.BAD_REQUEST, res);
 
   // Hash the password before saving the user
-  const hashedPassword = bcrypt.hashSync(payload.password, 10);
-  payload.password = hashedPassword;
-  payload.phoneNumber = phoneNumber;
+  // const hashedPassword = bcrypt.hashSync(payload.password, 10);
+  // payload.password = hashedPassword;
 
   const newUser = new usersModel(payload);
   const response = await newUser.save();

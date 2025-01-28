@@ -174,6 +174,33 @@ export const getBooksByPublisherService = async (payload: any, req: any, res: Re
 };
 
 
+export const updatePublisherService = async (id: string, payload: any, res: Response) => {
+  const updatedPublisher = await publishersModel.findByIdAndUpdate(id, payload, {
+    new: true,
+  });
+  if (!updatedPublisher) return errorResponseHandler("Publisher not found", httpStatusCode.NOT_FOUND, res);
+  return {
+    success: true,
+    message: "Publisher updated successfully",
+    data: updatedPublisher,
+  };
+};
+
+export const deletePublisherService = async (id: string, res: Response) => {
+  const deletedPublisher = await publishersModel.findByIdAndDelete(id);
+  if (!deletedPublisher) return errorResponseHandler("Publisher not found", httpStatusCode.NOT_FOUND, res);
+  if (deletedPublisher?.image) {
+    await deleteFileFromS3(deletedPublisher?.image);
+  }
+
+  return {
+    success: true,
+    message: "Publisher deleted successfully",
+    data: deletedPublisher,
+  };
+};
+
+
 export const getBookByIdPublisherService = async (bookId: string,payload:any,currentUser:any, res: Response) => {
   try {
     // const publisher = currentUser
@@ -253,28 +280,178 @@ export const getBookByIdPublisherService = async (bookId: string,payload:any,cur
     throw new Error("Failed to fetch book analytics");
   }
 };
-export const updatePublisherService = async (id: string, payload: any, res: Response) => {
-  const updatedPublisher = await publishersModel.findByIdAndUpdate(id, payload, {
-    new: true,
-  });
-  if (!updatedPublisher) return errorResponseHandler("Publisher not found", httpStatusCode.NOT_FOUND, res);
-  return {
-    success: true,
-    message: "Publisher updated successfully",
-    data: updatedPublisher,
-  };
-};
 
-export const deletePublisherService = async (id: string, res: Response) => {
-  const deletedPublisher = await publishersModel.findByIdAndDelete(id);
-  if (!deletedPublisher) return errorResponseHandler("Publisher not found", httpStatusCode.NOT_FOUND, res);
-  if (deletedPublisher?.image) {
-    await deleteFileFromS3(deletedPublisher?.image);
+// export const publisherDashboardService = async (payload: any, currentUser: string, res: Response) => {
+//   try {
+//     const publisherId = currentUser;
+//     console.log('publisherId: ', publisherId);
+//     const selectedYear = payload?.year ? parseInt(payload?.year as string, 10) : new Date().getFullYear();
+//     console.log('selectedYear: ', selectedYear);
+//     const currentYear = new Date().getFullYear();
+//     const currentMonth = new Date().getMonth() + 1; // January = 0, so add 1
+
+//     // Step 1: Fetch orders and populate productIds
+//     const orders = await ordersModel.find({
+//       createdAt: {
+//         $gte: new Date(`${selectedYear}-01-01`), // Start of the selected year
+//         $lt: new Date(`${selectedYear + 1}-01-01`), // Start of the next year
+//       },
+//     }).populate('productIds'); // Populate product details
+
+//     // Step 2: Extract books with matching publisherId
+//     const books = orders
+//       .flatMap(order => order.productIds) // Flatten the productIds from all orders
+//       .filter((book: any) => book?.publisherId?.toString() === publisherId); // Filter by publisherId
+
+//     // Step 3: Count orders and books
+//     const uniqueBooks = Array.from(new Set(books.map(book => book._id.toString()))); // Ensure unique books
+//     const totalBooks = uniqueBooks.length;
+
+//     const monthlyCounts = await ordersModel.aggregate([
+//       {
+//         $match: {
+//           "productIds.publisherId": new mongoose.Types.ObjectId(publisherId), // Match by publisherId in populated products
+//           createdAt: {
+//             $gte: new Date(`${selectedYear}-01-01`),
+//             $lt: new Date(`${selectedYear + 1}-01-01`),
+//           },
+//         },
+//       },
+//       {
+//         $group: {
+//           _id: { $month: "$createdAt" },
+//           count: { $sum: 1 },
+//         },
+//       },
+//       { $sort: { _id: 1 } },
+//     ]);
+
+//     const monthlyCountArray = monthlyCounts.map(({ _id, count }) => {
+//       const month = new Date(selectedYear, _id - 1); // _id is the month (1 = January)
+//       const formattedMonth = month.toLocaleString("default", { year: "numeric", month: "2-digit" });
+//       return { month: formattedMonth, count };
+//     });
+
+//     // Step 4: Return the data
+//     return {
+//       totalBooks,
+//       analytics: {
+//         monthlyCounts: monthlyCountArray,
+//       },
+//     };
+//   } catch (error) {
+//     console.error("Error in publisherDashboardService:", error);
+//     throw new Error("Failed to fetch publisher dashboard data");
+//   }
+// };
+
+
+export const publisherDashboardService = async (payload: any, currentUser: string, res: Response) => {
+  try {
+    const publisherId = new mongoose.Types.ObjectId(currentUser); // Convert to ObjectId
+    const selectedYear = payload?.year ? parseInt(payload.year as string, 10) : new Date().getFullYear();
+    const currentYear = new Date().getFullYear();
+    let overviewDate: Date | null = new Date();
+    overviewDate.setDate(new Date().getDate() - 30);
+
+    const Books =  await productsModel.find({ publisherId }).populate([{path:'authorId',select:"name"}])
+    const NewBooks = await productsModel.find( { publisherId,createdAt: { $gte: overviewDate } } ).countDocuments();
+    const TotalBooksCount =  Books.length;
+    
+    const averageRating: number = Books.reduce((acc: number, rating: any) => acc + (rating.averageRating || 0), 0) / Books.length;
+
+    // // **1. Fetch Orders and Populate `productIds` (Books)**
+    const orders = await ordersModel
+    .find()
+    .populate({
+      path: "productIds",
+      model: "products", // Ensure this matches your Mongoose model name
+    });
+    
+    console.log('orders: ', orders);
+    let bookCounts: Record<string, number> = {};
+    // // **2. Extract and Filter Books for the Given Publisher**
+    orders.forEach((order) => {
+      order.productIds.forEach((book: any) => {
+        if (book.publisherId?.toString() === publisherId.toString()) {
+          const bookId = book._id.toString();
+          if (!bookCounts[bookId]) {
+            bookCounts[bookId] = 0;
+          }
+          bookCounts[bookId] += 1;
+        }
+      });
+    });
+    const sortedBookIds = Object.entries(bookCounts)
+  .sort(([, countA], [, countB]) => countB - countA) // Sort by count
+  .slice(0, 4) // Take the top 4 books
+  .map(([bookId]) => new mongoose.Types.ObjectId(bookId)); // Convert back to ObjectId
+  const topBooks = await productsModel.find({ _id: { $in: sortedBookIds } }).populate([{
+    path:"authorId",
+    select:"name"
+  }]);
+    console.log('books: ', bookCounts);
+    // **3. Get Unique Books and Count**
+    // const uniqueBooks: string[] = Array.from(new Set(books.map((book: any) => book._id.toString())));
+    // const totalBooks = uniqueBooks.length;
+
+    // **4. Compute Monthly Order Statistics**
+    const monthlyCounts = await ordersModel.aggregate([
+      {
+        $match: {
+          createdAt: {
+            $gte: new Date(`${selectedYear}-01-01`),
+            $lt: new Date(`${selectedYear + 1}-01-01`),
+          },
+        },
+      },
+      { $unwind: "$productIds" }, // Unwind the array to process each book separately
+      {
+        $lookup: {
+          from: "products", // Ensure this matches your MongoDB collection name
+          localField: "productIds",
+          foreignField: "_id",
+          as: "bookDetails",
+        },
+      },
+      { $unwind: "$bookDetails" }, // Extract book details
+      {
+        $match: {
+          "bookDetails.publisherId": publisherId,
+        },
+      },
+      {
+        $group: {
+          _id: { $month: "$createdAt" },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]);
+
+    // **5. Convert Monthly Aggregation to Proper Format**
+    const monthlyCountArray = monthlyCounts.map(({ _id, count }) => {
+      const month = new Date(selectedYear, _id - 1); // _id is the month, 1 = January
+      const formattedMonth = month.toLocaleString("default", { year: "numeric", month: "2-digit" }); // Format as "YYYY-MM"
+      return {
+        month: formattedMonth,
+        count,
+      };
+    });
+
+    // **6. Return the Data**
+    return {
+      TotalBooksCount,
+      NewBooks,
+      averageRating,
+      topBooks,
+      analytics: {
+        monthlyCounts: monthlyCountArray,
+      },
+      Books
+    };
+  } catch (error) {
+    console.error("Error in publisherDashboardService:", error);
+    throw new Error("Failed to fetch publisher dashboard data");
   }
-
-  return {
-    success: true,
-    message: "Publisher deleted successfully",
-    data: deletedPublisher,
-  };
 };

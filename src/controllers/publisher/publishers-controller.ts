@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { createPublisherService, getPublisherService, updatePublisherService, deletePublisherService, getAllPublishersService, getBooksByPublisherService, getBookByIdPublisherService } from "../../services/publisher/publishers-service";
+import { createPublisherService, getPublisherService, updatePublisherService, deletePublisherService, getAllPublishersService, getBooksByPublisherService, getBookByIdPublisherService, publisherDashboardService } from "../../services/publisher/publishers-service";
 import { errorParser } from "../../lib/errors/error-response-handler";
 import { httpStatusCode } from "../../lib/constant";
 
@@ -65,6 +65,16 @@ export const getAllBooksByPublisherId = async (req: Request, res: Response) => {
 export const getBookByIdPublisher = async (req: Request, res: Response) => {
     try {
         const response = await getBookByIdPublisherService(req.params.id,req.query,req, res);
+        return res.status(httpStatusCode.OK).json(response);
+    } catch (error: any) {
+        const { code, message } = errorParser(error);
+        return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
+    }
+};
+export const publisherDashboard = async (req: Request, res: Response) => {
+    try {
+        const currentUser = "6793288c2bf260ac53d4cf4e"
+        const response = await publisherDashboardService(req.query,currentUser, res);
         return res.status(httpStatusCode.OK).json(response);
     } catch (error: any) {
         const { code, message } = errorParser(error);

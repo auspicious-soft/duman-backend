@@ -8,26 +8,6 @@ interface Rating {
 }
 
 // Extend the Mongoose Document for Products
-export interface ProductDocument extends Document {
-  name: Record<string, unknown>;
-  description: Record<string, unknown>;
-  authorId: Types.ObjectId[];
-  categoryId: Types.ObjectId[];
-  subCategoryId: Types.ObjectId[];
-  price: number;
-  genre: string[];
-  image?: string;
-  file?: Map<string, string>;
-  type: "e-book" | "podcast" | "audiobook" | "course";
-  publisherId?: Types.ObjectId;
-  isDiscounted: boolean;
-  discountPercentage?: number;
-  ratings: Rating[];
-  averageRating: number;
-
-  // Custom method
-  calculateAverageRating(): number;
-}
 
 import mongoose, { Mongoose } from "mongoose";
 
@@ -39,7 +19,7 @@ import mongoose, { Mongoose } from "mongoose";
 // });
 // export const productRatingsModel = mongoose.model("rating", ratingSchema);
 
-const productsSchema = new Schema<ProductDocument>(  {
+const productsSchema = new mongoose.Schema({
     name: {
       type: Object,
       requried: true,
@@ -103,6 +83,7 @@ const productsSchema = new Schema<ProductDocument>(  {
     //       comment: { type: String },
     //     },
     // ],
+    createdAt: { type: Date, default: Date.now },
     averageRating: { type: Number, default: 0 },
   },
   { timestamps: true }

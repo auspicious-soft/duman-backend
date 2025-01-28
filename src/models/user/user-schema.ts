@@ -20,6 +20,10 @@ const usersSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    countryCode:{
+      type: String,
+      required: true,
+    },
     phoneNumber: {
       type: String,
       unique: true,
