@@ -9,7 +9,7 @@ const resend = new Resend(process.env.RESEND_API_KEY)
 export const sendPasswordResetEmail = async (email: string, token: string) => {
    return await resend.emails.send({
         from: process.env.COMPANY_RESEND_GMAIL_ACCOUNT as string,
-        to: "mansi.bhandari1501@gmail.com",
+        to: email,
         subject: "Reset your password",
         react: ForgotPasswordEmail({ otp: token }),
     })

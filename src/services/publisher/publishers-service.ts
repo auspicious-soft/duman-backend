@@ -383,14 +383,13 @@ export const publisherDashboardService = async (payload: any, currentUser: strin
       });
     });
     const sortedBookIds = Object.entries(bookCounts)
-  .sort(([, countA], [, countB]) => countB - countA) // Sort by count
-  .slice(0, 4) // Take the top 4 books
-  .map(([bookId]) => new mongoose.Types.ObjectId(bookId)); // Convert back to ObjectId
+  .sort(([, countA], [, countB]) => countB - countA) 
+  .slice(0, 4) 
+  .map(([bookId]) => new mongoose.Types.ObjectId(bookId));
   const topBooks = await productsModel.find({ _id: { $in: sortedBookIds } }).populate([{
     path:"authorId",
     select:"name"
   }]);
-    console.log('books: ', bookCounts);
     // **3. Get Unique Books and Count**
     // const uniqueBooks: string[] = Array.from(new Set(books.map((book: any) => book._id.toString())));
     // const totalBooks = uniqueBooks.length;

@@ -1,7 +1,7 @@
 import { Router } from "express";
 import {  getAdminDetails, getDashboardStats, getNewUsers } from "../controllers/admin/admin-controller";
 import { createEventHandler, getEventByIdHandler, updateEventHandler, deleteEventHandler, getAllEventsHandler } from "../controllers/events/events-controller";
-import { createUser, deleteUser, getAllUser, getUser, getUserDashboardStats, updateUser } from "src/controllers/user/user-controller";
+import { createNewUser, deleteUser, getAllUser, getUser, getUserDashboardStats, updateUser } from "src/controllers/user/user-controller";
 import { createCategory, deleteCategory, getAllCategories, getCategory, updateCategory } from "src/controllers/categories/categories-controller";
 import { createSubCategory, deleteSubCategory, getAllSubCategory, getSubCategoriesByCategoryId, getSubCategory, updateSubCategory } from "src/controllers/sub-categories/sub-categories-controller";
 import { AddBookRating, addBookToDiscounts, createBook, deleteBook, getAllBooks, getAllDiscountedBooks, getBook, removeBookFromDiscounts, updateBook } from "../controllers/products/products-controller";
@@ -118,7 +118,7 @@ router.put("/booksToDiscount", addBookToDiscounts);
 router.put("/removeBooksFromDiscounts", removeBookFromDiscounts);
 
 // users route
-router.post("/users", createUser);
+router.post("/users", createNewUser);
 router.get("/users", getAllUser);
 router.get("/users/:id", getUser);
 router.put("/users/:id", updateUser);
