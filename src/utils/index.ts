@@ -36,93 +36,21 @@ interface Payload {
 // }
 
 export const queryBuilder = (payload: Payload, querySearchKeyInBackend = ['name']) => {
-    let { description = '', order = '', orderColumn = '' } = payload;
+    const { description = '', order = '', orderColumn = '' } = payload;
     const queryConditions: any[] = [];
-    querySearchKeyInBackend.forEach((key) => {
-    queryConditions.push({
-    $or: [
-    { [key]: { $regex: description, $options: 'i' } },
-    { [`${key}.*`]: { $regex: description, $options: 'i' } },
-    ],
+
+    querySearchKeyInBackend.forEach(field => {
+      queryConditions.push({
+        [field]: { $regex: description, $options: 'i' }
+      });
     });
-    });
+
     const query = description ? { $or: queryConditions } : {};
-    const sort: { [key: string]: SortOrder } = order && orderColumn ? { [orderColumn]: order === 'asc' ? 1 : -1 } : {};
-    return { query, sort };
-    };
-// export const queryBuilder = (payload: Payload, querySearchKeyInBackend = ['name']) =>   {
-//     const { 
-//         description = '', 
-//         order = '', 
-//         orderColumn = '' 
-//     } = payload;
-
-//     // Search only within the specified field's values
-//     const query: Record<string, any> = description ? { 
-//         $or: querySearchKeyInBackend.map(key => ({ [key]: { $regex: description, $options: 'i' } }))
-//     } : {};
-
-//     // Sorting logic
-//     const sort: Record<string, 1 | -1> = order && orderColumn 
-//         ? { [orderColumn]: order === 'asc' ? 1 : -1 } 
-//         : {};
-
-//     return { query, sort };
-// };
-
-
-
-// export const queryBuilder = (payload: Payload, querySearchKeyInBackend = ['name']) => {
-//     let { description = '', order = '', orderColumn = '' } = payload;
     
-//     // Function to recursively create a $regex condition for all keys in the object
-//     const buildSearchQuery = (obj: any, searchKeys: string[], searchValue: string): any[] => {
-//         return searchKeys.flatMap((key:any) => {
-//             if (obj[key] && typeof obj[key] === 'object') {
-//                 // If it's an object, recursively search through its keys
-//                 return buildSearchQuery(obj[key], Object.keys(obj[key]), searchValue);
-//             } else {
-//                 // If it's a value, create the regex query for it
-//                 return { [key]: { $regex: searchValue, $options: 'i' } };
-//             }
-//         });
-//     };
-
-//     const query = description ? { $or: buildSearchQuery({ ...payload }, querySearchKeyInBackend, description) } : {};
-//     const sort: { [key: string]: SortOrder } = order && orderColumn ? { [orderColumn]: order === 'asc' ? 1 : -1 } : {};
-
-//     return { query, sort };
-// };
-
-
-// export const queryBuilder = (payload: Payload, querySearchKeyInBackend = ['name']) => {
-//     let { description = '', order = '', orderColumn = '' } = payload;
-
-//     // Function to recursively search through all keys in the object and return a $regex query
-//     const buildSearchQuery = (obj: any, searchValue: string) => {
-//         const query: any[] = [];
-
-//         for (const key in obj) {
-//             if (obj[key] && typeof obj[key] === 'object') {
-//                 // If it's an object, recursively search through its keys
-//                 query.push(...buildSearchQuery(obj[key], searchValue));
-//             } else {
-//                 // Otherwise, create the regex condition for the value
-//                 query.push({ [key]: { $regex: searchValue, $options: 'i' } });
-//             }
-//         }
-
-//         return query;
-//     };
-
-//     // If description exists, build the query for all keys in the object
-//     const query = description ? { $or: buildSearchQuery(payload, description) } : {};
-
-//     // Handle sorting if both order and orderColumn are provided
-//     const sort: { [key: string]: SortOrder } = order && orderColumn ? { [orderColumn]: order === 'asc' ? 1 : -1 } : {};
-
-//     return { query, sort };
-// };
+    const sort: { [key: string]: SortOrder } = order && orderColumn ? { [orderColumn]: order === 'asc' ? 1 : -1 } : {};
+  
+    return { query, sort };
+};
 
 
 export const convertToBoolean = (value: string) => {

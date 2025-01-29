@@ -38,13 +38,13 @@ const usersSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: function(this: UserDocument) {
-        return !this.googleId && !this.facebookId && !this.appleId;
-      },
+      // required: function(this: UserDocument) {
+      //   return !this.googleId && !this.facebookId && !this.appleId && !this.phoneNumber;
+      // },
     },
     authType: {
       type: String,
-      enum: ["manual", "whatsapp", "facebook", "apple", "google"],
+      enum: ["manual", "Whatsapp", "Facebook", "Apple", "Google"],
       default: "manual"
     },
     countryCode: {

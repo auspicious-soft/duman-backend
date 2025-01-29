@@ -2,7 +2,8 @@
 import { customAlphabet } from "nanoid";
 import { passwordResetTokenModel } from "../../models/password-token-schema";
 import twilio from "twilio";
-
+import { configDotenv } from "dotenv";
+configDotenv();
 // const client = twilio(process.env.ACCOUNTSID as string, process.env.AUTHTOKEN as string);
 const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID!, process.env.TWILIO_AUTH_TOKEN!);
 
@@ -47,21 +48,22 @@ const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID!, process.env.TWILIO_
 // };
 
 export const generateOtpWithTwilio = async (phoneNumber: string, otp: string) => {
+  console.log('phoneNumber: ', phoneNumber);
   try {
-     await twilioClient.messages.create({
-      body: `Your OTP is: ${otp}`,
-      from: "whatsapp:" + process.env.TWILIO_PHONE_NUMBER,
-      to: `whatsapp:${phoneNumber}`,
-    });
+     const res= await twilioClient.messages.create({
+       body: `Your OTP is: ${otp}`,
+       from: `whatsapp:+14155238886`,
+       to: `whatsapp:${phoneNumber}`,
+      });
     return {
       success: true,
       message: "OTP is sent via Whatsapp",
     };
   } catch (error) {
-    console.error("Error sending password reset token via Twilio:", error);
+    console.error("Error sending otp  via Twilio:", error);
     return {
       success: false,
-      message: "Failed to send password reset token via SMS",
+      message: "Failed to send otp via Whatsapp",
       error,
     };
   }

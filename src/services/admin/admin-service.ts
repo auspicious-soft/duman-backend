@@ -11,7 +11,6 @@ import {
   getPasswordResetTokenByToken,
   generatePasswordResetTokenByPhone,
 } from "src/utils/mails/token";
-import { generatePasswordResetTokenByPhoneWithTwilio } from "../../utils/sms/sms";
 import { passwordResetTokenModel } from "src/models/password-token-schema";
 import { usersModel } from "src/models/user/user-schema";
 import { eventsModel } from "../../models/events/events-schema";

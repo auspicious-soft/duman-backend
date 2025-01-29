@@ -8,11 +8,9 @@ import { queryBuilder } from "src/utils";
 import { ordersModel } from "../../models/orders/orders-schema";
 import { deleteFileFromS3 } from "src/configF/s3";
 import { configDotenv } from "dotenv";
+import jwt from "jsonwebtoken";
 
 import twilio from "twilio";
-import { Resend } from "resend";
-import LoginCredentials from "src/utils/mails/templates/login-credentials";
-import VerifyEmail from "src/utils/mails/templates/email-verification";
 import { sendEmailVerificationMail, sendLoginCredentialsEmail, sendPasswordResetEmail } from "src/utils/mails/mail";
 import { passwordResetTokenModel } from "src/models/password-token-schema";
 import { generateOtpWithTwilio } from "src/utils/sms/sms";
@@ -28,7 +26,8 @@ export interface UserPayload {
   facebookId?: string;
   appleId?: string;
   emailVerified?: boolean;
-  language?:string
+  language?: string;
+  authType?:string
 }
 
 const sanitizeUser = (user: any): UserDocument => {
@@ -38,7 +37,7 @@ const sanitizeUser = (user: any): UserDocument => {
   return sanitized;
 };
 
-export const forgotPasswordService = async (email: string, res: Response) => {
+export const forgotPasswordUserService = async (email: string, res: Response) => {
   const user = await usersModel.findOne({ email: email }).select("+password");
   if (!user) return errorResponseHandler("Email not found", httpStatusCode.NOT_FOUND, res);
   const passwordResetToken = await generatePasswordResetToken(email);
@@ -49,7 +48,7 @@ export const forgotPasswordService = async (email: string, res: Response) => {
   }
 };
 
-export const newPassswordAfterOTPVerifiedService = async (payload: { password: string; otp: string }, res: Response) => {
+export const newPassswordAfterOTPVerifiedUserService = async (payload: { password: string; otp: string }, res: Response) => {
   const { password, otp } = payload;
 
   const existingToken = await getPasswordResetTokenByToken(otp);
@@ -221,7 +220,7 @@ export const getAllUserService = async (payload: any, res: Response) => {
   const page = parseInt(payload.page as string) || 1;
   const limit = parseInt(payload.limit as string) || 0;
   const offset = (page - 1) * limit;
-  let { query, sort } = queryBuilder(payload, ["fullName"]);
+  let { query, sort } = queryBuilder(payload, ["fullName.kaz", "fullName.eng", "fullName.rus", "email"]);
   if (payload.duration) {
     const durationDays = parseInt(payload.duration);
     if (durationDays === 30 || durationDays === 7) {
@@ -252,7 +251,6 @@ export const getAllUserService = async (payload: any, res: Response) => {
 };
 
 export const signUpUser = async (userData: UserPayload) => {
-  console.log('userData: ', userData);
   const existingUser = await usersModel.findOne({ email: userData.email });
   if (existingUser) {
     throw new Error("Email already registered");
@@ -268,8 +266,8 @@ export const signUpUser = async (userData: UserPayload) => {
   return sanitizeUser(user);
 };
 
-export const loginWithEmail = async (email: string, password: string) => {
-  const user = await usersModel.findOne({ email , "emailVerified": true,});
+export const loginWithEmail = async (email: string, password: string, res:Response) => {
+  const user = await usersModel.findOne({ email, emailVerified: true });
   if (!user || !user.password) {
     throw new Error("User not found");
   }
@@ -278,14 +276,84 @@ export const loginWithEmail = async (email: string, password: string) => {
   if (!isPasswordValid) {
     throw new Error("Invalid email or password");
   }
-
-  return { user: sanitizeUser(user) };
+  
+  if (!process.env.AUTH_SECRET) {
+    return errorResponseHandler("AUTH_SECRET is not defined", httpStatusCode.INTERNAL_SERVER_ERROR, res);
+  }
+  const token = jwt.sign({ id: user._id, phoneNumber: user.phoneNumber }, process.env.AUTH_SECRET);
+  return {
+    success: true,
+    message: "Login successful",
+    data: sanitizeUser(user),
+    token:token
+    
+  };
 };
 
-export const generateAndSendOTP = async (payload:{email?:string,phoneNumber?:string}) => {
+export const SignUpWithWhatsappService = async (userData: UserPayload) => {
+  const existingUser = await usersModel.findOne({ phoneNumber: userData.phoneNumber });
+  if (existingUser) {
+    throw new Error("phoneNumber already registered");
+  }
+
+  const user = await usersModel.create({
+    phoneNumber:userData.phoneNumber,
+    authType: userData.authType
+  });
+  await generateAndSendOTP({ phoneNumber: userData.phoneNumber });
+
+  return sanitizeUser(user);
+};
+
+export const loginWithPhoneNumber = async (phoneNumber: string, res: Response) => {
+  const user = await usersModel.findOne({
+    phoneNumber,
+  });
+  if (user && user.authType !== "Whatsapp") {
+    return errorResponseHandler(`Try login from ${user.authType}`, httpStatusCode.BAD_REQUEST, res);
+  }
+  if (user && user.authType == "Whatsapp" && user.whatsappNumberVerified!==true) {
+    return errorResponseHandler("Number is not verified", httpStatusCode.BAD_REQUEST, res);
+  }
+  if (!user) {
+    return errorResponseHandler("Number is not registered", httpStatusCode.BAD_REQUEST, res);
+  }
+ 
+  if (!process.env.AUTH_SECRET) {
+    return errorResponseHandler("AUTH_SECRET is not defined", httpStatusCode.INTERNAL_SERVER_ERROR, res);
+  }
+  const token = jwt.sign({ id: user._id, phoneNumber: user.phoneNumber }, process.env.AUTH_SECRET);
+  // user.otp = null;
+  await user.save();
+
+  return {
+    success: true,
+    message: "Login successful",
+    data: sanitizeUser(user),
+    token:token
+    
+  };
+};
+
+export const SignUpWithGoogleService = async (userData: UserPayload) => {
+  const existingUser = await usersModel.findOne({ email: userData.email });
+  if (existingUser) {
+    throw new Error("email already registered");
+  }
+
+  const user = await usersModel.create({
+    phoneNumber:userData.phoneNumber,
+    authType: userData.authType
+  });
+  await generateAndSendOTP({ phoneNumber: userData.phoneNumber });
+
+  return sanitizeUser(user);
+};
+
+export const generateAndSendOTP = async (payload: { email?: string; phoneNumber?: string }) => {
   const { email, phoneNumber } = payload;
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+  const expiresAt = new Date(Date.now() + 20 * 60 * 1000); // 20 minutes
 
   const user = await usersModel.findOneAndUpdate(
     {
@@ -296,10 +364,10 @@ export const generateAndSendOTP = async (payload:{email?:string,phoneNumber?:str
         "otp.code": otp,
         "otp.expiresAt": expiresAt,
       },
-    }
+    },
+    { upsert: true }
   );
-  
-  console.log('user: ', user);
+
   if (phoneNumber) {
     await generateOtpWithTwilio(phoneNumber, otp);
   }
@@ -307,74 +375,37 @@ export const generateAndSendOTP = async (payload:{email?:string,phoneNumber?:str
     await sendEmailVerificationMail(email, otp, user?.language || "en");
   }
   if (user) {
-    user.otp = null;
     await user.save();
   }
   return true;
 };
 
-// export const generateAndSendOTPEmail = async (email: string) => {
-//   const otp = Math.floor(100000 + Math.random() * 900000).toString();
-//   const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-
-//   const user = await usersModel.findOneAndUpdate(
-//     { email: email },
-//     {
-//       $set: {
-//         "otp.code": otp,
-//         "otp.expiresAt": expiresAt,
-//       },
-//     }
-//   );
-//   if (!user) {
-//     throw new Error("Invalid or expired OTP");
-//   }
-//   await sendEmailVerificationMail(email, otp, user.language);
-//   user.otp = null;
-//   await user.save();
-//   return true;
-// };
-
 export const verifyOTPService = async (payload: any) => {
   const { email, phoneNumber, otp } = payload;
+  console.log("phoneNumber: ", phoneNumber);
+  console.log("payload: ", payload);
   const user = await usersModel.findOne({
     $or: [{ email }, { phoneNumber }],
     "otp.code": otp,
     "otp.expiresAt": { $gt: new Date() },
   });
+  console.log('user: ', user);
 
   if (!user) {
     throw new Error("Invalid or expired OTP");
   }
 
-  user.otp = null;
-  if(email){
-    user.emailVerified =true
+  if (user.otp) {
+    user.otp.code = "";
+    user.otp.expiresAt = new Date(0);
   }
-  if(phoneNumber){
-    user.whatsappNumberVerified =true
+  if (email) {
+    user.emailVerified = true;
+  }
+  if (phoneNumber) {
+    user.whatsappNumberVerified = true;
   }
   await user.save();
 
   return { user: sanitizeUser(user) };
-};
-
-export const loginWithPhoneNumber = async (phoneNumber: string, otp: string, res: Response) => {
-  const user = await usersModel.findOne({
-    phoneNumber,
-    "whatsappNumberVerified": true,
-  });
-
-  if (!user) {
-    return errorResponseHandler("Number is not registered", httpStatusCode.BAD_REQUEST, res);
-  }
-
-  user.otp = null;
-  await user.save();
-
-  return {
-    success: true,
-    message: "Login successful",
-    data: sanitizeUser(user),
-  };
 };

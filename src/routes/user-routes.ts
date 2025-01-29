@@ -15,10 +15,10 @@ const router = Router();
 // router.get("/:id", getUser)
 router.get("/dashboard/:id", getUserDashboardStats)
 // router.put("/", checkAuth, editUserInfo)
-router.post('/signup/email', emailSignup);
-router.post('/signin/email', emailSignin);
-router.post('/whatsapp/send-otp', SignUpWithWhatsapp);
-router.post('/whatsapp/verify-otp', verifyOTP);
+// router.post('/signup/email', emailSignup);
+// router.post('/signin/email', emailSignin);
+// router.post('/whatsapp/send-otp', SignUpWithWhatsapp);
+// router.post('/whatsapp/verify-otp', verifyOTP);
 
 
 //rating route
