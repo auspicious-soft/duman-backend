@@ -8,9 +8,9 @@ import { admin, publisher, user } from "./routes"
 // import admin from "firebase-admin"
 import { checkValidAdminRole, checkValidPublisherRole } from "./utils"
 import bodyParser from 'body-parser'
-import { login } from "./controllers/admin/admin-controller"
+import { login, newPassswordAfterOTPVerified } from "./controllers/admin/admin-controller"
 import { forgotPassword } from "./controllers/admin/admin-controller"
-import {  verifyOtpPasswordReset, newPassswordAfterOTPVerified } from "./controllers/user/user-controller";
+import {  verifyOtpPasswordReset, forgotPasswordUser, newPassswordAfterOTPVerifiedUser, emailSignup, emailSignin, SignUpWithWhatsapp, verifyOTP } from "./controllers/user/user-controller";
 import { checkAuth } from "./middleware/check-auth"
 
 // Create __dirname equivalent for ES modules
@@ -65,6 +65,12 @@ app.post("/api/login", login)
 app.post("/api/verify-otp", verifyOtpPasswordReset)
 app.post("/api/forgot-password", forgotPassword)
 app.patch("/api/new-password-otp-verified", newPassswordAfterOTPVerified)
+app.post("/api/login/email", emailSignin)
+app.post("/api/signup/email", emailSignup)
+app.post("/api/login/whatsapp", SignUpWithWhatsapp)
+app.post("/api/signup/whatsapp", verifyOTP)
+app.post("/api/app/forgot-password", forgotPasswordUser)
+app.patch("/api/app/new-password-otp-verified", newPassswordAfterOTPVerifiedUser)
 
 
 app.listen(PORT, () => console.log(`Server is listening on port ${PORT}`));

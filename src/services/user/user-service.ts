@@ -9,64 +9,27 @@ import { ordersModel } from "../../models/orders/orders-schema";
 import { deleteFileFromS3 } from "src/configF/s3";
 import { configDotenv } from "dotenv";
 
-import jwt from 'jsonwebtoken';
-import { OAuth2Client } from 'google-auth-library';
-import twilio from 'twilio';
+import twilio from "twilio";
 import { Resend } from "resend";
-import ForgotPasswordEmail from "src/utils/mails/templates/forgot-password-reset";
+import LoginCredentials from "src/utils/mails/templates/login-credentials";
+import VerifyEmail from "src/utils/mails/templates/email-verification";
+import { sendEmailVerificationMail, sendLoginCredentialsEmail, sendPasswordResetEmail } from "src/utils/mails/mail";
+import { passwordResetTokenModel } from "src/models/password-token-schema";
+import { generateOtpWithTwilio } from "src/utils/sms/sms";
 configDotenv();
-const resend = new Resend(process.env.RESEND_API_KEY)
-const twilioClient = twilio(
-  process.env.TWILIO_ACCOUNT_SID!,
-  process.env.TWILIO_AUTH_TOKEN!
-);
+// const resend = new Resend(process.env.RESEND_API_KEY);
+const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID!, process.env.TWILIO_AUTH_TOKEN!);
 export interface UserPayload {
   email: string;
-  name: string;
+  fullName: string;
   password?: string;
   phoneNumber?: string;
   googleId?: string;
   facebookId?: string;
   appleId?: string;
   emailVerified?: boolean;
+  language?:string
 }
-
-export interface OTPPayload {
-  code: string;
-  expiresAt: Date;
-}
-
-export interface TokenPayload {
-  accessToken: string;
-  refreshToken: string;
-}
-
-export interface AuthResponse {
-  success: boolean;
-  data?: {
-    user: any;
-    accessToken?: string;
-    refreshToken?: string;
-  };
-  message?: string;
-}
-
-
-const generateTokens = async (user: any): Promise<TokenPayload> => {
-  const accessToken = jwt.sign(
-    { userId: user._id },
-    process.env.JWT_SECRET!,
-    { expiresIn: '1h' }
-  );
-
-  const refreshToken = jwt.sign(
-    { userId: user._id },
-    process.env.JWT_REFRESH_SECRET!,
-    { expiresIn: '7d' }
-  );
-
-  return { accessToken, refreshToken };
-};
 
 const sanitizeUser = (user: any): UserDocument => {
   const sanitized = user.toObject();
@@ -75,74 +38,44 @@ const sanitizeUser = (user: any): UserDocument => {
   return sanitized;
 };
 
+export const forgotPasswordService = async (email: string, res: Response) => {
+  const user = await usersModel.findOne({ email: email }).select("+password");
+  if (!user) return errorResponseHandler("Email not found", httpStatusCode.NOT_FOUND, res);
+  const passwordResetToken = await generatePasswordResetToken(email);
 
+  if (passwordResetToken !== null) {
+    await sendPasswordResetEmail(email, passwordResetToken.token, user.language);
+    return { success: true, message: "Password reset email sent with otp" };
+  }
+};
 
-// export const signupService = async (payload: any, res: Response) => {
-//   const emailExists = await usersModel.findOne({ email: payload.email });
-//   if (emailExists) return errorResponseHandler("Email already exists", httpStatusCode.BAD_REQUEST, res);
-//   const phoneExists = await usersModel.findOne({
-//     phoneNumber: `${payload.phoneNumber}`,
-//   });
-//   if (phoneExists) return errorResponseHandler("phone Number already exists", httpStatusCode.BAD_REQUEST, res);
+export const newPassswordAfterOTPVerifiedService = async (payload: { password: string; otp: string }, res: Response) => {
+  const { password, otp } = payload;
 
-//   payload.phoneNumber = `${payload.phoneNumber}`;
-//   const newPassword = bcrypt.hashSync(payload.password, 10);
-//   payload.password = newPassword;
-//   const genId = customAlphabet("1234567890", 8);
-//   const identifier = customAlphabet("0123456789", 3);
+  const existingToken = await getPasswordResetTokenByToken(otp);
+  if (!existingToken) return errorResponseHandler("Invalid OTP", httpStatusCode.BAD_REQUEST, res);
 
-//   payload.myReferralCode = `${process.env.NEXT_PUBLIC_APP_URL}/signup?referralCode=${genId()}`;
-//   payload.identifier = identifier();
-//   // if(payload.referralCode) {
-//   //     const referredBy = await usersModel.findOne({ myReferralCode: `${process.env.NEXT_PUBLIC_APP_URL}/signup?referralCode=${payload.referralCode}` })
-//   //     if (referredBy) {
-//   //         payload.referredBy = referredBy._id           //Set my referred by
-//   //         await increaseReferredCountAndCredits(referredBy._id)   //Increase referred count of the person who referred me
-//   //         await sendNotificationToUserService({ title: "Referral", message: "Congrats! A new user has signed up with your referral code", ids: [referredBy._id.toString()] }, res)   //Sending THE NOTIFICATION TO THE USER WHO REFERRED ME
-//   //     }
-//   // }
-//   new usersModel({
-//     ...payload,
-//     email: payload.email.toLowerCase().trim(),
-//   }).save();
-//   return { success: true, message: "Client signup successfull" };
-// };
+  const hasExpired = new Date(existingToken.expires) < new Date();
+  if (hasExpired) return errorResponseHandler("OTP expired", httpStatusCode.BAD_REQUEST, res);
 
-// export const loginService = async (payload: any, res: Response) => {
-//   const { email, phoneNumber, password } = payload;
-//   const query = email ? { email } : { phoneNumber };
-//   const client = await usersModel.findOne(query).select("+password");
-//   if (!client) return errorResponseHandler("User not found", httpStatusCode.NOT_FOUND, res);
-//   if (!client.password) return errorResponseHandler("Password not found", httpStatusCode.BAD_REQUEST, res);
-//   const isPasswordValid = bcrypt.compareSync(password, client.password);
-//   if (!isPasswordValid) return errorResponseHandler("Invalid password", httpStatusCode.UNAUTHORIZED, res);
-//   const clientObject: any = client.toObject();
-//   delete clientObject.password;
-//   return { success: true, message: "Login successful", data: clientObject };
-// };
+  let existingUser: any;
 
-// export const forgotPasswordService = async (payload: any, res: Response) => {
-//   const { email, phoneNumber, password } = payload;
-//   const query = email ? { email } : { phoneNumber };
+  if (existingToken.email) {
+    existingUser = await usersModel.findOne({ email: existingToken.email });
+  } else if (existingToken.phoneNumber) {
+    existingUser = await usersModel.findOne({ phoneNumber: existingToken.phoneNumber });
+  }
 
-//   const client = await usersModel.findOne(query);
-//   if (!client) return errorResponseHandler("User not found", httpStatusCode.NOT_FOUND, res);
+  const hashedPassword = await bcrypt.hash(password, 10);
+  const response = await usersModel.findByIdAndUpdate(existingUser._id, { password: hashedPassword }, { new: true });
+  await passwordResetTokenModel.findByIdAndDelete(existingToken._id);
 
-//   if (email) {
-//     const passwordResetToken = await generatePasswordResetToken(email);
-//     if (passwordResetToken !== null) {
-//       await sendPasswordResetEmail(email, passwordResetToken.token);
-//       return { success: true, message: "Password reset email sent with otp" };
-//     }
-//   } else {
-//     const generatePasswordResetTokenBysms = await generatePasswordResetTokenByPhone(phoneNumber);
-
-//     if (generatePasswordResetTokenBysms !== null) {
-//       // await generatePasswordResetTokenByPhoneWithTwilio(phoneNumber, generatePasswordResetTokenBysms.token);
-//       return { success: true, message: "Password reset sms sent with otp" };
-//     }
-//   }
-// };
+  return {
+    success: true,
+    message: "Password updated successfully",
+    data: response,
+  };
+};
 
 export const verifyOtpPasswordResetService = async (token: string, res: Response) => {
   const existingToken = await getPasswordResetTokenByToken(token);
@@ -152,106 +85,6 @@ export const verifyOtpPasswordResetService = async (token: string, res: Response
   if (hasExpired) return errorResponseHandler("OTP expired", httpStatusCode.BAD_REQUEST, res);
   return { success: true, message: "Token verified successfully" };
 };
-
-// export const newPassswordAfterOTPVerifiedService = async (payload: { password: string; otp: string }, res: Response) => {
-//   const { password, otp } = payload;
-//   const existingToken = await getPasswordResetTokenByToken(otp);
-//   if (!existingToken) return errorResponseHandler("Invalid OTP", httpStatusCode.BAD_REQUEST, res);
-
-//   const hasExpired = new Date(existingToken.expires) < new Date();
-//   if (hasExpired) return errorResponseHandler("OTP expired", httpStatusCode.BAD_REQUEST, res);
-
-//   let existingClient: any;
-
-//   if (existingToken.email) {
-//     existingClient = await adminModel.findOne({ email: existingToken.email });
-//     if (!existingClient) {
-//       existingClient = await usersModel.findOne({ email: existingToken.email });
-//     }
-//     if (!existingClient) return errorResponseHandler("User not found", httpStatusCode.NOT_FOUND, res);
-//   } else if (existingToken.phoneNumber) {
-//     existingClient = await usersModel.findOne({
-//       phoneNumber: existingToken.phoneNumber,
-//     });
-//     if (!existingClient) {
-//       existingClient = await usersModel.findOne({
-//         phoneNumber: existingToken.phoneNumber,
-//       });
-//     }
-//     if (!existingClient) return errorResponseHandler("User not found", httpStatusCode.NOT_FOUND, res);
-//   }
-
-//   const hashedPassword = await bcrypt.hash(password, 10);
-
-//   if (existingClient.role == "admin") {
-//     const response = await adminModel.findByIdAndUpdate(existingClient._id, { password: hashedPassword }, { new: true });
-//   } else {
-//     const response = await usersModel.findByIdAndUpdate(existingClient._id, { password: hashedPassword }, { new: true });
-//   }
-
-//   // await passwordResetTokenModel.findByIdAndDelete(existingToken._id)
-
-//   return {
-//     success: true,
-//     message: "Password updated successfully",
-//   };
-// };
-
-// export const passwordResetService = async (req: Request, res: Response) => {
-//   const { currentPassword, newPassword } = req.body;
-//   const getAdmin = await usersModel.findById(req.params.id).select("+password");
-//   if (!getAdmin) return errorResponseHandler("Admin not found", httpStatusCode.NOT_FOUND, res);
-
-//   if (!getAdmin.password) return errorResponseHandler("Password not found", httpStatusCode.BAD_REQUEST, res);
-//   const passwordMatch = bcrypt.compareSync(currentPassword, getAdmin.password);
-//   if (!passwordMatch) return errorResponseHandler("Current password invalid", httpStatusCode.BAD_REQUEST, res);
-//   const hashedPassword = bcrypt.hashSync(newPassword, 10);
-//   const response = await usersModel.findByIdAndUpdate(req.params.id, {
-//     password: hashedPassword,
-//   });
-//   return {
-//     success: true,
-//     message: "Password updated successfully",
-//     data: response,
-//   };
-// };
-
-// export const getUserInfoService = async (id: string, res: Response) => {
-//   // const user = await usersModel.findById(id);
-//   // if (!user) return errorResponseHandler("User not found", httpStatusCode.NOT_FOUND, res);
-//   // const userProjects = await projectsModel.find({ userId: id }).select("-__v");
-//   // return {
-//   //     success: true,
-//   //     message: "User retrieved successfully",
-//   //     data: {
-//   //         user,
-//   //         projects: userProjects.length > 0 ? userProjects : [],
-//   //     }
-//   // };
-// };
-
-// export const getUserInfoByEmailService = async (email: string, res: Response) => {
-//   const client = await usersModel.findOne({ email });
-//   if (!client) return errorResponseHandler("User not found", httpStatusCode.NOT_FOUND, res);
-//   return {
-//     success: true,
-//     message: "Client info fetched successfully",
-//     data: client,
-//   };
-// };
-
-// export const editUserInfoService = async (id: string, payload: any, res: Response) => {
-//   const user = await usersModel.findById(id);
-//   if (!user) return errorResponseHandler("User not found", httpStatusCode.NOT_FOUND, res);
-//   payload.phoneNumber = `${payload.phoneNumber}`;
-//   const updateduser = await usersModel.findByIdAndUpdate(id, { ...payload }, { new: true });
-
-//   return {
-//     success: true,
-//     message: "User updated successfully",
-//     data: updateduser,
-//   };
-// };
 
 export const createUserService = async (payload: any, res: Response) => {
   const emailExists = await usersModel.findOne({ email: payload.email });
@@ -268,6 +101,9 @@ export const createUserService = async (payload: any, res: Response) => {
   const newUser = new usersModel(payload);
   const response = await newUser.save();
 
+  if (response.email && response.password) {
+    await sendLoginCredentialsEmail(response.email, response.password);
+  }
   return {
     success: true,
     message: "User created successfully",
@@ -314,8 +150,8 @@ export const deleteUserService = async (id: string, res: Response) => {
   if (!user) return errorResponseHandler("User not found", httpStatusCode.NOT_FOUND, res);
 
   const deletedUser = await usersModel.findByIdAndDelete(id);
-  if(deletedUser?.profilePic){
-    await deleteFileFromS3(deletedUser?.profilePic)
+  if (deletedUser?.profilePic) {
+    await deleteFileFromS3(deletedUser?.profilePic);
   }
   return {
     success: true,
@@ -335,7 +171,7 @@ export const getUserProfileDetailService = async (id: string, payload: any, res:
       { path: "authorId", model: "authors" },
       { path: "categoryId", model: "categories" },
     ],
-  });;
+  });
 
   let filteredOrders = userOrders;
 
@@ -415,118 +251,130 @@ export const getAllUserService = async (payload: any, res: Response) => {
   }
 };
 
-
-
-
-
-
-export const createUser = async (userData: UserPayload): Promise<UserDocument> => {
+export const signUpUser = async (userData: UserPayload) => {
+  console.log('userData: ', userData);
   const existingUser = await usersModel.findOne({ email: userData.email });
   if (existingUser) {
-    throw new Error('Email already registered');
+    throw new Error("Email already registered");
   }
 
-  const hashedPassword = userData.password 
-    ? await bcrypt.hash(userData.password, 10) 
-    : undefined;
-    const user = await usersModel.create({
-      ...userData,
-      password: hashedPassword,
-    });
-    await generateAndSendOTPEmail(userData.email)
+  const hashedPassword = userData.password ? await bcrypt.hash(userData.password, 10) : undefined;
+  const user = await usersModel.create({
+    ...userData,
+    password: hashedPassword,
+  });
+  await generateAndSendOTP({ email: userData.email });
 
   return sanitizeUser(user);
 };
 
-export const loginWithEmail = async (
-  email: string,
-  password: string
-) => {
-  const user = await usersModel.findOne({ email });
+export const loginWithEmail = async (email: string, password: string) => {
+  const user = await usersModel.findOne({ email , "emailVerified": true,});
   if (!user || !user.password) {
-    throw new Error('User not found');
+    throw new Error("User not found");
   }
 
   const isPasswordValid = await bcrypt.compare(password, user.password);
   if (!isPasswordValid) {
-    throw new Error('Invalid password');
+    throw new Error("Invalid email or password");
   }
 
   return { user: sanitizeUser(user) };
 };
 
-export const generateAndSendOTP = async (phoneNumber: string) => {
-  
+export const generateAndSendOTP = async (payload:{email?:string,phoneNumber?:string}) => {
+  const { email, phoneNumber } = payload;
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  console.log('otp: ', otp);
-  const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-
-  await usersModel.updateOne(
-    { phoneNumber },
-    {
-      $set: {
-        'otp.code': otp,
-        'otp.expiresAt': expiresAt,
-      },
-    },
-    { upsert: true }
-  );
-
-  await twilioClient.messages.create({
-    body: `Your OTP is: ${otp}`,
-    from: 'whatsapp:' + process.env.TWILIO_PHONE_NUMBER,
-    to: `whatsapp:${phoneNumber}`,
-  });
-
-
-  return true;
-};
-export const generateAndSendOTPEmail = async (email: string) => {
-  console.log('email: ', email);
-  
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  console.log('otp: ', otp);
   const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
   const user = await usersModel.findOneAndUpdate(
-    { email: email },
+    {
+      $or: [{ email }, { phoneNumber }],
+    },
     {
       $set: {
-        'otp.code': otp,
-        'otp.expiresAt': expiresAt,
+        "otp.code": otp,
+        "otp.expiresAt": expiresAt,
       },
-    },
+    }
   );
-  console.log("user",user)
-
-  await resend.emails.send({
-    from: process.env.COMPANY_RESEND_GMAIL_ACCOUNT as string,
-    to: email,
-    subject: "Verify Email",
-    react: ForgotPasswordEmail({ otp: otp }),
-})
+  
+  console.log('user: ', user);
+  if (phoneNumber) {
+    await generateOtpWithTwilio(phoneNumber, otp);
+  }
+  if (email) {
+    await sendEmailVerificationMail(email, otp, user?.language || "en");
+  }
+  if (user) {
+    user.otp = null;
+    await user.save();
+  }
   return true;
 };
 
-export const verifyOTP = async (
-  phoneNumber: string,
-  otp: string
-) => {
+// export const generateAndSendOTPEmail = async (email: string) => {
+//   const otp = Math.floor(100000 + Math.random() * 900000).toString();
+//   const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+//   const user = await usersModel.findOneAndUpdate(
+//     { email: email },
+//     {
+//       $set: {
+//         "otp.code": otp,
+//         "otp.expiresAt": expiresAt,
+//       },
+//     }
+//   );
+//   if (!user) {
+//     throw new Error("Invalid or expired OTP");
+//   }
+//   await sendEmailVerificationMail(email, otp, user.language);
+//   user.otp = null;
+//   await user.save();
+//   return true;
+// };
+
+export const verifyOTPService = async (payload: any) => {
+  const { email, phoneNumber, otp } = payload;
   const user = await usersModel.findOne({
-    phoneNumber,
-    'otp.code': otp,
-    'otp.expiresAt': { $gt: new Date() },
+    $or: [{ email }, { phoneNumber }],
+    "otp.code": otp,
+    "otp.expiresAt": { $gt: new Date() },
   });
-  console.log('otp: ', otp);
-  console.log('user: ', user);
 
   if (!user) {
-    throw new Error('Invalid or expired OTP');
+    throw new Error("Invalid or expired OTP");
   }
-  
-    user.otp = null;
-    await user.save();
+
+  user.otp = null;
+  if(email){
+    user.emailVerified =true
+  }
+  if(phoneNumber){
+    user.whatsappNumberVerified =true
+  }
+  await user.save();
 
   return { user: sanitizeUser(user) };
 };
 
+export const loginWithPhoneNumber = async (phoneNumber: string, otp: string, res: Response) => {
+  const user = await usersModel.findOne({
+    phoneNumber,
+    "whatsappNumberVerified": true,
+  });
+
+  if (!user) {
+    return errorResponseHandler("Number is not registered", httpStatusCode.BAD_REQUEST, res);
+  }
+
+  user.otp = null;
+  await user.save();
+
+  return {
+    success: true,
+    message: "Login successful",
+    data: sanitizeUser(user),
+  };
+};

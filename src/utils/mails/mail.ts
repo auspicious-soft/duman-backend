@@ -1,19 +1,37 @@
 import { Resend } from "resend";
-import ForgotPasswordEmail from "./templates/forgot-password-reset";
 import { configDotenv } from "dotenv";
+import ForgotPasswordEmail from "./templates/forget-password";
+import LoginCredentials from "./templates/login-credentials";
+import VerifyEmail from "./templates/email-verification";
 
 configDotenv()
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 
-export const sendPasswordResetEmail = async (email: string, token: string) => {
+export const sendPasswordResetEmail = async (email: string, token: string, language: string = "eng") => {
    return await resend.emails.send({
         from: process.env.COMPANY_RESEND_GMAIL_ACCOUNT as string,
         to: email,
         subject: "Reset your password",
-        react: ForgotPasswordEmail({ otp: token }),
+        react: ForgotPasswordEmail({ otp: token , language }),
     })
 }
+export const sendLoginCredentialsEmail = async (email: string, password: string) => {
+   return await resend.emails.send({
+        from: process.env.COMPANY_RESEND_GMAIL_ACCOUNT as string,
+        to: email,
+        subject: "Login Credentials",
+        react: LoginCredentials({ email: email || "", password: password || "" }),
+    })
+}  
+export const sendEmailVerificationMail = async (email:string,otp: string, language: string) => {
+   return await resend.emails.send({
+        from: process.env.COMPANY_RESEND_GMAIL_ACCOUNT as string,
+        to: email,
+        subject: "Verify Email",
+        react: VerifyEmail({ otp: otp, language: language })
+    })
+}   
 
 export const sendContactMailToAdmin = async (payload: { name: string, email: string, message: string, phoneNumber: string }) => {
     await resend.emails.send({

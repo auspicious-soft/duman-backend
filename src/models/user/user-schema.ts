@@ -39,12 +39,13 @@ const usersSchema = new mongoose.Schema(
     password: {
       type: String,
       required: function(this: UserDocument) {
-        return !this.googleId && !this.facebookId && !this.appleId && !this.phoneNumber;
+        return !this.googleId && !this.facebookId && !this.appleId;
       },
     },
-    authType:{
-      type:String,
-      enum:["manual","whatsapp","facebook","apple","google"]
+    authType: {
+      type: String,
+      enum: ["manual", "whatsapp", "facebook", "apple", "google"],
+      default: "manual"
     },
     countryCode: {
       type: String,
@@ -65,7 +66,7 @@ const usersSchema = new mongoose.Schema(
       default: null,
     },
     facebookId: { 
-      type: String ,
+      type: String,
       default: null,
     },
     appleId: { 
@@ -77,14 +78,19 @@ const usersSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    otp:
-      {
-        code: {type: String, default: null,},
-        expiresAt: {type:Date, default: null,}
-        
-      }
-
-    
+    whatsappNumberVerified: { 
+      type: Boolean,
+      default: false,
+    },
+    otp: {
+      code: { type: String, default: null, },
+      expiresAt: { type: Date,default: null, }
+    },
+    language:{
+      type:String,
+      enum:["kaz","eng","rus"],
+      default:"eng"
+    }
   },
   { timestamps: true }
 );
