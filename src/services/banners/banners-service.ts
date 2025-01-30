@@ -3,7 +3,7 @@ import { errorResponseHandler } from "../../lib/errors/error-response-handler";
 import { httpStatusCode } from "../../lib/constant";
 import { queryBuilder } from "src/utils";
 import { storiesModel } from "../../models/stories/stories-schema";
-import { deleteFileFromS3 } from "src/configF/s3";
+import { deleteFileFromS3 } from "src/config/s3";
 import { bannersModel } from "../../models/banners/banners-schema";
 
 export const createBannerService = async (payload: any, res: Response) => {

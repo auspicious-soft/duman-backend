@@ -5,7 +5,7 @@ import { subCategoriesModel } from "../../models/sub-categories/sub-categories-s
 import { productsModel } from "src/models/products/products-schema";
 import { queryBuilder } from "src/utils";
 import { categoriesModel } from "src/models/categories/categroies-schema";
-import { deleteFileFromS3 } from "src/configF/s3";
+import { deleteFileFromS3 } from "src/config/s3";
 
 
 export const createSubCategoryService = async (payload: any, res: Response) => {

@@ -3,7 +3,7 @@ import { errorResponseHandler } from "../../lib/errors/error-response-handler";
 import { httpStatusCode } from "../../lib/constant";
 import { queryBuilder } from "src/utils";
 import { storiesModel } from "../../models/stories/stories-schema";
-import { deleteFileFromS3 } from "src/configF/s3";
+import { deleteFileFromS3 } from "src/config/s3";
 import { bannersModel } from "../../models/banners/banners-schema";
 import { summariesModel } from "../../models/summaries/summaries-schema";
 
@@ -19,7 +19,10 @@ export const createSummaryService = async (payload: any, res: Response) => {
 };
 
 export const getSummaryService = async (id: string, res: Response) => {
-  const summary = await summariesModel.findById(id).populate('booksId');
+  const summary = await summariesModel.findById(id).populate({
+    path: "booksId",
+    populate: { path: "authorId" }
+  });
   if (!summary) return errorResponseHandler("Summary not found", httpStatusCode.NOT_FOUND, res);
   return {
     success: true,

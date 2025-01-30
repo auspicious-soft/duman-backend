@@ -7,7 +7,7 @@ import { productsModel } from "src/models/products/products-schema";
 import { queryBuilder } from "src/utils";
 import { publishersModel } from "../../models/publishers/publishers-schema";
 import { authorsModel } from "../../models/authors/authors-schema";
-import { deleteFileFromS3 } from "src/configF/s3";
+import { deleteFileFromS3 } from "src/config/s3";
 
 export const createPublisherService = async (payload: any, res: Response) => {
   const newPublisher = new publishersModel(payload);

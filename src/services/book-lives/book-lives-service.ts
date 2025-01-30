@@ -2,8 +2,9 @@ import { Response } from "express";
 import { errorResponseHandler } from "../../lib/errors/error-response-handler";
 import { httpStatusCode } from "../../lib/constant";
 import { queryBuilder } from "src/utils";
-import { deleteFileFromS3 } from "src/configF/s3";
+import { deleteFileFromS3 } from "src/config/s3";
 import { bookLivesModel } from "../../models/book-lives/book-lives-schema";
+import { blogsModel } from "src/models/blogs/blogs-schema";
 
 
 export const createBookLiveService = async (payload: any, res: Response) => {
@@ -18,6 +19,8 @@ export const createBookLiveService = async (payload: any, res: Response) => {
 
 export const getBookLiveService = async (id: string, res: Response) => {
   const bookLive = await bookLivesModel.findById(id);
+  const blog = await blogsModel.find({categoryId: id});
+  console.log('blog: ', blog);
   if (!bookLive)
     return errorResponseHandler(
       "Book live not found",
@@ -27,7 +30,7 @@ export const getBookLiveService = async (id: string, res: Response) => {
   return {
     success: true,
     message: "Book live retrieved successfully",
-    data: bookLive,
+    data: {bookLive,blog},
   };
 };
 

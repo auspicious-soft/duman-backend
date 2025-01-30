@@ -5,7 +5,7 @@ import { httpStatusCode } from "../../lib/constant";
 import { queryBuilder } from "src/utils";
 import { publishersModel } from "../../models/publishers/publishers-schema";
 import { productsModel } from "src/models/products/products-schema";
-import { deleteFileFromS3 } from "src/configF/s3";
+import { deleteFileFromS3 } from "src/config/s3";
 import mongoose, { PipelineStage } from "mongoose";
 import { ordersModel } from "src/models/orders/orders-schema"; // Add this import
 import moment from "moment"; // Add this import for date manipulation

@@ -3,7 +3,7 @@ import cors from "cors"
 // import cookieParser from "cookie-parser";
 import path from "path"
 import { fileURLToPath } from 'url'
-import connectDB from "./configF/db"
+import connectDB from "./config/db"
 import { admin, publisher, user } from "./routes"
 // import admin from "firebase-admin"
 import { checkValidAdminRole, checkValidPublisherRole } from "./utils"
@@ -58,7 +58,7 @@ app.get("/", (_, res: any) => {
     res.send("Hello world entry point 🚀✅");
 });
 
-app.use("/api/admin",checkValidAdminRole,checkAuth, admin);
+app.use("/api/admin",checkValidAdminRole, admin);
 app.use("/api/publisher",checkValidPublisherRole, publisher);
 app.use("/api/user", user);
 //adminAuth routes

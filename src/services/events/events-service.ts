@@ -3,7 +3,7 @@ import { eventsModel } from "../../models/events/events-schema";
 import { queryBuilder } from "src/utils";
 import { errorResponseHandler } from "src/lib/errors/error-response-handler";
 import { httpStatusCode } from "src/lib/constant";
-import { deleteFileFromS3 } from "src/configF/s3";
+import { deleteFileFromS3 } from "src/config/s3";
 import { Response } from "express";
 
 export interface Event {

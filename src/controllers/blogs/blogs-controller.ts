@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { httpStatusCode } from 'src/lib/constant';
 import { errorParser } from 'src/lib/errors/error-response-handler';
-import { createBlogService, deleteBlogService, getAllBlogsService, updateBlogService } from 'src/services/blogs/blogs-service';
+import { createBlogService, deleteBlogService, getAllBlogsService, getBlogService, updateBlogService } from 'src/services/blogs/blogs-service';
 
 export const createBlog = async (req: Request, res: Response) => {
     try {
@@ -15,7 +15,8 @@ export const createBlog = async (req: Request, res: Response) => {
 
 export const getBlogById = async (req: Request, res: Response) => {
     try {
-        const response = await getAllBlogsService(req.params.id,res);
+        console.log('req.params.id: ', req.params.id);
+        const response = await getBlogService(req.params.id,res);
         return res.status(httpStatusCode.OK).json(response);
     } catch (error: any) {
         const { code, message } = errorParser(error);

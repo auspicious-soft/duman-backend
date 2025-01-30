@@ -6,7 +6,7 @@ import { generatePasswordResetToken, generatePasswordResetTokenByPhone, getPassw
 import { httpStatusCode } from "../../lib/constant";
 import { queryBuilder } from "src/utils";
 import { ordersModel } from "../../models/orders/orders-schema";
-import { deleteFileFromS3 } from "src/configF/s3";
+import { deleteFileFromS3 } from "src/config/s3";
 import { configDotenv } from "dotenv";
 
 import { sendEmailVerificationMail, sendLoginCredentialsEmail, sendPasswordResetEmail } from "src/utils/mails/mail";

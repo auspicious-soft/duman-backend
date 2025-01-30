@@ -4,7 +4,7 @@ import { errorResponseHandler } from "../../lib/errors/error-response-handler";
 import { httpStatusCode } from "../../lib/constant";
 import { productsModel, } from "../../models/products/products-schema";
 import { queryBuilder } from "src/utils";
-import { deleteFileFromS3 } from "src/configF/s3";
+import { deleteFileFromS3 } from "src/config/s3";
 import { productRatingsModel } from "src/models/ratings/ratings-schema";
 
 export const createBookService = async (payload: any, res: Response) => {

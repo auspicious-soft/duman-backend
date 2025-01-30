@@ -2,7 +2,7 @@ import { Response } from "express";
 import { errorResponseHandler } from "../../lib/errors/error-response-handler";
 import { httpStatusCode } from "../../lib/constant";
 import { queryBuilder } from "src/utils";
-import { deleteFileFromS3 } from "src/configF/s3";
+import { deleteFileFromS3 } from "src/config/s3";
 import { collectionsModel } from "../../models/collections/collections-schema";
 import { addBooksToCollection } from 'src/controllers/collections/collections-controller';
 
