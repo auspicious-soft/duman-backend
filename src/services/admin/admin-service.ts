@@ -16,6 +16,7 @@ import { usersModel } from "src/models/user/user-schema";
 import { eventsModel } from "../../models/events/events-schema";
 
 export const loginService = async (payload: any, res: Response) => {
+  console.log('payload: ', payload);
   const { username, password } = payload;
   const countryCode = "+45";
   const toNumber = Number(username);

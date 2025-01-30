@@ -4,8 +4,24 @@ import { httpStatusCode } from "../../lib/constant";
 import { queryBuilder } from "src/utils";
 import { ordersModel } from "../../models/orders/orders-schema";
 import { customAlphabet } from "nanoid";
+import { productsModel } from "../../models/products/products-schema"; // Assuming you have a products model
 
 export const createOrderService = async (payload: any, res: Response) => {
+  console.log('payload: ', payload);
+
+  // Check if any product is discounted
+  const products = await productsModel.find({ _id: { $in: payload.productIds } });
+  const hasDiscountedProduct = products.some(product => product.isDiscounted);
+  console.log('hasDiscountedProduct: ', hasDiscountedProduct);
+
+  if (hasDiscountedProduct && payload.voucherId) {
+    return errorResponseHandler(
+      "Voucher cannot be applied to discounted products",
+      httpStatusCode.BAD_REQUEST,
+      res
+    );
+  }
+
   const identifier = customAlphabet("0123456789", 5);
   payload.identifier = identifier();
   const newOrder = new ordersModel(payload);

@@ -2,7 +2,7 @@ import { httpStatusCode } from "src/lib/constant";
 import { errorResponseHandler } from "src/lib/errors/error-response-handler";
 import { UserDocument } from "src/models/user/user-schema";
 import { generateAndSendOTP } from "src/services/user/user-service";
-import { Request, Response } from "express";
+import { Response } from "express";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 

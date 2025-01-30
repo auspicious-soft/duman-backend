@@ -32,9 +32,67 @@ const sanitizeUser = (user: any): UserDocument => {
   delete sanitized.otp;
   return sanitized;
 };
+export const loginUserService = async (userData:UserDocument, authType:string, res:Response) => {
+  try {
+    let query = getSignUpQueryByAuthType(userData, authType);
+    let user:any = await usersModel.findOne(query);
+    let validationResponse = validateUserForLogin(user, authType,userData, res);
+    if (validationResponse) return validationResponse;
+    
+    if (authType === 'Email') {
+      let passwordValidationResponse = await validatePassword(userData, user.password, res);
+      if (passwordValidationResponse) return passwordValidationResponse;
+    }
+    
+    user.token = generateUserToken(user as any);
+    await user.save();
+    return sanitizeUser(user);
+  } catch (error:any) {
+    return errorResponseHandler(error.message, httpStatusCode.INTERNAL_SERVER_ERROR, res);
+  }
+};
 
-export const forgotPasswordUserService = async (email: string, res: Response) => {
-  const user = await usersModel.findOne({ email: email }).select("+password");
+
+export const signUpService = async (userData:UserDocument, authType:string, res:Response) => {
+  try {
+    if (!authType) {
+      return errorResponseHandler("Auth type is required", httpStatusCode.BAD_REQUEST, res);
+    }
+
+    if (authType === "Email" && (!userData.password || !userData.email)) {
+      return errorResponseHandler("Both email and password is required for Email authentication", httpStatusCode.BAD_REQUEST, res);
+    }
+
+    const query = getSignUpQueryByAuthType(userData, authType);
+    const existingUser = await usersModel.findOne(query);
+    const existingUserResponse = existingUser ? handleExistingUser(existingUser as any, authType, res) : null;
+    if (existingUserResponse) return existingUserResponse;
+
+    const newUserData = { ...userData, authType };
+    newUserData.password = await hashPasswordIfEmailAuth(userData, authType);
+
+    const user = await usersModel.create(newUserData);
+    await sendOTPIfNeeded(userData, authType);
+
+    if (!process.env.AUTH_SECRET) {
+      return errorResponseHandler("AUTH_SECRET is not defined", httpStatusCode.INTERNAL_SERVER_ERROR, res);
+    }
+
+    user.token = generateUserToken(user as any);
+    await user.save();
+    return sanitizeUser(user);
+  } catch (error) {
+    if (error instanceof Error) {
+      return errorResponseHandler(error.message, httpStatusCode.INTERNAL_SERVER_ERROR, res);
+    } else {
+      return errorResponseHandler("An unknown error occurred", httpStatusCode.INTERNAL_SERVER_ERROR, res);
+    }
+  }
+};
+
+export const forgotPasswordUserService = async (payload: any, res: Response) => {
+  const {email} = payload;
+  const user = await usersModel.findOne({ email }).select("+password");
   if (!user) return errorResponseHandler("Email not found", httpStatusCode.NOT_FOUND, res);
   const passwordResetToken = await generatePasswordResetToken(email);
 
@@ -56,11 +114,13 @@ export const newPassswordAfterOTPVerifiedUserService = async (payload: { passwor
   let existingUser: any;
 
   if (existingToken.email) {
-    existingUser = await usersModel.findOne({ email: existingToken.email });
+    existingUser = await usersModel.findOne({ email: existingToken.email, authType:"Email" });
   } else if (existingToken.phoneNumber) {
     existingUser = await usersModel.findOne({ phoneNumber: existingToken.phoneNumber });
   }
-
+ if(!existingUser){
+  return errorResponseHandler(`Please try login with ${existingUser.authType}`, httpStatusCode.BAD_REQUEST, res);
+ }
   const hashedPassword = await bcrypt.hash(password, 10);
   const response = await usersModel.findByIdAndUpdate(existingUser._id, { password: hashedPassword }, { new: true });
   await passwordResetTokenModel.findByIdAndDelete(existingToken._id);
@@ -68,7 +128,7 @@ export const newPassswordAfterOTPVerifiedUserService = async (payload: { passwor
   return {
     success: true,
     message: "Password updated successfully",
-    data: response,
+    data: sanitizeUser(response),
   };
 };
 
@@ -246,132 +306,7 @@ export const getAllUserService = async (payload: any, res: Response) => {
   }
 };
 
-// const generateUserToken = (user) => {
-//   const tokenPayload = {
-//     id: user._id,
-//     role: user.role,
-//   };
-//   if (user.email) {
-//     tokenPayload.email = user.email;
-//   } else if (user.phoneNumber) {
-//     tokenPayload.phoneNumber = user.phoneNumber;
-//   }
-//   return jwt.sign(tokenPayload, process.env.AUTH_SECRET);
-// };
 
-// export const getLoginQueryByAuthType = (userData:UserDocument, authType:string) => {
-//   return authType === 'Email' ? { email: userData.email, emailVerified: true } : { phoneNumber: userData.phoneNumber };
-// };
-
-
-
-export const loginUserService = async (userData:UserDocument, authType:string, res:Response) => {
-  console.log('authType: ', authType);
-  console.log('userData: ', userData);
-  try {
-    let query = getSignUpQueryByAuthType(userData, authType);
-    let user:any = await usersModel.findOne(query);
-    let validationResponse = validateUserForLogin(user, authType,userData, res);
-    if (validationResponse) return validationResponse;
-    
-    if (authType === 'Email') {
-      let passwordValidationResponse = await validatePassword(userData, user.password, res);
-      if (passwordValidationResponse) return passwordValidationResponse;
-    }
-    
-    user.token = generateUserToken(user as any);
-    await user.save();
-    return sanitizeUser(user);
-  } catch (error:any) {
-    return errorResponseHandler(error.message, httpStatusCode.INTERNAL_SERVER_ERROR, res);
-  }
-};
-
-
-// export const loginWithEmail = async (email: string, password: string, res:Response) => {
-//   const user = await usersModel.findOne({ email, emailVerified: true });
-//   if (!user || !user.password) {
-//     throw new Error("User not found");
-//   }
-
-//   const isPasswordValid = await bcrypt.compare(password, user.password);
-//   if (!isPasswordValid) {
-//     throw new Error("Invalid email or password");
-//   }
-  
-//   if (!process.env.AUTH_SECRET) {
-//     return errorResponseHandler("AUTH_SECRET is not defined", httpStatusCode.INTERNAL_SERVER_ERROR, res);
-//   }
-//   const token = jwt.sign({ id: user._id, email: user.email, user:user.role }, process.env.AUTH_SECRET);
-//   user.token = token;
-//   await user.save();
-//   return sanitizeUser(user)
-  
-// };
-
-
-// export const loginWithPhoneNumber = async (phoneNumber: string, res: Response) => {
-//   const user = await usersModel.findOne({
-//     phoneNumber,
-//   });
-//   if (user && user.authType !== "Whatsapp") {
-//     return errorResponseHandler(`Try login from ${user.authType}`, httpStatusCode.BAD_REQUEST, res);
-//   }
-//   if (user && user.authType == "Whatsapp" && user.whatsappNumberVerified!==true) {
-//     return errorResponseHandler("Number is not verified", httpStatusCode.BAD_REQUEST, res);
-//   }
-//   if (!user) {
-//     return errorResponseHandler("Number is not registered", httpStatusCode.BAD_REQUEST, res);
-//   }
-  
-//   if (!process.env.AUTH_SECRET) {
-//     return errorResponseHandler("AUTH_SECRET is not defined", httpStatusCode.INTERNAL_SERVER_ERROR, res);
-//   }
-//   const token = jwt.sign({ id: user._id, phoneNumber: user.phoneNumber }, process.env.AUTH_SECRET);
-//   user.token = token;
-//   await user.save();
-  
-//   return sanitizeUser(user);
-// };
-
-
-
-export const signUpService = async (userData:UserDocument, authType:string, res:Response) => {
-  try {
-    if (!authType) {
-      return errorResponseHandler("Auth type is required", httpStatusCode.BAD_REQUEST, res);
-    }
-
-    if (authType === "Email" && !userData.password) {
-      return errorResponseHandler("Password is required for Email authentication", httpStatusCode.BAD_REQUEST, res);
-    }
-
-    const query = getSignUpQueryByAuthType(userData, authType);
-    const existingUser = await usersModel.findOne(query);
-    const existingUserResponse = existingUser ? handleExistingUser(existingUser as any, authType, res) : null;
-    if (existingUserResponse) return existingUserResponse;
-
-    const newUserData = { ...userData, authType };
-    newUserData.password = await hashPasswordIfEmailAuth(userData, authType);
-
-    const user = await usersModel.create(newUserData);
-    await sendOTPIfNeeded(userData, authType);
-
-    if (!process.env.AUTH_SECRET) {
-      return errorResponseHandler("AUTH_SECRET is not defined", httpStatusCode.INTERNAL_SERVER_ERROR, res);
-    }
-
-    user.token = generateUserToken(user as any);
-    await user.save();
-    return sanitizeUser(user);
-  } catch (error) {
-    if (error instanceof Error) {
-      return errorResponseHandler(error.message, httpStatusCode.INTERNAL_SERVER_ERROR, res);
-    } else {
-      return errorResponseHandler("An unknown error occurred", httpStatusCode.INTERNAL_SERVER_ERROR, res);
-    }
-  }
-};
 
 export const generateAndSendOTP = async (payload: { email?: string; phoneNumber?: string }) => {
   const { email, phoneNumber } = payload;
@@ -405,8 +340,7 @@ export const generateAndSendOTP = async (payload: { email?: string; phoneNumber?
 
 export const verifyOTPService = async (payload: any) => {
   const { email, phoneNumber, otp } = payload;
-  console.log("phoneNumber: ", phoneNumber);
-  console.log("payload: ", payload);
+
   const user = await usersModel.findOne({
     $or: [{ email }, { phoneNumber }],
     "otp.code": otp,

@@ -10,7 +10,8 @@ import { checkValidAdminRole, checkValidPublisherRole } from "./utils"
 import bodyParser from 'body-parser'
 import { login, newPassswordAfterOTPVerified } from "./controllers/admin/admin-controller"
 import { forgotPassword } from "./controllers/admin/admin-controller"
-import {  verifyOtpPasswordReset, forgotPasswordUser, newPassswordAfterOTPVerifiedUser, emailSignup,   verifyOTP, resendOTP, loginUser } from "./controllers/user/user-controller";
+import {  verifyOtpPasswordReset, forgotPasswordUser, newPassswordAfterOTPVerifiedUser,verifyOTP, resendOTP, loginUser, userSignup } from "./controllers/user/user-controller";
+import { checkAuth } from "./middleware/check-auth"
 
 // Create __dirname equivalent for ES modules
 const __filename = fileURLToPath(import.meta.url) // <-- Define __filename
@@ -57,17 +58,18 @@ app.get("/", (_, res: any) => {
     res.send("Hello world entry point 🚀✅");
 });
 
-app.use("/api/admin",checkValidAdminRole, admin);
+app.use("/api/admin",checkValidAdminRole,checkAuth, admin);
 app.use("/api/publisher",checkValidPublisherRole, publisher);
 app.use("/api/user", user);
+//adminAuth routes
 app.post("/api/login", login)
 app.post("/api/verify-otp", verifyOtpPasswordReset)
 app.post("/api/forgot-password", forgotPassword)
 app.patch("/api/new-password-otp-verified", newPassswordAfterOTPVerified)
-app.post("/api/login-user", loginUser)
-app.post("/api/signup/email", emailSignup)
-// app.post('/api/sign-up/whatsapp', SignUpWithWhatsapp);
-// app.post("/api/login/whatsapp", LoginWithWhatsapp)
+
+//userAuth routes
+app.post("/api/user/login", loginUser)
+app.post("/api/user/signup", userSignup)  
 app.post("/api/signup/verify-otp", verifyOTP)
 app.post("/api/resend-otp", resendOTP)
 app.post("/api/app/forgot-password", forgotPasswordUser)

@@ -21,6 +21,39 @@ import {
 import { forgotPasswordService, newPassswordAfterOTPVerifiedService } from "src/services/admin/admin-service";
 import { verifyOtpPasswordResetService,newPassswordAfterOTPVerifiedUserService } from "../../services/user/user-service";
 
+export const userSignup = async (req: Request, res: Response) => {
+  try {
+    const user = await signUpService( req.body, req.body.authType, res );
+
+    res.status(200).json({
+      success: true,
+      message: "Sign-up successful",
+      data: user,
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: error instanceof Error ? error.message : "An error occurred",
+    });
+  }
+};
+
+export const loginUser = async (req: Request, res: Response) => {
+  try {
+    const loginResponse = await loginUserService(req.body,req.body.authType, res);
+
+    res.status(200).json({
+      success: true,
+      message: "Login successful",
+      data: loginResponse,
+    });
+  } catch (error) {
+    res.status(401).json({
+      success: false,
+      message: error instanceof Error ? error.message : "An error occurred",
+    });
+  }
+};
 export const forgotPasswordUser = async (req: Request, res: Response) => {
   try {
     const response = await forgotPasswordUserService(req.body, res);
@@ -122,71 +155,6 @@ export const deleteUser = async (req: Request, res: Response) => {
   }
 };
 
-export const emailSignup = async (req: Request, res: Response) => {
-  try {
-    const user = await signUpService( req.body, req.body.authType, res );
-
-    res.status(200).json({
-      success: true,
-      message: "Sign-up successful",
-      data: user,
-    });
-  } catch (error) {
-    res.status(400).json({
-      success: false,
-      message: error instanceof Error ? error.message : "An error occurred",
-    });
-  }
-};
-
-export const loginUser = async (req: Request, res: Response) => {
-  try {
-    const loginResponse = await loginUserService(req.body,req.body.authType, res);
-
-    res.status(200).json({
-      success: true,
-      message: "Login successful",
-      data: loginResponse,
-    });
-  } catch (error) {
-    res.status(401).json({
-      success: false,
-      message: error instanceof Error ? error.message : "An error occurred",
-    });
-  }
-};
-
-// export const SignUpWithWhatsapp = async (req: Request, res: Response) => {
-//   try {
-//     await SignUpWithWhatsappService(req.body,res);
-
-//     res.status(200).json({
-//       success: true,
-//       message: "OTP sent successfully",
-//     });
-//   } catch (error) {
-//     res.status(400).json({
-//       success: false,
-//       message: error instanceof Error ? error.message : "An error occurred",
-//     });
-//   }
-// };
-// export const LoginWithWhatsapp = async (req: Request, res: Response) => {
-//   try {
-//     const {phoneNumber} = req.body
-//     const loginResponse = await loginWithPhoneNumber(phoneNumber,res);
-
-//     res.status(200).json({
-//       success: true,
-//       message: loginResponse,
-//     });
-//   } catch (error) {
-//     res.status(400).json({
-//       success: false,
-//       message: error instanceof Error ? error.message : "An error occurred",
-//     });
-//   }
-// };
 
 
 export const verifyOTP = async (req: Request, res: Response) => {
