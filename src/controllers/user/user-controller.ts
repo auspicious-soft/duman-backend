@@ -2,19 +2,21 @@ import { Request, Response } from "express";
 import { httpStatusCode } from "../../lib/constant";
 import { errorParser } from "../../lib/errors/error-response-handler";
 import {
-  signUpUser,
+  // signUpWithEmail,
   createUserService,
   deleteUserService,
   generateAndSendOTP,
   getAllUserService,
   getUserProfileDetailService,
   getUserService,
-  loginWithEmail,
+  // loginWithEmail,
   updateUserService,
   verifyOTPService,
   forgotPasswordUserService,
-  SignUpWithWhatsappService,
-  loginWithPhoneNumber,
+  // SignUpWithWhatsappService,
+  // loginWithPhoneNumber,
+  signUpService,
+  loginUserService,
 } from "src/services/user/user-service";
 import { forgotPasswordService, newPassswordAfterOTPVerifiedService } from "src/services/admin/admin-service";
 import { verifyOtpPasswordResetService,newPassswordAfterOTPVerifiedUserService } from "../../services/user/user-service";
@@ -122,12 +124,12 @@ export const deleteUser = async (req: Request, res: Response) => {
 
 export const emailSignup = async (req: Request, res: Response) => {
   try {
-    const { email, password, fullName, language } = req.body;
-    const user = await signUpUser({  email, password, fullName, language });
+    const user = await signUpService( req.body, req.body.authType, res );
 
-    res.status(201).json({
+    res.status(200).json({
       success: true,
-      data: { user },
+      message: "Sign-up successful",
+      data: user,
     });
   } catch (error) {
     res.status(400).json({
@@ -137,13 +139,13 @@ export const emailSignup = async (req: Request, res: Response) => {
   }
 };
 
-export const emailSignin = async (req: Request, res: Response) => {
+export const loginUser = async (req: Request, res: Response) => {
   try {
-    const { email, password } = req.body;
-    const loginResponse = await loginWithEmail(email, password, res);
+    const loginResponse = await loginUserService(req.body,req.body.authType, res);
 
     res.status(200).json({
       success: true,
+      message: "Login successful",
       data: loginResponse,
     });
   } catch (error) {
@@ -154,37 +156,37 @@ export const emailSignin = async (req: Request, res: Response) => {
   }
 };
 
-export const SignUpWithWhatsapp = async (req: Request, res: Response) => {
-  try {
-    await SignUpWithWhatsappService(req.body);
+// export const SignUpWithWhatsapp = async (req: Request, res: Response) => {
+//   try {
+//     await SignUpWithWhatsappService(req.body,res);
 
-    res.status(200).json({
-      success: true,
-      message: "OTP sent successfully",
-    });
-  } catch (error) {
-    res.status(400).json({
-      success: false,
-      message: error instanceof Error ? error.message : "An error occurred",
-    });
-  }
-};
-export const LoginWithWhatsapp = async (req: Request, res: Response) => {
-  try {
-    const {phoneNumber} = req.body
-    const loginResponse = await loginWithPhoneNumber(phoneNumber,res);
+//     res.status(200).json({
+//       success: true,
+//       message: "OTP sent successfully",
+//     });
+//   } catch (error) {
+//     res.status(400).json({
+//       success: false,
+//       message: error instanceof Error ? error.message : "An error occurred",
+//     });
+//   }
+// };
+// export const LoginWithWhatsapp = async (req: Request, res: Response) => {
+//   try {
+//     const {phoneNumber} = req.body
+//     const loginResponse = await loginWithPhoneNumber(phoneNumber,res);
 
-    res.status(200).json({
-      success: true,
-      message: loginResponse,
-    });
-  } catch (error) {
-    res.status(400).json({
-      success: false,
-      message: error instanceof Error ? error.message : "An error occurred",
-    });
-  }
-};
+//     res.status(200).json({
+//       success: true,
+//       message: loginResponse,
+//     });
+//   } catch (error) {
+//     res.status(400).json({
+//       success: false,
+//       message: error instanceof Error ? error.message : "An error occurred",
+//     });
+//   }
+// };
 
 
 export const verifyOTP = async (req: Request, res: Response) => {

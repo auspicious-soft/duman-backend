@@ -1,22 +1,21 @@
 import mongoose, { Schema } from "mongoose";
 
 export interface UserDocument extends Document {
-  email: string;
+  _id?:string;
+  email?: string;
   password?: string;
-  fullName: string;
+  fullName?: string;
   phoneNumber?: string;
   otp?: {
     code: string;
     expiresAt: Date;
   };
-  googleId?: string;
-  facebookId?: string;
-  appleId?: string;
   emailVerified: boolean;
-  role:string;
-  countryCode:string;
-  level:string;
-  profilePic:string
+  role?:string;
+  countryCode?:string;
+  level?:string;
+  profilePic?:string;
+  authType?:string
 }
 const usersSchema = new mongoose.Schema(
   {
@@ -44,8 +43,8 @@ const usersSchema = new mongoose.Schema(
     },
     authType: {
       type: String,
-      enum: ["manual", "Whatsapp", "Facebook", "Apple", "Google"],
-      default: "manual"
+      enum: ["Email", "Whatsapp", "Facebook", "Apple", "Google"],
+      default: "Email"
     },
     countryCode: {
       type: String,
@@ -60,19 +59,6 @@ const usersSchema = new mongoose.Schema(
     profilePic: {
       type: String,
       default: null,
-    },
-    googleId: { 
-      type: String,
-      default: null,
-    },
-    facebookId: { 
-      type: String,
-      default: null,
-    },
-    appleId: { 
-      type: String,
-      default: null,
-
     },
     emailVerified: { 
       type: Boolean,
@@ -90,6 +76,9 @@ const usersSchema = new mongoose.Schema(
       type:String,
       enum:["kaz","eng","rus"],
       default:"eng"
+    },
+    token:{
+      type:String,
     }
   },
   { timestamps: true }

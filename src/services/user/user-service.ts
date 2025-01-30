@@ -8,26 +8,22 @@ import { queryBuilder } from "src/utils";
 import { ordersModel } from "../../models/orders/orders-schema";
 import { deleteFileFromS3 } from "src/configF/s3";
 import { configDotenv } from "dotenv";
-import jwt from "jsonwebtoken";
 
-import twilio from "twilio";
 import { sendEmailVerificationMail, sendLoginCredentialsEmail, sendPasswordResetEmail } from "src/utils/mails/mail";
 import { passwordResetTokenModel } from "src/models/password-token-schema";
 import { generateOtpWithTwilio } from "src/utils/sms/sms";
+import { generateUserToken, getSignUpQueryByAuthType, handleExistingUser, hashPasswordIfEmailAuth, sendOTPIfNeeded, validatePassword, validateUserForLogin } from "src/utils/userAuth/signUpAuth";
 configDotenv();
-// const resend = new Resend(process.env.RESEND_API_KEY);
-const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID!, process.env.TWILIO_AUTH_TOKEN!);
+
 export interface UserPayload {
+  _id?:string;
   email: string;
   fullName: string;
   password?: string;
   phoneNumber?: string;
-  googleId?: string;
-  facebookId?: string;
-  appleId?: string;
-  emailVerified?: boolean;
   language?: string;
-  authType?:string
+  authType?:string;
+  role?:string;
 }
 
 const sanitizeUser = (user: any): UserDocument => {
@@ -250,104 +246,131 @@ export const getAllUserService = async (payload: any, res: Response) => {
   }
 };
 
-export const signUpUser = async (userData: UserPayload) => {
-  const existingUser = await usersModel.findOne({ email: userData.email });
-  if (existingUser) {
-    throw new Error("Email already registered");
+// const generateUserToken = (user) => {
+//   const tokenPayload = {
+//     id: user._id,
+//     role: user.role,
+//   };
+//   if (user.email) {
+//     tokenPayload.email = user.email;
+//   } else if (user.phoneNumber) {
+//     tokenPayload.phoneNumber = user.phoneNumber;
+//   }
+//   return jwt.sign(tokenPayload, process.env.AUTH_SECRET);
+// };
+
+// export const getLoginQueryByAuthType = (userData:UserDocument, authType:string) => {
+//   return authType === 'Email' ? { email: userData.email, emailVerified: true } : { phoneNumber: userData.phoneNumber };
+// };
+
+
+
+export const loginUserService = async (userData:UserDocument, authType:string, res:Response) => {
+  console.log('authType: ', authType);
+  console.log('userData: ', userData);
+  try {
+    let query = getSignUpQueryByAuthType(userData, authType);
+    let user:any = await usersModel.findOne(query);
+    let validationResponse = validateUserForLogin(user, authType,userData, res);
+    if (validationResponse) return validationResponse;
+    
+    if (authType === 'Email') {
+      let passwordValidationResponse = await validatePassword(userData, user.password, res);
+      if (passwordValidationResponse) return passwordValidationResponse;
+    }
+    
+    user.token = generateUserToken(user as any);
+    await user.save();
+    return sanitizeUser(user);
+  } catch (error:any) {
+    return errorResponseHandler(error.message, httpStatusCode.INTERNAL_SERVER_ERROR, res);
   }
-
-  const hashedPassword = userData.password ? await bcrypt.hash(userData.password, 10) : undefined;
-  const user = await usersModel.create({
-    ...userData,
-    password: hashedPassword,
-  });
-  await generateAndSendOTP({ email: userData.email });
-
-  return sanitizeUser(user);
 };
 
-export const loginWithEmail = async (email: string, password: string, res:Response) => {
-  const user = await usersModel.findOne({ email, emailVerified: true });
-  if (!user || !user.password) {
-    throw new Error("User not found");
-  }
 
-  const isPasswordValid = await bcrypt.compare(password, user.password);
-  if (!isPasswordValid) {
-    throw new Error("Invalid email or password");
-  }
+// export const loginWithEmail = async (email: string, password: string, res:Response) => {
+//   const user = await usersModel.findOne({ email, emailVerified: true });
+//   if (!user || !user.password) {
+//     throw new Error("User not found");
+//   }
+
+//   const isPasswordValid = await bcrypt.compare(password, user.password);
+//   if (!isPasswordValid) {
+//     throw new Error("Invalid email or password");
+//   }
   
-  if (!process.env.AUTH_SECRET) {
-    return errorResponseHandler("AUTH_SECRET is not defined", httpStatusCode.INTERNAL_SERVER_ERROR, res);
+//   if (!process.env.AUTH_SECRET) {
+//     return errorResponseHandler("AUTH_SECRET is not defined", httpStatusCode.INTERNAL_SERVER_ERROR, res);
+//   }
+//   const token = jwt.sign({ id: user._id, email: user.email, user:user.role }, process.env.AUTH_SECRET);
+//   user.token = token;
+//   await user.save();
+//   return sanitizeUser(user)
+  
+// };
+
+
+// export const loginWithPhoneNumber = async (phoneNumber: string, res: Response) => {
+//   const user = await usersModel.findOne({
+//     phoneNumber,
+//   });
+//   if (user && user.authType !== "Whatsapp") {
+//     return errorResponseHandler(`Try login from ${user.authType}`, httpStatusCode.BAD_REQUEST, res);
+//   }
+//   if (user && user.authType == "Whatsapp" && user.whatsappNumberVerified!==true) {
+//     return errorResponseHandler("Number is not verified", httpStatusCode.BAD_REQUEST, res);
+//   }
+//   if (!user) {
+//     return errorResponseHandler("Number is not registered", httpStatusCode.BAD_REQUEST, res);
+//   }
+  
+//   if (!process.env.AUTH_SECRET) {
+//     return errorResponseHandler("AUTH_SECRET is not defined", httpStatusCode.INTERNAL_SERVER_ERROR, res);
+//   }
+//   const token = jwt.sign({ id: user._id, phoneNumber: user.phoneNumber }, process.env.AUTH_SECRET);
+//   user.token = token;
+//   await user.save();
+  
+//   return sanitizeUser(user);
+// };
+
+
+
+export const signUpService = async (userData:UserDocument, authType:string, res:Response) => {
+  try {
+    if (!authType) {
+      return errorResponseHandler("Auth type is required", httpStatusCode.BAD_REQUEST, res);
+    }
+
+    if (authType === "Email" && !userData.password) {
+      return errorResponseHandler("Password is required for Email authentication", httpStatusCode.BAD_REQUEST, res);
+    }
+
+    const query = getSignUpQueryByAuthType(userData, authType);
+    const existingUser = await usersModel.findOne(query);
+    const existingUserResponse = existingUser ? handleExistingUser(existingUser as any, authType, res) : null;
+    if (existingUserResponse) return existingUserResponse;
+
+    const newUserData = { ...userData, authType };
+    newUserData.password = await hashPasswordIfEmailAuth(userData, authType);
+
+    const user = await usersModel.create(newUserData);
+    await sendOTPIfNeeded(userData, authType);
+
+    if (!process.env.AUTH_SECRET) {
+      return errorResponseHandler("AUTH_SECRET is not defined", httpStatusCode.INTERNAL_SERVER_ERROR, res);
+    }
+
+    user.token = generateUserToken(user as any);
+    await user.save();
+    return sanitizeUser(user);
+  } catch (error) {
+    if (error instanceof Error) {
+      return errorResponseHandler(error.message, httpStatusCode.INTERNAL_SERVER_ERROR, res);
+    } else {
+      return errorResponseHandler("An unknown error occurred", httpStatusCode.INTERNAL_SERVER_ERROR, res);
+    }
   }
-  const token = jwt.sign({ id: user._id, phoneNumber: user.phoneNumber }, process.env.AUTH_SECRET);
-  return {
-    success: true,
-    message: "Login successful",
-    data: sanitizeUser(user),
-    token:token
-    
-  };
-};
-
-export const SignUpWithWhatsappService = async (userData: UserPayload) => {
-  const existingUser = await usersModel.findOne({ phoneNumber: userData.phoneNumber });
-  if (existingUser) {
-    throw new Error("phoneNumber already registered");
-  }
-
-  const user = await usersModel.create({
-    phoneNumber:userData.phoneNumber,
-    authType: userData.authType
-  });
-  await generateAndSendOTP({ phoneNumber: userData.phoneNumber });
-
-  return sanitizeUser(user);
-};
-
-export const loginWithPhoneNumber = async (phoneNumber: string, res: Response) => {
-  const user = await usersModel.findOne({
-    phoneNumber,
-  });
-  if (user && user.authType !== "Whatsapp") {
-    return errorResponseHandler(`Try login from ${user.authType}`, httpStatusCode.BAD_REQUEST, res);
-  }
-  if (user && user.authType == "Whatsapp" && user.whatsappNumberVerified!==true) {
-    return errorResponseHandler("Number is not verified", httpStatusCode.BAD_REQUEST, res);
-  }
-  if (!user) {
-    return errorResponseHandler("Number is not registered", httpStatusCode.BAD_REQUEST, res);
-  }
- 
-  if (!process.env.AUTH_SECRET) {
-    return errorResponseHandler("AUTH_SECRET is not defined", httpStatusCode.INTERNAL_SERVER_ERROR, res);
-  }
-  const token = jwt.sign({ id: user._id, phoneNumber: user.phoneNumber }, process.env.AUTH_SECRET);
-  // user.otp = null;
-  await user.save();
-
-  return {
-    success: true,
-    message: "Login successful",
-    data: sanitizeUser(user),
-    token:token
-    
-  };
-};
-
-export const SignUpWithGoogleService = async (userData: UserPayload) => {
-  const existingUser = await usersModel.findOne({ email: userData.email });
-  if (existingUser) {
-    throw new Error("email already registered");
-  }
-
-  const user = await usersModel.create({
-    phoneNumber:userData.phoneNumber,
-    authType: userData.authType
-  });
-  await generateAndSendOTP({ phoneNumber: userData.phoneNumber });
-
-  return sanitizeUser(user);
 };
 
 export const generateAndSendOTP = async (payload: { email?: string; phoneNumber?: string }) => {
