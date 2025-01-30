@@ -14,9 +14,10 @@ import {
 import { passwordResetTokenModel } from "src/models/password-token-schema";
 import { usersModel } from "src/models/user/user-schema";
 import { eventsModel } from "../../models/events/events-schema";
+import { productsModel } from "src/models/products/products-schema";
+import { ordersModel } from "src/models/orders/orders-schema";
 
 export const loginService = async (payload: any, res: Response) => {
-  console.log('payload: ', payload);
   const { username, password } = payload;
   const countryCode = "+45";
   const toNumber = Number(username);
@@ -215,11 +216,15 @@ export const getDashboardStatsService = async (payload: any, res: Response) => {
       .select("-__v");
     const newUsersCount = await usersModel.countDocuments(overviewDate ? { createdAt: { $gte: overviewDate } } : {});
     const eventsCount = await eventsModel.countDocuments(overviewDate ? { createdAt: { $gte: overviewDate } } : {});
-    const otherData = {
-      newBooks: 0,
-      totalRevenue: 0,
-    };
+    const newBooks = await productsModel.countDocuments(overviewDate ? { createdAt: { $gte: overviewDate } } : {});
+    const totalRevenueResult = await ordersModel.aggregate([
+      { $match: overviewDate ? { createdAt: { $gte: overviewDate } } : {} },
+      { $group: { _id: null, totalRevenue: { $sum: "$totalAmount" } } }
+    ]);
 
+    const totalRevenue = totalRevenueResult.length > 0 ? totalRevenueResult[0].totalRevenue : 0;    
+    console.log('overviewDate: ', overviewDate);
+    
     return {
       success: true,
       message: "Dashboard stats fetched successfully",
@@ -228,7 +233,8 @@ export const getDashboardStatsService = async (payload: any, res: Response) => {
         newestEvents,
         newUsersCount,
         eventsCount,
-        ...otherData,
+        newBooks,
+        totalRevenue
       },
     };
   } catch (error) {

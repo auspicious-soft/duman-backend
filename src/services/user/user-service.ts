@@ -13,6 +13,8 @@ import { sendEmailVerificationMail, sendLoginCredentialsEmail, sendPasswordReset
 import { passwordResetTokenModel } from "src/models/password-token-schema";
 import { generateOtpWithTwilio } from "src/utils/sms/sms";
 import { generateUserToken, getSignUpQueryByAuthType, handleExistingUser, hashPasswordIfEmailAuth, sendOTPIfNeeded, validatePassword, validateUserForLogin } from "src/utils/userAuth/signUpAuth";
+import { productsModel } from "src/models/products/products-schema";
+import { eventsModel } from "src/models/events/events-schema";
 configDotenv();
 
 export interface UserPayload {
@@ -169,10 +171,28 @@ export const createUserService = async (payload: any, res: Response) => {
 export const getUserService = async (id: string, res: Response) => {
   const user = await usersModel.findById(id);
   if (!user) return errorResponseHandler("User not found", httpStatusCode.NOT_FOUND, res);
-  const amountPaid = "0000";
-  const booksPurchasedCount = "0000";
-  const countCount = "0000";
-  const Events = "0000";
+  const totalAmountPaidResult = await ordersModel.aggregate([
+    { $match: { userId: user._id } },
+    { $group: { _id: null, totalAmount: { $sum: "$totalAmount" } } }
+  ]);
+  const amountPaid = totalAmountPaidResult.length > 0 ? totalAmountPaidResult[0].totalAmount : 0;
+ // Fetch all orders for the user
+ const userOrders = await ordersModel.find({ userId: user._id }).populate({ path: "productIds", model: "products" });
+
+ // Calculate the number of books purchased by the user
+ const booksPurchasedCount = userOrders.reduce((count, order) => {
+   return count + order.productIds.filter((product: any) => product.type === "e-book").length;
+ }, 0);
+
+ // Calculate the number of courses purchased by the user
+ const courseCount = userOrders.reduce((count, order) => {
+   return count + order.productIds.filter((product: any) => product.type === "course").length;
+ }, 0);
+
+ // Calculate the number of events attended by the user
+//  const eventsCount = await eventsModel.countDocuments({ userId: user._id });
+
+
   return {
     success: true,
     message: "User retrieved successfully",
@@ -180,8 +200,8 @@ export const getUserService = async (id: string, res: Response) => {
       data: user,
       amountPaid,
       booksPurchasedCount,
-      countCount,
-      Events,
+      courseCount,
+      // Events,
     },
   };
 };
