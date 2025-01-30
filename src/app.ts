@@ -58,7 +58,7 @@ app.get("/", (_, res: any) => {
     res.send("Hello world entry point 🚀✅");
 });
 
-app.use("/api/admin",checkValidAdminRole, admin);
+app.use("/api/admin",checkValidAdminRole,checkAuth, admin);
 app.use("/api/publisher",checkValidPublisherRole, publisher);
 app.use("/api/user", user);
 //adminAuth routes

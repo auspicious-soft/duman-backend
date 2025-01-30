@@ -17,7 +17,7 @@ export const createBookLive = async (req: Request, res: Response) => {
 
 export const getBookLive = async (req: Request, res: Response) => {
     try {
-        const response = await getBookLiveService(req.params.id, res);
+        const response = await getBookLiveService(req.params.id, req.query, res);
         return res.status(httpStatusCode.OK).json(response);
     } catch (error: any) {
         const { code, message } = errorParser(error);

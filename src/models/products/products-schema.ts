@@ -1,23 +1,4 @@
-import { Schema, model, Document, Types } from "mongoose";
-
-// Define the Rating type
-interface Rating {
-  userId: Types.ObjectId;
-  rating: number;
-  comment?: string;
-}
-
-// Extend the Mongoose Document for Products
-
 import mongoose, { Mongoose } from "mongoose";
-
-//  const ratingSchema = new mongoose.Schema({
-//   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-//   rating: { type: Number, required: true, min: 1, max: 5 },
-//   productId: { type: mongoose.Schema.Types.ObjectId, ref: "Products", required: true },
-//   comment: { type: String },
-// });
-// export const productRatingsModel = mongoose.model("rating", ratingSchema);
 
 const productsSchema = new mongoose.Schema({
     name: {
@@ -75,14 +56,6 @@ const productsSchema = new mongoose.Schema({
       type: Number,
       default: null,
     },
-    // ratings: [
-     
-    //     {
-    //       userId: { type: mongoose.Schema.Types.ObjectId, ref: "users", required: true },
-    //       rating: { type: Number, required: true, min: 1, max: 5 },
-    //       comment: { type: String },
-    //     },
-    // ],
     createdAt: { type: Date, default: Date.now },
     averageRating: { type: Number, default: 0 },
   },

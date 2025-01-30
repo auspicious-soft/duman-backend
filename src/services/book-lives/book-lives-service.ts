@@ -17,20 +17,43 @@ export const createBookLiveService = async (payload: any, res: Response) => {
   };
 };
 
-export const getBookLiveService = async (id: string, res: Response) => {
+export const getBookLiveService = async (id: string, payload: any, res: Response) => {
   const bookLive = await bookLivesModel.findById(id);
-  const blog = await blogsModel.find({categoryId: id});
-  console.log('blog: ', blog);
   if (!bookLive)
     return errorResponseHandler(
       "Book live not found",
       httpStatusCode.NOT_FOUND,
       res
     );
+
+  const page = parseInt(payload.page as string) || 1;
+  const limit = parseInt(payload.limit as string) || 0;
+  const offset = (page - 1) * limit;
+  const { query, sort } = queryBuilder(payload, ["name"]);
+
+  const totalDataCount =
+    Object.keys(query).length < 1
+      ? await blogsModel.countDocuments({ categoryId: id })
+      : await blogsModel.countDocuments({ ...query, categoryId: id });
+
+  const blogs = await blogsModel
+    .find({ ...query, categoryId: id })
+    .sort(sort)
+    .skip(offset)
+    .limit(limit)
+    .select("-__v");
+
+  if (!blogs || blogs.length === 0) {
+    return errorResponseHandler("No blog found for this category", httpStatusCode.NOT_FOUND, res);
+  }
+
   return {
     success: true,
     message: "Book live retrieved successfully",
-    data: {bookLive,blog},
+    data: { bookLive, blogs },
+    page,
+    limit,
+    total: totalDataCount,
   };
 };
 
@@ -38,7 +61,7 @@ export const getAllBookLivesService = async (payload: any, res: Response) => {
   const page = parseInt(payload.page as string) || 1;
   const limit = parseInt(payload.limit as string) || 0;
   const offset = (page - 1) * limit;
-  const { query, sort } = queryBuilder(payload, ["title"]);
+  const { query, sort } = queryBuilder(payload, ["name"]);
 
   const totalDataCount =
     Object.keys(query).length < 1
