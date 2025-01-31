@@ -31,7 +31,8 @@ export const getAvailableProductsService = async (res: Response) => {
     const bookMasterProductIds = bookMasters.flatMap(bookMaster => bookMaster.productsId);
 
     const availableProducts = await productsModel.find({
-      _id: { $nin: bookMasterProductIds }
+      _id: { $nin: bookMasterProductIds },
+      type:"course"
     });
 
     return {
