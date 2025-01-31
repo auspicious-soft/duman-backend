@@ -54,7 +54,7 @@ export const getBookStudyService = async (id: string, res: Response) => {
       { path: "publisherId" }, 
     ],
   });
-  
+  //nested populate
   if (!bookStudy) return errorResponseHandler("Book study not found", httpStatusCode.NOT_FOUND, res);
   return {
     success: true,

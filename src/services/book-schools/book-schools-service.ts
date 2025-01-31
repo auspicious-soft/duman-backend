@@ -32,7 +32,12 @@ export const getAllBookSchoolsService = async (payload: any, res: Response) => {
     const { query, sort } = queryBuilder(payload,["name"]);
   
     const totalDataCount = Object.keys(query).length < 1 ? await bookSchoolsModel.countDocuments() : await bookSchoolsModel.countDocuments(query);
-    const results = await bookSchoolsModel.find(query).sort(sort).skip(offset).limit(limit).select("-__v");
+    const results = await bookSchoolsModel.find(query).sort(sort).skip(offset).limit(limit).select("-__v").populate([
+        { path: "authorId" }, 
+        { path: "categoryId" }, 
+        { path: "subCategoryId" }, 
+        { path: "publisherId" }, 
+    ]);
     if (results.length)
       return {
         page,

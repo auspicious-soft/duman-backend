@@ -79,7 +79,15 @@ export const getAllBookMastersService = async (payload: any, res: Response) => {
   const { query, sort } = queryBuilder(payload, ["name"]);
 
   const totalDataCount = Object.keys(query).length < 1 ? await bookMastersModel.countDocuments() : await bookMastersModel.countDocuments(query);
-  const results = await bookMastersModel.find(query).sort(sort).skip(offset).limit(limit).select("-__v");
+  const results = await bookMastersModel.find(query).sort(sort).skip(offset).limit(limit).select("-__v").populate({
+    path: "productsId",
+    populate: [
+      { path: "authorId" }, 
+      { path: "categoryId" }, 
+      { path: "subCategoryId" }, 
+      { path: "publisherId" }, 
+    ],
+  });
   if (results.length)
     return {
       page,
