@@ -36,7 +36,7 @@ export const getAllBlogsService = async (payload: any, res: Response) => {
   const page = parseInt(payload.page as string) || 1;
   const limit = parseInt(payload.limit as string) || 0;
   const offset = (page - 1) * limit;
-  const { query, sort } = queryBuilder(payload, ["title"]);
+  const { query, sort } = queryBuilder(payload, ["name"]);
 
   const totalDataCount =
     Object.keys(query).length < 1

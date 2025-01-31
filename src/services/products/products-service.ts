@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 import { errorResponseHandler } from "../../lib/errors/error-response-handler";
 import { httpStatusCode } from "../../lib/constant";
 import { productsModel, } from "../../models/products/products-schema";
-import { queryBuilder } from "src/utils";
+import { nestedQueryBuilder, queryBuilder } from "src/utils";
 import { deleteFileFromS3 } from "src/config/s3";
 import { productRatingsModel } from "src/models/ratings/ratings-schema";
 
@@ -33,7 +33,7 @@ export const getAllBooksService = async (payload: any, res: Response) => {
   const page = parseInt(payload.page as string) || 1;
   const limit = parseInt(payload.limit as string) || 0;
   const offset = (page - 1) * limit;
-  const { query, sort } = queryBuilder(payload, ["name"]) as { query: any; sort: any };
+  const { query, sort } = nestedQueryBuilder(payload, ["name"]) as { query: any; sort: any };
 
   // Add filter based on type
   if (payload.type) {
@@ -41,7 +41,7 @@ export const getAllBooksService = async (payload: any, res: Response) => {
   }
 
   const totalDataCount = Object.keys(query).length < 1 ? await productsModel.countDocuments() : await productsModel.countDocuments(query);
-  const results = await productsModel.find(query).sort(sort).skip(offset).limit(limit).populate("authorId");
+  const results = await productsModel.find(query).sort(sort).skip(offset).limit(limit).populate([{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }]);
   if (results.length)
     return {
       page,
@@ -65,7 +65,7 @@ export const getAllDiscountedBooksService = async (payload: any, res: Response) 
   const page = parseInt(payload.page as string) || 1;
   const limit = parseInt(payload.limit as string) || 0;
   const offset = (page - 1) * limit;
-  const { query, sort } = queryBuilder(payload, ["name"]) as { query: any; sort: any };
+  const { query, sort } = nestedQueryBuilder(payload, ["name"]) as { query: any; sort: any };
 
   if (payload.isDiscounted) {
     query.isDiscounted = payload.isDiscounted;
@@ -74,7 +74,7 @@ export const getAllDiscountedBooksService = async (payload: any, res: Response) 
     query.type = payload.type;
   }
   const totalDataCount = Object.keys(query).length < 1 ? await productsModel.countDocuments() : await productsModel.countDocuments(query);
-  const results = await productsModel.find(query).sort(sort).skip(offset).limit(limit).populate("categoryId").populate("publisherId").populate("authorId");
+  const results = await productsModel.find(query).sort(sort).skip(offset).limit(limit).populate([{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }]);
   if (results.length)
     return {
       page,

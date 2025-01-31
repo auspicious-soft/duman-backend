@@ -3,7 +3,7 @@ import { errorResponseHandler } from "../../lib/errors/error-response-handler";
 import { httpStatusCode } from "../../lib/constant";
 import { subCategoriesModel } from "../../models/sub-categories/sub-categories-schema";
 import { productsModel } from "src/models/products/products-schema";
-import { queryBuilder } from "src/utils";
+import { nestedQueryBuilder, queryBuilder } from "src/utils";
 import { categoriesModel } from "src/models/categories/categroies-schema";
 import { deleteFileFromS3 } from "src/config/s3";
 
@@ -29,7 +29,7 @@ export const getSubCategoriesService = async (payload: any,id:string,res: Respon
         const page = parseInt(payload.page as string) || 1;
         const limit = parseInt(payload.limit as string) || 0;
         const offset = (page - 1) * limit;
-        const { query, sort } = queryBuilder(payload, ["name"]);
+        const { query, sort } = nestedQueryBuilder(payload, ["name"]);
       
         const totalDataCount =
           Object.keys(query).length < 1
@@ -68,7 +68,7 @@ export const getAllSubCategoriesService = async (payload:any, res: Response) => 
     const page = parseInt(payload.page as string) || 1
       const limit = parseInt(payload.limit as string) || 0
       const offset = (page - 1) * limit
-      const { query, sort } = queryBuilder(payload, ['name'])
+      const { query, sort } = nestedQueryBuilder(payload, ['name'])
      
       const totalDataCount = Object.keys(query).length < 1 ? await subCategoriesModel.countDocuments() : await subCategoriesModel.countDocuments(query)
       const results = await subCategoriesModel.find(query).sort(sort).skip(offset).limit(limit).populate('categoryId');
@@ -95,7 +95,7 @@ export const getSubCategoriesByCategoryIdService = async (payload:any,categoryId
         const page = parseInt(payload.page as string) || 1;
         const limit = parseInt(payload.limit as string) || 0;
         const offset = (page - 1) * limit;
-        const { query, sort } = queryBuilder(payload, ["name"]);
+        const { query, sort } = nestedQueryBuilder(payload, ["name"]);
       
         const totalDataCount =
           Object.keys(query).length < 1

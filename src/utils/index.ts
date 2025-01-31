@@ -35,23 +35,21 @@ export const queryBuilder = (payload: Payload, querySearchKeyInBackend = ['name'
     return { query, sort };
 }
 
-// export const queryBuilder = (payload: Payload, querySearchKeyInBackend = ['name']) => {
-//     const { description = '', order = '', orderColumn = '' } = payload;
-//     const queryConditions: any[] = [];
+export const nestedQueryBuilder = (payload: Payload, querySearchKeyInBackend = ['name']) => {
+    let { description = '', order = '', orderColumn = '' } = payload;
 
-//     querySearchKeyInBackend.forEach(field => {
-//       queryConditions.push({
-//         [field]: { $regex: description, $options: 'i' }
-//       });
-//     });
+    const query = description ? {  $or: querySearchKeyInBackend.flatMap(key => {
+            return [
+                { [key]: { $regex: description, $options: 'i' } },
+                ...['eng', 'kaz', 'rus'].map(langKey => ({ [`${key}.${langKey}`]: { $regex: description, $options: 'i' } }))
+            ];
+        })
+    } : {};
 
-//     const query = description ? { $or: queryConditions } : {};
-    
-//     const sort: { [key: string]: SortOrder } = order && orderColumn ? { [orderColumn]: order === 'asc' ? 1 : -1 } : {};
-  
-//     return { query, sort };
-// };
+    const sort: { [key: string]: SortOrder } = order && orderColumn ? { [orderColumn]: order === 'asc' ? 1 : -1 } : {};
 
+    return { query, sort };
+}
 
 export const convertToBoolean = (value: string) => {
     if (value === 'true') return true

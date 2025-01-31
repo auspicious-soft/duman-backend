@@ -4,7 +4,7 @@ import { UserDocument, usersModel } from "../../models/user/user-schema";
 import bcrypt from "bcryptjs";
 import { generatePasswordResetToken, generatePasswordResetTokenByPhone, getPasswordResetTokenByToken } from "../../utils/mails/token";
 import { httpStatusCode } from "../../lib/constant";
-import { queryBuilder } from "src/utils";
+import { nestedQueryBuilder, queryBuilder } from "src/utils";
 import { ordersModel } from "../../models/orders/orders-schema";
 import { deleteFileFromS3 } from "src/config/s3";
 import { configDotenv } from "dotenv";
@@ -296,7 +296,7 @@ export const getAllUserService = async (payload: any, res: Response) => {
   const page = parseInt(payload.page as string) || 1;
   const limit = parseInt(payload.limit as string) || 0;
   const offset = (page - 1) * limit;
-  let { query, sort } = queryBuilder(payload, ["fullName.kaz", "fullName.eng", "fullName.rus", "email"]);
+  let { query, sort } = nestedQueryBuilder(payload, ['name', "email"]);
   if (payload.duration) {
     const durationDays = parseInt(payload.duration);
     if (durationDays === 30 || durationDays === 7) {

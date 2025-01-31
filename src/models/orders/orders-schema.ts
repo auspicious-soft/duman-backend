@@ -27,6 +27,11 @@ const ordersSchema = new mongoose.Schema(
     transactionId: {
       type: String,
     },
+    status:{
+      type: String,
+      enum:['Pending','Completed','Failed'],
+      default: 'Pending'
+    }
   },
   { timestamps: true }
 );

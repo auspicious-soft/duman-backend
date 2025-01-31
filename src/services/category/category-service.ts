@@ -4,7 +4,7 @@ import { httpStatusCode } from "../../lib/constant";
 import { categoriesModel } from "../../models/categories/categroies-schema";
 import { subCategoriesModel } from "src/models/sub-categories/sub-categories-schema";
 import { productsModel } from "src/models/products/products-schema";
-import { queryBuilder } from "src/utils";
+import { nestedQueryBuilder, queryBuilder } from "src/utils";
 import { deleteFileFromS3 } from "src/config/s3";
 
 export const createCategoryService = async (payload: any, res: Response) => {
@@ -35,7 +35,7 @@ export const getAllCategoriesService = async (payload: any, res: Response) => {
   const page = parseInt(payload.page as string) || 1;
   const limit = parseInt(payload.limit as string) || 0;
   const offset = (page - 1) * limit;
-  const { query, sort } = queryBuilder(payload, ["name"]);
+  const { query, sort } = nestedQueryBuilder(payload, ["name"]);
 
   const totalDataCount =
     Object.keys(query).length < 1

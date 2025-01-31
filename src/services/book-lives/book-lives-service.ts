@@ -1,7 +1,7 @@
 import { Response } from "express";
 import { errorResponseHandler } from "../../lib/errors/error-response-handler";
 import { httpStatusCode } from "../../lib/constant";
-import { queryBuilder } from "src/utils";
+import { nestedQueryBuilder, queryBuilder } from "src/utils";
 import { deleteFileFromS3 } from "src/config/s3";
 import { bookLivesModel } from "../../models/book-lives/book-lives-schema";
 import { blogsModel } from "src/models/blogs/blogs-schema";
@@ -61,7 +61,7 @@ export const getAllBookLivesService = async (payload: any, res: Response) => {
   const page = parseInt(payload.page as string) || 1;
   const limit = parseInt(payload.limit as string) || 0;
   const offset = (page - 1) * limit;
-  const { query, sort } = queryBuilder(payload, ["name"]);
+  const { query, sort } = nestedQueryBuilder(payload, ["name"]);
 
   const totalDataCount =
     Object.keys(query).length < 1

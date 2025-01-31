@@ -2,7 +2,7 @@ import { Response } from "express";
 import { errorResponseHandler } from "../../lib/errors/error-response-handler";
 import { httpStatusCode } from "../../lib/constant";
 
-import { queryBuilder } from "src/utils";
+import { nestedQueryBuilder, queryBuilder } from "src/utils";
 import { publishersModel } from "../../models/publishers/publishers-schema";
 import { productsModel } from "src/models/products/products-schema";
 import { deleteFileFromS3 } from "src/config/s3";
@@ -43,7 +43,7 @@ export const getAllPublishersService = async (payload: any, res: Response) => {
   const page = parseInt(payload.page as string) || 1;
   const limit = parseInt(payload.limit as string) || 10; // Default limit
   const offset = (page - 1) * limit;
-  const { query } = queryBuilder(payload, ["name"]);
+  const { query } = nestedQueryBuilder(payload, ["name"]);
   // Sorting logic
   const sort: Record<string, 1 | -1> = {};
   if (payload.sortField) {
@@ -148,7 +148,7 @@ export const getBooksByPublisherService = async (payload: any, req: any, res: Re
     const page = parseInt(payload.page as string) || 1;
     const limit = parseInt(payload.limit as string) || 0;
     const offset = (page - 1) * limit;
-    const { query, sort } = queryBuilder(payload, ["name"]) as { query: any; sort: any };
+    const { query, sort } = nestedQueryBuilder(payload, ["name"]) as { query: any; sort: any };
 
     if (payload.type) {
       query.type = payload.type;
