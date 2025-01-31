@@ -24,7 +24,6 @@ export const createSubCategoryService = async (payload: any, res: Response) => {
 };
 
 export const getSubCategoriesService = async (payload: any,id:string,res: Response) => {
-    console.log('payload: ', payload);
     try {
         const subCategories = await subCategoriesModel.findById(id);
         const page = parseInt(payload.page as string) || 1;
@@ -45,7 +44,7 @@ export const getSubCategoriesService = async (payload: any,id:string,res: Respon
           .select("-__v");
       
         if (!books || books.length === 0) {
-          return errorResponseHandler("No blog found for this category", httpStatusCode.NOT_FOUND, res);
+          return errorResponseHandler("No blog found for this category", httpStatusCode.NO_CONTENT, res);
         }
       
         return {
@@ -99,7 +98,6 @@ export const getSubCategoriesByCategoryIdService = async (categoryId: string, re
             return errorResponseHandler("No sub-categories and book found for this category", httpStatusCode.NO_CONTENT, res);
             
         }
-       
         const response = subCategories.length > 0 ? subCategories : books;
 
         return {
