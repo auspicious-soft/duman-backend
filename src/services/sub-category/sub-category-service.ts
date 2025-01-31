@@ -23,17 +23,47 @@ export const createSubCategoryService = async (payload: any, res: Response) => {
     
 };
 
-export const getSubCategoriesService = async (id: string,res: Response) => {
+export const getSubCategoriesService = async (payload: any,id:string,res: Response) => {
+    console.log('payload: ', payload);
     try {
         const subCategories = await subCategoriesModel.findById(id);
+        const page = parseInt(payload.page as string) || 1;
+        const limit = parseInt(payload.limit as string) || 0;
+        const offset = (page - 1) * limit;
+        const { query, sort } = queryBuilder(payload, ["name"]);
+      
+        const totalDataCount =
+          Object.keys(query).length < 1
+            ? await productsModel.countDocuments({ subCategoryId: id })
+            : await productsModel.countDocuments({ ...query, subCategoryId: id });
+      
+        const books = await productsModel
+          .find({ ...query, subCategoryId: id })
+          .sort(sort)
+          .skip(offset)
+          .limit(limit)
+          .select("-__v");
+      
+        if (!books || books.length === 0) {
+          return errorResponseHandler("No blog found for this category", httpStatusCode.NOT_FOUND, res);
+        }
+      
         return {
-            success: true,
-            data: subCategories,
+          success: true,
+          message: "Book live retrieved successfully",
+          data: { subCategories, books },
+          page,
+          limit,
+          total: totalDataCount,
         };
+       
     } catch (error) {
         return errorResponseHandler('Failed to fetch sub-categories', httpStatusCode.INTERNAL_SERVER_ERROR, res);
     }
 };
+ 
+
+ 
 export const getAllSubCategoriesService = async (payload:any, res: Response) => {
 
     const page = parseInt(payload.page as string) || 1
@@ -63,28 +93,22 @@ export const getAllSubCategoriesService = async (payload:any, res: Response) => 
  
 export const getSubCategoriesByCategoryIdService = async (categoryId: string, res: Response) => {
         const subCategories = await subCategoriesModel.find({ categoryId }).select("-__v").populate('categoryId').lean();
-        if (!subCategories || subCategories.length === 0) {
-            return errorResponseHandler("No sub-categories found for this category", httpStatusCode.NOT_FOUND, res);
+        const books = await productsModel.find({ categoryId }).select("-__v").populate('authorId').lean();
+        console.log('books: ', books);
+        if ((!subCategories || subCategories.length === 0) && (!books || books.length === 0)) {
+            return errorResponseHandler("No sub-categories and book found for this category", httpStatusCode.NO_CONTENT, res);
+            
         }
+       
+        const response = subCategories.length > 0 ? subCategories : books;
+
         return {
             success: true,
-            data: subCategories,
+            data:response,
         };
     
 };
-export const getSubCategoryByIdService = async (id: string, res: Response) => {
-    try {
-        const subCategory = await subCategoriesModel.findById( id ).select("-__v").populate('categoryId').lean()
-        if (!subCategory) return errorResponseHandler("Sub-category not found", httpStatusCode.NOT_FOUND, res);
-        return {
-            success: true,
-            data: subCategory,
-        };
-    } catch (error) {
-        console.error('Error fetching sub-category:', error); 
-        return errorResponseHandler('Failed to fetch sub-category', httpStatusCode.INTERNAL_SERVER_ERROR, res);
-    }
-};
+
 export const updateSubCategoryService = async (id: string, payload: any, res: Response) => {
         const updatedSubCategory = await subCategoriesModel.findByIdAndUpdate(id, payload, { new: true });
         if (!updatedSubCategory) return errorResponseHandler("Sub-category not found", httpStatusCode.NOT_FOUND, res);

@@ -20,6 +20,7 @@ import { createBookStudy, deleteBookStudy, getAllBookStudies, getAvailableProduc
 import { createBookUniversity, deleteBookUniversity, getAllBookUniversities, getAvailableProductsUniversity, getBookUniversity, updateBookUniversity } from "src/controllers/book-universities/book-universities-controller";
 import { createBookLive, deleteBookLive, getAllBookLives, getBookLive, updateBookLive } from "src/controllers/book-lives/book-lives-controller";
 import { createBlog, deleteBlog, getAllBlogs, getBlogById, updateBlog } from "src/controllers/blogs/blogs-controller";
+import { sendNotificationToUser, sendNotificationToUsers } from "src/controllers/notifications/notifications-controller";
 
 const router = Router();
 
@@ -182,5 +183,8 @@ router.get("/blogs/:id", getBlogById);
 router.put("/blogs/:id", updateBlog);
 router.delete("/blogs/:id", deleteBlog);
 
+//notifications route
+router.post("/send-notification", sendNotificationToUsers)
+router.post("/send-notification-to-specific-users", sendNotificationToUser)
 
 export { router };

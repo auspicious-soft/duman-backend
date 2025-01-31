@@ -2,23 +2,19 @@ import { Request, Response } from "express";
 import { httpStatusCode } from "../../lib/constant";
 import { errorParser } from "../../lib/errors/error-response-handler";
 import {
-  // signUpWithEmail,
   createUserService,
   deleteUserService,
   generateAndSendOTP,
   getAllUserService,
   getUserProfileDetailService,
   getUserService,
-  // loginWithEmail,
   updateUserService,
   verifyOTPService,
   forgotPasswordUserService,
-  // SignUpWithWhatsappService,
-  // loginWithPhoneNumber,
   signUpService,
   loginUserService,
 } from "src/services/user/user-service";
-import { forgotPasswordService, newPassswordAfterOTPVerifiedService } from "src/services/admin/admin-service";
+import {  newPassswordAfterOTPVerifiedService } from "src/services/admin/admin-service";
 import { verifyOtpPasswordResetService,newPassswordAfterOTPVerifiedUserService } from "../../services/user/user-service";
 
 export const userSignup = async (req: Request, res: Response) => {

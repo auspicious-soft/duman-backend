@@ -1,7 +1,7 @@
 import { Schema, model } from 'mongoose';
 
 const notificationsSchema = new Schema({
-    userId: {
+    userIds: {
         type: [Schema.ObjectId],
         ref: "users"
     },

@@ -10,8 +10,8 @@ export const adminUserLoginSchema = z.object({
 
 export const sendNotificationToUserSchema = z.object({
     title: z.string().min(1),
-    message: z.string().min(1),
-    ids: z.array(z.string()).min(1).optional()
+    description: z.string().min(1),
+    userIds: z.array(z.string()).min(1).optional()
 }).strict({
     message: "Bad payload present in the data"
 })
