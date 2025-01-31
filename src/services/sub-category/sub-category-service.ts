@@ -49,7 +49,7 @@ export const getSubCategoriesService = async (payload: any,id:string,res: Respon
       
         return {
           success: true,
-          message: "Book live retrieved successfully",
+          message: "Sub categories retrieved successfully",
           data: { subCategories, books },
           page,
           limit,
@@ -90,19 +90,41 @@ export const getAllSubCategoriesService = async (payload:any, res: Response) => 
       }
 };
  
-export const getSubCategoriesByCategoryIdService = async (categoryId: string, res: Response) => {
+export const getSubCategoriesByCategoryIdService = async (payload:any,categoryId: string, res: Response) => {
         const subCategories = await subCategoriesModel.find({ categoryId }).select("-__v").populate('categoryId').lean();
-        const books = await productsModel.find({ categoryId }).select("-__v").populate('authorId').lean();
-        console.log('books: ', books);
+        const page = parseInt(payload.page as string) || 1;
+        const limit = parseInt(payload.limit as string) || 0;
+        const offset = (page - 1) * limit;
+        const { query, sort } = queryBuilder(payload, ["name"]);
+      
+        const totalDataCount =
+          Object.keys(query).length < 1
+            ? await productsModel.countDocuments({ categoryId: categoryId })
+            : await productsModel.countDocuments({ ...query, categoryId: categoryId });
+      
+        const books = await productsModel
+          .find({ ...query, categoryId: categoryId })
+          .sort(sort)
+          .skip(offset)
+          .limit(limit)
+          .select("-__v");
+      
+        if (!books || books.length === 0) {
+          return errorResponseHandler("No blog found for this category", httpStatusCode.NO_CONTENT, res);
+        }
+      
         if ((!subCategories || subCategories.length === 0) && (!books || books.length === 0)) {
             return errorResponseHandler("No sub-categories and book found for this category", httpStatusCode.NO_CONTENT, res);
-            
         }
         const response = subCategories.length > 0 ? subCategories : books;
 
         return {
             success: true,
-            data:response,
+            message: "Sub categories retrieved successfully",
+            data: { response },
+            page,
+            limit,
+            total: totalDataCount,
         };
     
 };

@@ -50,7 +50,7 @@ export const getSubCategoriesByCategoryId = async (
 ) => {
   try {
     const { categoryId } = req.params;
-    const response = await getSubCategoriesByCategoryIdService(categoryId, res);
+    const response = await getSubCategoriesByCategoryIdService(req.query,categoryId, res);
     return res.status(httpStatusCode.OK).json(response);
   } catch (error: any) {
     const { code, message } = errorParser(error);
