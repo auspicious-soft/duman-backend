@@ -1,20 +1,12 @@
 import { Response } from "express";
 import { errorResponseHandler } from "../../lib/errors/error-response-handler";
 import { httpStatusCode } from "../../lib/constant";
-import { queryBuilder } from "src/utils";
+import { nestedQueryBuilder, queryBuilder } from "src/utils";
 import { bookMastersModel } from "../../models/book-masters/book-masters-schema"; 
 import { productsModel } from "../../models/products/products-schema"; // Import productsModel
+import { PipelineStage } from "mongoose";
 
-// export const createBookMasterService = async (payload: any, res: Response) => {
-//   const newBookMaster = new bookMastersModel(payload);
-//   const savedBookMaster = await newBookMaster.save();
-//   return {
-//     success: true,
-//     message: "Book master created successfully",
-//     data: savedBookMaster,
-//   };
-// };
-// Function to add multiple products to a bookMaster
+
 export const addBooksToBookMaster = async (payload: any, res: Response) => {
   try {
     const createdDocuments = [];
@@ -77,7 +69,7 @@ export const getAllBookMastersService = async (payload: any, res: Response) => {
   const page = parseInt(payload.page as string) || 1;
   const limit = parseInt(payload.limit as string) || 0;
   const offset = (page - 1) * limit;
-  const { query, sort } = queryBuilder(payload, ["name"]);
+  const { query, sort } = nestedQueryBuilder(payload, ["name","authorId"]);
 
   const totalDataCount = Object.keys(query).length < 1 ? await bookMastersModel.countDocuments() : await bookMastersModel.countDocuments(query);
   const results = await bookMastersModel.find(query).sort(sort).skip(offset).limit(limit).select("-__v").populate({
@@ -107,6 +99,121 @@ export const getAllBookMastersService = async (payload: any, res: Response) => {
     };
   }
 };
+
+// export const getAllBookMastersService = async (payload: any, res: Response) => {
+//   const page = parseInt(payload.page as string) || 1;
+//   const limit = parseInt(payload.limit as string) || 0;
+//   const offset = (page - 1) * limit;
+//   const { query, sort } = queryBuilder(payload, ["name", "authorId"]);
+
+//   try {
+//     const pipeline: PipelineStage[] = [
+//       { $match: query },
+//       {
+//         $lookup: {
+//           from: "products", // The collection name of the products
+//           localField: "productsId",
+//           foreignField: "_id",
+//           as: "products",
+//         },
+//       },
+//       { $unwind: "$products" },
+//       {
+//         $lookup: {
+//           from: "authors", // The collection name of the authors
+//           localField: "products.authorId",
+//           foreignField: "_id",
+//           as: "products.author",
+//         },
+//       },
+//       { $unwind: "$products.author" },
+//       {
+//         $match: {
+//           $or: [
+//             { "products.name": { $regex: query, $options: "i" } },
+//             { "products.author.name": { $regex: query, $options: "i" } },
+//           ],
+//         },
+//       },
+//       {
+//         $group: {
+//           _id: "$_id",
+//           doc: { $first: "$$ROOT" },
+//         },
+//       },
+//       { $replaceRoot: { newRoot: "$doc" } },
+//       // { $sort: sort },
+//       { $skip: offset },
+//       { $limit: limit },
+//     ];
+
+//     const totalDataCountPipeline: PipelineStage[] = [
+//       { $match: query },
+//       {
+//         $lookup: {
+//           from: "products",
+//           localField: "productsId",
+//           foreignField: "_id",
+//           as: "products",
+//         },
+//       },
+//       { $unwind: "$products" },
+//       {
+//         $lookup: {
+//           from: "authors",
+//           localField: "products.authorId",
+//           foreignField: "_id",
+//           as: "products.author",
+//         },
+//       },
+//       { $unwind: "$products.author" },
+//       {
+//         $match: {
+//           $or: [
+//             { "products.name": { $regex: payload.name, $options: "i" } },
+//             { "products.author.name": { $regex: payload.authorId, $options: "i" } },
+//           ],
+//         },
+//       },
+//       {
+//         $group: {
+//           _id: null,
+//           count: { $sum: 1 },
+//         },
+//       },
+//     ];
+
+//     const [results, totalDataCountResult] = await Promise.all([
+//       bookMastersModel.aggregate(pipeline),
+//       bookMastersModel.aggregate(totalDataCountPipeline),
+//     ]);
+
+//     const totalDataCount = totalDataCountResult.length > 0 ? totalDataCountResult[0].count : 0;
+
+//     if (results.length) {
+//       return {
+//         page,
+//         limit,
+//         success: true,
+//         total: totalDataCount,
+//         data: results,
+//       };
+//     } else {
+//       return {
+//         data: [],
+//         page,
+//         limit,
+//         success: false,
+//         total: 0,
+//       };
+//     }
+//   } catch (error) {
+//     console.error("Error in getAllBookMastersService:", error);
+//     return errorResponseHandler("Failed to fetch book masters", httpStatusCode.INTERNAL_SERVER_ERROR, res);
+//   }
+// };
+
+
 
 export const updateBookMasterService = async (id: string, payload: any, res: Response) => {
   const updatedBookMaster = await bookMastersModel.findByIdAndUpdate(id, payload, {

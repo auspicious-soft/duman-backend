@@ -6,6 +6,7 @@ import { productsModel, } from "../../models/products/products-schema";
 import { nestedQueryBuilder, queryBuilder } from "src/utils";
 import { deleteFileFromS3 } from "src/config/s3";
 import { productRatingsModel } from "src/models/ratings/ratings-schema";
+import { ordersModel } from "src/models/orders/orders-schema";
 
 export const createBookService = async (payload: any, res: Response) => {
   const newBook = new productsModel(payload);
@@ -18,11 +19,32 @@ export const createBookService = async (payload: any, res: Response) => {
 };
 
 export const getBooksService = async (id: string, res: Response) => {
+  console.log('id: ', id);
   try {
     const books = await productsModel.find({ _id: id }).populate([{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }]);
+    console.log('books: ', books);
+    const orders = (await ordersModel.find({ productIds: id }));
+    console.log('orders: ', orders);
+
+    // Calculate totalBookSold and totalRevenue
+    let totalBookSold = orders.length;
+    let totalRevenue = totalBookSold;
+
+    // orders.forEach((order:any) => {
+    //   order.products.forEach((product:any) => {
+    //     if (product.productId.toString() === id) {
+    //       totalBookSold += product.quantity;
+    //       totalRevenue += product.quantity * product.price;
+    //     }
+    //   });
+    // });
     return {
       success: true,
-      data: books,
+      data: {
+        books,
+        totalBookSold,
+        totalRevenue
+      },
     };
   } catch (error) {
     return errorResponseHandler("Failed to fetch books", httpStatusCode.INTERNAL_SERVER_ERROR, res);
