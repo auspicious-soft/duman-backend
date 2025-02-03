@@ -21,23 +21,29 @@ export const createBookService = async (payload: any, res: Response) => {
 export const getBooksService = async (id: string, res: Response) => {
   console.log('id: ', id);
   try {
-    const books = await productsModel.find({ _id: id }).populate([{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }]);
+    const books = await productsModel.find({ _id: id }).populate([
+      { path: "authorId" },
+      { path: "categoryId" },
+      { path: "subCategoryId" },
+      { path: "publisherId" }
+    ]);
     console.log('books: ', books);
-    const orders = (await ordersModel.find({ productIds: id }));
-    console.log('orders: ', orders);
 
-    // Calculate totalBookSold and totalRevenue
-    let totalBookSold = orders.length;
-    let totalRevenue = totalBookSold;
+    if (!books || books.length === 0) {
+      return errorResponseHandler("Book not found", httpStatusCode.NOT_FOUND, res);
+    }
 
-    // orders.forEach((order:any) => {
-    //   order.products.forEach((product:any) => {
-    //     if (product.productId.toString() === id) {
-    //       totalBookSold += product.quantity;
-    //       totalRevenue += product.quantity * product.price;
-    //     }
-    //   });
-    // });
+    const bookPrice = books[0]?.price;
+
+    if (!bookPrice) {
+      return errorResponseHandler("Book price not available", httpStatusCode.NOT_FOUND, res);
+    }
+
+    // Fetch orders that include the book ID in their productIds
+    const orders = await ordersModel.find({ productIds: id });
+    const totalBookSold = orders.length;
+    const totalRevenue = totalBookSold * bookPrice;
+
     return {
       success: true,
       data: {
