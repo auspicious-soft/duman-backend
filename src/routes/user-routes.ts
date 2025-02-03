@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { getAllBookLives, getBookLive } from "src/controllers/book-lives/book-lives-controller";
+import { getBookSchoolsByCode, verifyBookSchoolsByCode } from "src/controllers/book-schools/book-schools-controller";
 import { getAllEventsHandler, getEventByIdHandler } from "src/controllers/events/events-controller";
 import { getAllNotificationsOfUser, markAllNotificationsAsRead } from "src/controllers/notifications/notifications-controller";
 import { AddBookRating } from "src/controllers/products/products-controller";
@@ -20,6 +21,9 @@ router.get("/book-lives/:id", getBookLive);
 
 //rating route
 router.put("/books/rating/:id", AddBookRating);
+//coupon route
+router.get("/book-schools/verify", verifyBookSchoolsByCode);
+router.get("/book-schools/books", getBookSchoolsByCode);
 
 //notifications route
 router.route("/:id/notifications").get( getAllNotificationsOfUser).put( markAllNotificationsAsRead)

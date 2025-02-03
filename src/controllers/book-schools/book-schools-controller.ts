@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { createBookSchoolService, getBookSchoolService, updateBookSchoolService, deleteBookSchoolService, getAllBookSchoolsService } from "../../services/book-schools/book-schools-service";
+import { createBookSchoolService, getBookSchoolService, updateBookSchoolService, deleteBookSchoolService, getAllBookSchoolsService, getBookSchoolsByCodeService } from "../../services/book-schools/book-schools-service";
 import { errorParser } from "../../lib/errors/error-response-handler";
 import { httpStatusCode } from "../../lib/constant";
 import { verifyBookSchoolsByCodeService } from './../../services/book-schools/book-schools-service';
@@ -48,6 +48,15 @@ export const deleteBookSchool = async (req: Request, res: Response) => {
 export const getAllBookSchools = async (req: Request, res: Response) => {
     try {
         const response = await getAllBookSchoolsService(req.query, res);
+        return res.status(httpStatusCode.OK).json(response);
+    } catch (error: any) {
+        const { code, message } = errorParser(error);
+        return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
+    }
+};
+export const getBookSchoolsByCode = async (req: Request, res: Response) => {
+    try {
+        const response = await getBookSchoolsByCodeService(req.query, res);
         return res.status(httpStatusCode.OK).json(response);
     } catch (error: any) {
         const { code, message } = errorParser(error);

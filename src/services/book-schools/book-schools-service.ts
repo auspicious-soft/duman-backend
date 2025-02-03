@@ -2,10 +2,9 @@ import { Response } from "express";
 import { errorResponseHandler } from "../../lib/errors/error-response-handler";
 import { httpStatusCode } from "../../lib/constant";
 import { queryBuilder } from "src/utils";
-import { bookSchoolsModel } from "../../models/book-schools/book-schools-schema";
-import { PipelineStage } from "mongoose";
 import { productsModel } from "src/models/products/products-schema";
 import { usersModel } from "src/models/user/user-schema";
+import { bookSchoolsModel } from './../../models/book-schools/book-schools-schema';
 
 export const createBookSchoolService = async (payload: any, res: Response) => {
   const newBookSchool = new bookSchoolsModel(payload);
@@ -88,11 +87,23 @@ export const getBookSchoolsByCodeService = async (payload: any, res: Response) =
     const limit = parseInt(payload.limit as string) || 0;
     const offset = (page - 1) * limit;
     const { query, sort } = queryBuilder(payload,["couponCode"]);
-  
-    const totalDataCount = Object.keys(query).length < 1 ? await bookSchoolsModel.countDocuments() : await bookSchoolsModel.countDocuments(query);
-    const results = await bookSchoolsModel.find(query).sort(sort).skip(offset).limit(limit).select("-__v").populate([
-        { path: "publisherId" }, 
-    ]);
+    //to be improved
+   const userId ="679b1af8fe658ee117ea73f2"
+   const schoolVoucher = (await usersModel.findById(userId))?.schoolVoucher;    
+   const totalDataCount = Object.keys(query).length < 1 ? await bookSchoolsModel.countDocuments() : await bookSchoolsModel.countDocuments(query);
+   
+   let results: any[] = [];
+   if(schoolVoucher){
+     const modifiedQuery = { ...query, _id: schoolVoucher.voucherId };
+     results = await bookSchoolsModel.find(modifiedQuery)
+     .sort(sort)
+     .skip(offset)
+     .limit(limit)
+     .select("-__v")
+     .populate([{ path: "publisherId" }]);
+     
+    }
+   
     if (results.length)
       return {
         page,
@@ -120,39 +131,30 @@ export const verifyBookSchoolsByCodeService = async (payload: any, res: Response
     const bookSchool = await bookSchoolsModel.find({couponCode:payload.couponCode}).populate([
       { path: "publisherId" }, 
     ]);
-    console.log('bookSchool: ', bookSchool.map(school => school._id));
     const bookSchoolId = bookSchool.map(school => school._id);
+    //to be improved
     const user = await usersModel.findOne({email:"mansi.bhandari150@gmail.com"});
     
     if (user && user.schoolVoucher) {
       user.schoolVoucher.voucherId = bookSchoolId[0];
       await user.save();
+      if(bookSchool.length > 0 && bookSchool[0].allowedActivation > bookSchool[0].codeActivated){        
+        for (const school of bookSchool) {
+          school.codeActivated += 1;
+          await school.save();
+        }
+      }
+      else{
+        return errorResponseHandler("Book school coupon limit exceeded", httpStatusCode.BAD_REQUEST, res);
+      }
     }
-    const publisherIds = bookSchool.flatMap(school => 
-      school.publisherId.map(publisher => publisher._id)
-    );
-
-    const results = await productsModel.find({
-      publisherId: {$in :publisherIds},type:"e-book",...query
-    }).skip(offset).limit(limit).select("-__v").populate([
-      { path: "publisherId" }, 
-      { path: "authorId" }, 
-      { path: "categoryId" }, 
-      { path: "subCategoryId" }, 
-    ]);
-    if (results.length)
+ 
       return {
         success: true,
         total: totalDataCount,
-        data: results,
+        data: user,
       };
-    else {
-      return {
-        data: [],
-        success: false,
-        total: 0,
-      };
-    }
+    
   };
 
 export const updateBookSchoolService = async (id: string, payload: any, res: Response) => {

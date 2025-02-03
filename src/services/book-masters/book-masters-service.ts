@@ -124,153 +124,104 @@ export const getBookMasterService = async (id: string, res: Response) => {
 //     };
 //   }
 // };
-export const getAllBookMastersService = async (payload: any, res: Response) => {
-  const page = parseInt(payload.page as string) || 1;
-  const limit = parseInt(payload.limit as string) || 0;
-  const offset = (page - 1) * limit;
-  const { query, sort } = nestedQueryBuilder(payload, ["name","authorId"]);
-
-  const totalDataCount = Object.keys(query).length < 1 ? await bookMastersModel.countDocuments() : await bookMastersModel.countDocuments(query);
-  const results = await bookMastersModel.find(query).sort(sort).skip(offset).limit(limit).select("-__v").populate({
-    path: "productsId",
-    populate: [
-      { path: "authorId" }, 
-      { path: "categoryId" }, 
-      { path: "subCategoryId" }, 
-      { path: "publisherId" }, 
-    ],
-  });
-  if (results.length)
-    return {
-      page,
-      limit,
-      success: true,
-      total: totalDataCount,
-      data: results,
-    };
-  else {
-    return {
-      data: [],
-      page,
-      limit,
-      success: false,
-      total: 0,
-    };
-  }
-};
-
 // export const getAllBookMastersService = async (payload: any, res: Response) => {
 //   const page = parseInt(payload.page as string) || 1;
 //   const limit = parseInt(payload.limit as string) || 0;
 //   const offset = (page - 1) * limit;
-//   const { query, sort } = queryBuilder(payload, ["name", "authorId"]);
+//   const { query, sort } = nestedQueryBuilder(payload, ["name","authorId"]);
 
-//   try {
-//     const pipeline: PipelineStage[] = [
-//       { $match: query },
-//       {
-//         $lookup: {
-//           from: "products", // The collection name of the products
-//           localField: "productsId",
-//           foreignField: "_id",
-//           as: "products",
-//         },
-//       },
-//       { $unwind: "$products" },
-//       {
-//         $lookup: {
-//           from: "authors", // The collection name of the authors
-//           localField: "products.authorId",
-//           foreignField: "_id",
-//           as: "products.author",
-//         },
-//       },
-//       { $unwind: "$products.author" },
-//       {
-//         $match: {
-//           $or: [
-//             { "products.name": { $regex: query, $options: "i" } },
-//             { "products.author.name": { $regex: query, $options: "i" } },
-//           ],
-//         },
-//       },
-//       {
-//         $group: {
-//           _id: "$_id",
-//           doc: { $first: "$$ROOT" },
-//         },
-//       },
-//       { $replaceRoot: { newRoot: "$doc" } },
-//       // { $sort: sort },
-//       { $skip: offset },
-//       { $limit: limit },
-//     ];
-
-//     const totalDataCountPipeline: PipelineStage[] = [
-//       { $match: query },
-//       {
-//         $lookup: {
-//           from: "products",
-//           localField: "productsId",
-//           foreignField: "_id",
-//           as: "products",
-//         },
-//       },
-//       { $unwind: "$products" },
-//       {
-//         $lookup: {
-//           from: "authors",
-//           localField: "products.authorId",
-//           foreignField: "_id",
-//           as: "products.author",
-//         },
-//       },
-//       { $unwind: "$products.author" },
-//       {
-//         $match: {
-//           $or: [
-//             { "products.name": { $regex: payload.name, $options: "i" } },
-//             { "products.author.name": { $regex: payload.authorId, $options: "i" } },
-//           ],
-//         },
-//       },
-//       {
-//         $group: {
-//           _id: null,
-//           count: { $sum: 1 },
-//         },
-//       },
-//     ];
-
-//     const [results, totalDataCountResult] = await Promise.all([
-//       bookMastersModel.aggregate(pipeline),
-//       bookMastersModel.aggregate(totalDataCountPipeline),
-//     ]);
-
-//     const totalDataCount = totalDataCountResult.length > 0 ? totalDataCountResult[0].count : 0;
-
-//     if (results.length) {
-//       return {
-//         page,
-//         limit,
-//         success: true,
-//         total: totalDataCount,
-//         data: results,
-//       };
-//     } else {
-//       return {
-//         data: [],
-//         page,
-//         limit,
-//         success: false,
-//         total: 0,
-//       };
-//     }
-//   } catch (error) {
-//     console.error("Error in getAllBookMastersService:", error);
-//     return errorResponseHandler("Failed to fetch book masters", httpStatusCode.INTERNAL_SERVER_ERROR, res);
+//   const totalDataCount = Object.keys(query).length < 1 ? await bookMastersModel.countDocuments() : await bookMastersModel.countDocuments(query);
+//   const results = await bookMastersModel.find(query).sort(sort).skip(offset).limit(limit).select("-__v").populate({
+//     path: "productsId",
+//     populate: [
+//       { path: "authorId" }, 
+//       { path: "categoryId" }, 
+//       { path: "subCategoryId" }, 
+//       { path: "publisherId" }, 
+//     ],
+//   });
+//   if (results.length)
+//     return {
+//       page,
+//       limit,
+//       success: true,
+//       total: totalDataCount,
+//       data: results,
+//     };
+//   else {
+//     return {
+//       data: [],
+//       page,
+//       limit,
+//       success: false,
+//       total: 0,
+//     };
 //   }
 // };
+
+
+export const getAllBookMastersService = async (payload: any) => {
+  const page = parseInt(payload.page as string) || 1;
+  const limit = parseInt(payload.limit as string) || 0;
+  const offset = (page - 1) * limit;
+
+  const query: any = {}; 
+  
+  const sort: any = {};
+  if (payload.orderColumn && payload.order) {
+    sort[payload.orderColumn] = payload.order === "asc" ? 1 : -1;
+  }
+  
+
+  const results = await bookMastersModel
+    .find(query)
+    .sort(sort)
+    .skip(offset)
+    .limit(limit)
+    .select("-__v")
+    .populate({
+      path: "productsId",
+      populate: [
+        { path: "authorId" },
+        { path: "categoryId" },
+        { path: "subCategoryId" },
+        { path: "publisherId" },
+      ],
+    })
+    .lean();
+
+    let filteredResults = results;
+    let totalDataCount
+    totalDataCount = await bookMastersModel.countDocuments()
+  if (payload.description) {
+    const searchQuery = payload.description.toLowerCase();
+    // totalDataCount = await bookMastersModel.countDocuments(query);
+
+    filteredResults = results.filter((book) => {
+      const product = book.productsId as any;
+      const authors = product?.authorId;
+      const productNames = product?.name
+        ? Object.values(product.name).map((val: any) => val.toLowerCase())
+        : [];
+
+      const authorNames: string[] = (authors as any[]).flatMap((author) =>
+        author && author.name ? Object.values(author.name).map((val: any) => val.toLowerCase()) : []
+      );
+      return (
+        productNames.some((name) => name.includes(searchQuery)) ||
+        authorNames.some((name) => name.includes(searchQuery))
+      );
+    })
+    totalDataCount = filteredResults.length
+  }
+  return {
+    page,
+    limit,
+    success: filteredResults.length > 0,
+    total: filteredResults.length > 0 ? totalDataCount : 0,
+    data: filteredResults,
+  };
+};
 
 
 
