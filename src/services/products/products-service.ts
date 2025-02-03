@@ -182,7 +182,16 @@ export const deleteBookService = async (id: string, res: Response) => {
     const deletedBook = await productsModel.findByIdAndDelete(id);
     if (!deletedBook) return errorResponseHandler("Book not found", httpStatusCode.NOT_FOUND, res);
     if (deletedBook?.image) {
+      console.log('deletedBook?.image: ', deletedBook?.image);
       await deleteFileFromS3(deletedBook.image);
+    }
+    if (deletedBook?.file && deletedBook.file instanceof Map) {
+      for (const key of deletedBook.file.keys()) {
+        const fileValue = deletedBook.file.get(key);
+        if (fileValue && typeof fileValue === 'string') {
+          await deleteFileFromS3(fileValue);
+        }
+      }
     }
     return {
       success: true,

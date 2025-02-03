@@ -4,6 +4,7 @@ import { httpStatusCode } from "../../lib/constant";
 import { queryBuilder } from "src/utils";
 import { bookSchoolsModel } from "../../models/book-schools/book-schools-schema";
 import { PipelineStage } from "mongoose";
+import { productsModel } from "src/models/products/products-schema";
 
 export const createBookSchoolService = async (payload: any, res: Response) => {
   const newBookSchool = new bookSchoolsModel(payload);
@@ -15,14 +16,41 @@ export const createBookSchoolService = async (payload: any, res: Response) => {
   };
 };
 
-export const getBookSchoolService = async (id: string, res: Response) => {
-  const bookSchool = await bookSchoolsModel.findById(id);
+export const getBookSchoolService = async (payload:any, id: string, res: Response) => {
+  const page = parseInt(payload.page as string) || 1;
+  const limit = parseInt(payload.limit as string) || 0;
+  const offset = (page - 1) * limit;
+  const { query, sort } = queryBuilder(payload,["name"]);
+
+  const bookSchool = await bookSchoolsModel.findById(id).populate('publisherId');
   if (!bookSchool) return errorResponseHandler("Book school not found", httpStatusCode.NOT_FOUND, res);
-  return {
-    success: true,
-    message: "Book school retrieved successfully",
-    data: bookSchool,
-  };
+  const totalDataCount = Object.keys(query).length < 1 ? await productsModel.countDocuments() : await productsModel.countDocuments(query);
+    const results = await productsModel.find({
+      publisherId: {$in :bookSchool?.publisherId},type:"e-book",...query
+    }).sort(sort).skip(offset).limit(limit).select("-__v").populate([
+        { path: "publisherId" }, 
+        { path: "authorId" }, 
+        { path: "categoryId" }, 
+        { path: "subCategoryId" }, 
+    ]);
+  
+  if (results.length)
+    return {
+      page,
+      limit,
+      success: true,
+      total: totalDataCount,
+      data: {bookSchool,results},
+    };
+  else {
+    return {
+      data: [],
+      page,
+      limit,
+      success: false,
+      total: 0,
+    };
+  }
 };
 
 export const getAllBookSchoolsService = async (payload: any, res: Response) => {
@@ -33,9 +61,6 @@ export const getAllBookSchoolsService = async (payload: any, res: Response) => {
   
     const totalDataCount = Object.keys(query).length < 1 ? await bookSchoolsModel.countDocuments() : await bookSchoolsModel.countDocuments(query);
     const results = await bookSchoolsModel.find(query).sort(sort).skip(offset).limit(limit).select("-__v").populate([
-        { path: "authorId" }, 
-        { path: "categoryId" }, 
-        { path: "subCategoryId" }, 
         { path: "publisherId" }, 
     ]);
     if (results.length)

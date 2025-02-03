@@ -43,9 +43,7 @@ export const getBookLiveService = async (id: string, payload: any, res: Response
     .limit(limit)
     .select("-__v");
 
-  if (!blogs || blogs.length === 0) {
-    return errorResponseHandler("No blog found for this category", httpStatusCode.NOT_FOUND, res);
-  }
+
 
   return {
     success: true,

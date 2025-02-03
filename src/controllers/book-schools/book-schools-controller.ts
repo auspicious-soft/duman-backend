@@ -16,7 +16,7 @@ export const createBookSchool = async (req: Request, res: Response) => {
 
 export const getBookSchool = async (req: Request, res: Response) => {
     try {
-        const response = await getBookSchoolService(req.params.id, res);
+        const response = await getBookSchoolService(req.query,req.params.id, res);
         return res.status(httpStatusCode.OK).json(response);
     } catch (error: any) {
         const { code, message } = errorParser(error);
