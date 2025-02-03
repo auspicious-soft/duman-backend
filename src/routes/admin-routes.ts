@@ -2,8 +2,8 @@ import { Router } from "express";
 import {  getAdminDetails, getDashboardStats, getNewUsers } from "../controllers/admin/admin-controller";
 import { createEventHandler, getEventByIdHandler, updateEventHandler, deleteEventHandler, getAllEventsHandler } from "../controllers/events/events-controller";
 import { createNewUser, deleteUser, getAllUser, getUser, getUserDashboardStats, updateUser } from "src/controllers/user/user-controller";
-import { createCategory, deleteCategory, getAllCategories, getCategory, updateCategory } from "src/controllers/categories/categories-controller";
-import { createSubCategory, deleteSubCategory, getAllSubCategory, getSubCategoriesByCategoryId, getSubCategory, updateSubCategory } from "src/controllers/sub-categories/sub-categories-controller";
+import { addBooksToCategory, createCategory, deleteCategory, getAllCategories, getCategory, updateCategory } from "src/controllers/categories/categories-controller";
+import { addBooksToSubCategory, createSubCategory, deleteSubCategory, getAllSubCategory, getSubCategoriesByCategoryId, getSubCategory, updateSubCategory } from "src/controllers/sub-categories/sub-categories-controller";
 import { AddBookRating, addBookToDiscounts, createBook, deleteBook, getAllBooks, getAllDiscountedBooks, getBook, removeBookFromDiscounts, updateBook } from "../controllers/products/products-controller";
 import { createOrder, deleteOrder, getAllOrders, getOrder, updateOrder } from "src/controllers/orders/orders-controller";
 import { createPublisher, deletePublisher, getAllPublishers, getPublisher, updatePublisher } from "src/controllers/publisher/publishers-controller";
@@ -14,7 +14,7 @@ import { addBooksToCollection, createCollection, deleteCollection, getAllCollect
 import { addBooksToSummary, createSummary, deleteSummary, getAllSummaries, getSummary, updateSummary } from "src/controllers/summaries/summaries-controller";
 import { addBookToDiscountsService, getAllDiscountedBooksService } from "src/services/products/products-service";
 import { createDiscountVoucher, deleteDiscountVoucher, getAllDiscountVouchers, getDiscountVoucher, updateDiscountVoucher } from "src/controllers/discount-vouchers/discount-vouchers-controller";
-import { createBookSchool, deleteBookSchool, getAllBookSchools, getBookSchool, updateBookSchool } from "src/controllers/book-schools/book-schools-controller";
+import { createBookSchool, deleteBookSchool, getAllBookSchools, getBookSchool, updateBookSchool, verifyBookSchoolsByCode } from "src/controllers/book-schools/book-schools-controller";
 import { createBookMaster, deleteBookMaster, getAllBookMasters, getAvailableProductsMasters, getBookMaster, updateBookMaster } from "src/controllers/book-masters/book-masters-controller";
 import { createBookStudy, deleteBookStudy, getAllBookStudies, getAvailableProductsStudy, getBookStudy, updateBookStudy } from "src/controllers/book-studies/book-studies-controller";
 import { createBookUniversity, deleteBookUniversity, getAllBookUniversities, getAvailableProductsUniversity, getBookUniversity, updateBookUniversity } from "src/controllers/book-universities/book-universities-controller";
@@ -45,6 +45,7 @@ router.delete("/events/:id", deleteEventHandler);
 router.post("/categories", createCategory);
 router.get("/categories", getAllCategories);
 router.get("/categories/:id", getCategory);
+router.get("/categories/:id/add", addBooksToCategory);
 router.get("/categories/:categoryId/sub-categories", getSubCategoriesByCategoryId);
 router.put("/categories/:id", updateCategory);
 router.delete("/categories/:id", deleteCategory);
@@ -55,6 +56,8 @@ router.post("/sub-categories", createSubCategory);
 router.get("/sub-categories", getAllSubCategory);
 router.get("/sub-categories/:id", getSubCategory);
 router.put("/sub-categories/:id", updateSubCategory);
+router.get("/sub-categories/:id/add", addBooksToSubCategory);
+
 router.delete("/sub-categories/:id", deleteSubCategory);
 
 // books routes
@@ -140,6 +143,7 @@ router.delete("/vouchers/:id", deleteDiscountVoucher);
 // book-schools route
 router.post("/book-schools", createBookSchool);
 router.get("/book-schools", getAllBookSchools);
+router.get("/book-schools/verify", verifyBookSchoolsByCode);
 router.get("/book-masters/books", getAvailableProductsMasters);
 router.get("/book-schools/:id", getBookSchool);
 router.put("/book-schools/:id", updateBookSchool);

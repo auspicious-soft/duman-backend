@@ -156,3 +156,32 @@ export const deleteSubCategoryService = async (id: string, res: Response) => {
         };
  
 };
+
+export const addBookToSubCategoryService = async (payload: any,id:string, res: Response) => {
+  try {
+    const { booksId} = payload;
+
+    // Convert booksId to ObjectId
+  //   const objectIdArray = booksId.map((id: string) => new mongoose.Types.ObjectId(id));
+
+  const updatedBooks = await productsModel.updateMany(
+    { _id: { $in: booksId } },
+    {
+      $addToSet: {
+        subCategoryId: id,
+      },
+    }
+  );
+
+    if (updatedBooks.modifiedCount === 0) return errorResponseHandler("No books found to update", httpStatusCode.NOT_FOUND, res);
+
+    return {
+      success: true,
+      message: "Books Added to Sub-Category successfully",
+      data: updatedBooks,
+    };
+  } catch (error) {
+    console.error('Error updating books:', error); // Log the error for debugging
+    return errorResponseHandler("Failed to update books", httpStatusCode.INTERNAL_SERVER_ERROR, res);
+  }
+};

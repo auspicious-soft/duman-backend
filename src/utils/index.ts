@@ -28,7 +28,9 @@ interface Payload {
 }
 
 export const queryBuilder = (payload: Payload, querySearchKeyInBackend = ['name']) => {
+    console.log('payload: ', payload);
     let { description = '', order = '', orderColumn = '' } = payload;
+    console.log('description: ', description);
     const query = description ? { $or: querySearchKeyInBackend.map(key => ({ [key]: { $regex: description, $options: 'i' } })) } : {}
     const sort: { [key: string]: SortOrder } = order && orderColumn ? { [orderColumn]: order === 'asc' ? 1 : -1 } : {};
 

@@ -120,3 +120,30 @@ export const deleteCategoryService = async (id: string, res: Response) => {
     data: deletedCategory,
   };
 };
+
+export const addBookToCategoryService = async (payload: any,id:string, res: Response) => {
+  try {
+    const { booksId} = payload;
+    console.log('booksId: ', booksId);
+
+    const updatedBooks = await productsModel.updateMany(
+      { _id: { $in: booksId } },
+      {
+        $addToSet: {
+          categoryId: id,
+        },
+      }
+    );
+
+    if (updatedBooks.modifiedCount === 0) return errorResponseHandler("No books found to update", httpStatusCode.NOT_FOUND, res);
+
+    return {
+      success: true,
+      message: "Books Added to Category successfully",
+      data: updatedBooks,
+    };
+  } catch (error) {
+    console.error('Error updating books:', error); // Log the error for debugging
+    return errorResponseHandler("Failed to update books", httpStatusCode.INTERNAL_SERVER_ERROR, res);
+  }
+};

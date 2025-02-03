@@ -64,7 +64,66 @@ export const getBookMasterService = async (id: string, res: Response) => {
     data: bookMaster,
   };
 };
+// export const getAllBookMastersService = async (payload: any, res: Response) => {
+//   const page = parseInt(payload.page as string) || 1;
+//   const limit = parseInt(payload.limit as string) || 0;
+//   const offset = (page - 1) * limit;
 
+//   const { query, sort } = nestedQueryBuilder(payload, ["productsId.name", "productsId.authorId.name"]);
+
+//   const totalDataCount = Object.keys(query).length < 1
+//     ? await bookMastersModel.countDocuments()
+//     : await bookMastersModel.countDocuments(query);
+
+//   const results = await bookMastersModel
+//     .find(query)
+//     .sort(sort)
+//     .skip(offset)
+//     .limit(limit)
+//     .select("-__v")
+//     .populate({
+//       path: "productsId",
+//       populate: [
+//         { path: "authorId" },
+//         { path: "categoryId" },
+//         { path: "subCategoryId" },
+//         { path: "publisherId" },
+//       ],
+//     })
+//     .lean();
+
+//   const filteredResults = results.filter((book) => {
+//     const product = book.productsId as any;
+//     const author = product?.authorId;
+
+//     const productName = product?.name ? Object.values(product.name).join(" ") : "";
+
+//     const authorName = author?.name ? Object.values(author.name).join(" ") : "";
+
+//     return (
+//       productName.includes(payload.query) ||
+//       authorName.includes(payload.query)
+//     );
+//   });
+
+//   if (filteredResults.length) {
+//     return {
+//       page,
+//       limit,
+//       success: true,
+//       total: totalDataCount,
+//       data: filteredResults,
+//     };
+//   } else {
+//     return {
+//       data: [],
+//       page,
+//       limit,
+//       success: false,
+//       total: 0,
+//     };
+//   }
+// };
 export const getAllBookMastersService = async (payload: any, res: Response) => {
   const page = parseInt(payload.page as string) || 1;
   const limit = parseInt(payload.limit as string) || 0;

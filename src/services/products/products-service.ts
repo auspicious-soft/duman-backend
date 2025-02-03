@@ -39,7 +39,6 @@ export const getBooksService = async (id: string, res: Response) => {
       return errorResponseHandler("Book price not available", httpStatusCode.NOT_FOUND, res);
     }
 
-    // Fetch orders that include the book ID in their productIds
     const orders = await ordersModel.find({ productIds: id });
     const totalBookSold = orders.length;
     const totalRevenue = totalBookSold * bookPrice;
@@ -63,7 +62,6 @@ export const getAllBooksService = async (payload: any, res: Response) => {
   const offset = (page - 1) * limit;
   const { query, sort } = nestedQueryBuilder(payload, ["name"]) as { query: any; sort: any };
 
-  // Add filter based on type
   if (payload.type) {
     query.type = payload.type;
   }

@@ -15,7 +15,8 @@ export interface UserDocument extends Document {
   countryCode?:string;
   level?:string;
   profilePic?:string;
-  authType?:string
+  authType?:string;
+  schoolVoucher?:string;
 }
 const usersSchema = new mongoose.Schema(
   {
@@ -79,6 +80,14 @@ const usersSchema = new mongoose.Schema(
     },
     token:{
       type:String,
+    },
+    schoolVoucher:{
+      voucherId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "bookSchools",
+      },
+      createdAt: { type: Date, default: Date.now, },
+      expiredAt: { type: Date, default: () => new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) },
     }
   },
   { timestamps: true }

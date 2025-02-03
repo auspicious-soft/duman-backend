@@ -8,8 +8,6 @@ import {  getUserDashboardStats,  } from "src/controllers/user/user-controller";
 
 const router = Router();
 
-
-
 router.get("/dashboard/:id", getUserDashboardStats);
 
 //book-events routes
@@ -19,8 +17,6 @@ router.get("/events/:id", getEventByIdHandler);
 // book-lives route
 router.get("/book-lives", getAllBookLives);
 router.get("/book-lives/:id", getBookLive);
-
-
 
 //rating route
 router.put("/books/rating/:id", AddBookRating);
