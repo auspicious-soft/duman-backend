@@ -19,7 +19,15 @@ export const createCollectionService = async (payload: any, res: Response) => {
 
 
 export const getCollectionService = async (id: string, res: Response) => {
-  const collection = await collectionsModel.findById(id).populate('booksId');
+  const collection = await collectionsModel.findById(id).populate({
+    path: "booksId",
+    populate: [
+      { path: "authorId" }, 
+      { path: "categoryId" }, 
+      { path: "subCategoryId" }, 
+      { path: "publisherId" }, 
+    ],
+  });;
   if (!collection) return errorResponseHandler("Collection not found", httpStatusCode.NOT_FOUND, res);
   return {
     success: true,

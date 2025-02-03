@@ -45,9 +45,9 @@ router.delete("/events/:id", deleteEventHandler);
 router.post("/categories", createCategory);
 router.get("/categories", getAllCategories);
 router.get("/categories/:id", getCategory);
-router.get("/categories/:id/add", addBooksToCategory);
 router.get("/categories/:categoryId/sub-categories", getSubCategoriesByCategoryId);
 router.put("/categories/:id", updateCategory);
+router.put("/categories/:id/add", addBooksToCategory);
 router.delete("/categories/:id", deleteCategory);
 
 // sub-categories routes
@@ -56,7 +56,7 @@ router.post("/sub-categories", createSubCategory);
 router.get("/sub-categories", getAllSubCategory);
 router.get("/sub-categories/:id", getSubCategory);
 router.put("/sub-categories/:id", updateSubCategory);
-router.get("/sub-categories/:id/add", addBooksToSubCategory);
+router.put("/sub-categories/:id/add", addBooksToSubCategory);
 
 router.delete("/sub-categories/:id", deleteSubCategory);
 

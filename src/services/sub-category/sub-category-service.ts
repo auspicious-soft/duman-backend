@@ -26,6 +26,9 @@ export const createSubCategoryService = async (payload: any, res: Response) => {
 export const getSubCategoriesService = async (payload: any,id:string,res: Response) => {
     try {
         const subCategories = await subCategoriesModel.findById(id);
+        if (!subCategories) {
+          return errorResponseHandler("No sub-categories", httpStatusCode.NO_CONTENT, res);
+        }
         const page = parseInt(payload.page as string) || 1;
         const limit = parseInt(payload.limit as string) || 0;
         const offset = (page - 1) * limit;
@@ -41,7 +44,8 @@ export const getSubCategoriesService = async (payload: any,id:string,res: Respon
           .sort(sort)
           .skip(offset)
           .limit(limit)
-          .select("-__v");
+          .select("-__v")
+          .populate("authorId");
       
         if (!books || books.length === 0) {
           return errorResponseHandler("No blog found for this category", httpStatusCode.NO_CONTENT, res);
@@ -90,43 +94,95 @@ export const getAllSubCategoriesService = async (payload:any, res: Response) => 
       }
 };
  
-export const getSubCategoriesByCategoryIdService = async (payload:any,categoryId: string, res: Response) => {
-        const subCategories = await subCategoriesModel.find({ categoryId }).select("-__v").populate('categoryId').lean();
-        const page = parseInt(payload.page as string) || 1;
-        const limit = parseInt(payload.limit as string) || 0;
-        const offset = (page - 1) * limit;
-        const { query, sort } = nestedQueryBuilder(payload, ["name"]);
+// export const getSubCategoriesByCategoryIdService = async (payload:any,categoryId: string, res: Response) => {
+//         const subCategories = await subCategoriesModel.find({ categoryId }).select("-__v").populate('categoryId').lean();
+//         const page = parseInt(payload.page as string) || 1;
+//         const limit = parseInt(payload.limit as string) || 0;
+//         const offset = (page - 1) * limit;
+//         const { query, sort } = nestedQueryBuilder(payload, ["name"]);
       
-        const totalDataCount =
-          Object.keys(query).length < 1
-            ? await productsModel.countDocuments({ categoryId: categoryId })
-            : await productsModel.countDocuments({ ...query, categoryId: categoryId });
+//         const totalDataCount =
+//           Object.keys(query).length < 1
+//             ? await productsModel.countDocuments({ categoryId: categoryId })
+//             : await productsModel.countDocuments({ ...query, categoryId: categoryId });
       
-        const books = await productsModel
-          .find({ ...query, categoryId: categoryId })
-          .sort(sort)
-          .skip(offset)
-          .limit(limit)
-          .select("-__v");
-      
-        if (!books || books.length === 0) {
-          return errorResponseHandler("No blog found for this category", httpStatusCode.NO_CONTENT, res);
-        }
-      
-        if ((!subCategories || subCategories.length === 0) && (!books || books.length === 0)) {
-            return errorResponseHandler("No sub-categories and book found for this category", httpStatusCode.NO_CONTENT, res);
-        }
-        const response = subCategories.length > 0 ? subCategories : books;
+//         const books = await productsModel
+//           .find({ ...query, categoryId: categoryId })
+//           .sort(sort)
+//           .skip(offset)
+//           .limit(limit)
+//           .select("-__v")
+//           .populate("authorId");
+//         let categoryBooks;
+//         if (!books || books.length === 0) {
+//           return errorResponseHandler("No blog found for this category", httpStatusCode.NO_CONTENT, res);
+//         }
 
-        return {
-            success: true,
-            message: "Sub categories retrieved successfully",
-            data: { response },
-            page,
-            limit,
-            total: totalDataCount,
-        };
+//         if(subCategories.length <= 0){
+//           categoryBooks=books;
+//         }
+      
+//         if ((!subCategories || subCategories.length === 0) && (!books || books.length === 0)) {
+//             return errorResponseHandler("No sub-categories and book found for this category", httpStatusCode.NO_CONTENT, res);
+//         }
+//         const response = subCategories.length > 0 ? subCategories : books;
+
+//         return {
+//             success: true,
+//             message: "Sub categories retrieved successfully",
+//             data: { subCategories,books },
+//             page,
+//             limit,
+//             total: totalDataCount,
+//         };
     
+// };
+
+
+export const getSubCategoriesByCategoryIdService = async (payload: any, categoryId: string, res: Response) => {
+  const subCategories = await subCategoriesModel.find({ categoryId }).select("-__v").populate('categoryId').lean();
+  const page = parseInt(payload.page as string) || 1;
+  const limit = parseInt(payload.limit as string) || 0;
+  const offset = (page - 1) * limit;
+  const { query, sort } = nestedQueryBuilder(payload, ["name"]);
+
+  const totalDataCount =
+      Object.keys(query).length < 1
+          ? await productsModel.countDocuments({ categoryId: categoryId })
+          : await productsModel.countDocuments({ ...query, categoryId: categoryId });
+
+  const books = await productsModel
+      .find({ ...query, categoryId: categoryId })
+      .sort(sort)
+      .skip(offset)
+      .limit(limit)
+      .select("-__v")
+      .populate("authorId");
+
+  // Return "No blog found" only if there are no books and subcategories exist
+  if (subCategories.length > 0 && (!books || books.length === 0)) {
+      return errorResponseHandler("No blog found for this category", httpStatusCode.NO_CONTENT, res);
+  }
+  // If neither subcategories nor books exist, return appropriate error
+  if (subCategories.length === 0 && books.length === 0) {
+      return errorResponseHandler("No sub-categories and book found for this category", httpStatusCode.NO_CONTENT, res);
+  }
+  const response = subCategories.length > 0
+  ? { subcategory: subCategories, books: [] }
+  : { subcategory: [], books:books };
+  // If there are no subcategories, books should be an empty array
+  // const responseBooks = subCategories.length > 0 ? books : [];
+
+
+
+  return {
+      success: true,
+      message: "Sub categories retrieved successfully",
+      data: response  ,
+      page,
+      limit,
+      total: totalDataCount,
+  };
 };
 
 export const updateSubCategoryService = async (id: string, payload: any, res: Response) => {
@@ -160,9 +216,6 @@ export const deleteSubCategoryService = async (id: string, res: Response) => {
 export const addBookToSubCategoryService = async (payload: any,id:string, res: Response) => {
   try {
     const { booksId} = payload;
-
-    // Convert booksId to ObjectId
-  //   const objectIdArray = booksId.map((id: string) => new mongoose.Types.ObjectId(id));
 
   const updatedBooks = await productsModel.updateMany(
     { _id: { $in: booksId } },

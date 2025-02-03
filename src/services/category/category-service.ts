@@ -124,7 +124,6 @@ export const deleteCategoryService = async (id: string, res: Response) => {
 export const addBookToCategoryService = async (payload: any,id:string, res: Response) => {
   try {
     const { booksId} = payload;
-    console.log('booksId: ', booksId);
 
     const updatedBooks = await productsModel.updateMany(
       { _id: { $in: booksId } },

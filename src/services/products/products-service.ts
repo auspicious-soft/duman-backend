@@ -149,11 +149,7 @@ export const updateBookService = async (id: string, payload: any, res: Response)
 
 export const addBookToDiscountsService = async (payload: any, res: Response) => {
     try {
-      const { booksId, discountPercentage } = payload;
-  
-      // Convert booksId to ObjectId
-    //   const objectIdArray = booksId.map((id: string) => new mongoose.Types.ObjectId(id));
-  
+      const { booksId, discountPercentage } = payload; 
       const updatedBooks = await productsModel.updateMany(
         { _id: { $in: booksId } },
         {
