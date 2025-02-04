@@ -3,13 +3,36 @@ import path from 'path';
 
 // Initialize Firebase Admin SDK
 
-const serviceAccount = require(path.join(__dirname, 'config/firebase-adminsdk.json'));
+
+// admin.initializeApp({
+//   credential: admin.credential.cert(serviceAccount),
+// });
+// Function to send notification
+
+
+// export const sendNotification = async (fcmToken: string, title: string, body: string): Promise<void> => {
+//     const message: NotificationMessage = {
+//         notification: {
+//             title: title,
+//             body: body,
+//         },
+//         token: fcmToken, // Client's FCM token
+//     };
+
+//     try {
+//         const response: string = await admin.messaging().send(message);
+//         console.log('Successfully sent message:', response);
+//     } catch (error) {
+//         console.error('Error sending message:', error);
+//     }
+// };
+const serviceAccount = require(path.join(__dirname, '../../firebase-service.json'));
 
 admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
+    credential: admin.credential.cert(serviceAccount),
 });
-// Function to send notification
-interface NotificationMessage {
+
+export interface NotificationMessage {
     notification: {
         title: string;
         body: string;
@@ -17,22 +40,28 @@ interface NotificationMessage {
     token: string;
 }
 
-const sendNotification = async (fcmToken: string, title: string, body: string): Promise<void> => {
+export interface NotificationPayload {
+    title: string;
+    description: string;
+    userIds?: string[];
+}
+
+export const sendNotification = async (fcmToken: string, title: string, body: string): Promise<void> => {
     const message: NotificationMessage = {
         notification: {
-            title: title,
-            body: body,
+            title,
+            body,
         },
-        token: fcmToken, // Client's FCM token
+        token: fcmToken,
     };
 
     try {
-        const response: string = await admin.messaging().send(message);
-        console.log('Successfully sent message:', response);
+        const response = await admin.messaging().send(message);
+        console.log('Successfully sent FCM message:', response);
     } catch (error) {
-        console.error('Error sending message:', error);
+        console.error('Error sending FCM message:', error);
+        throw error;
     }
 };
-
 // Example usage
 // sendNotification('<CLIENT_FCM_TOKEN>', 'Hello', 'This is a test notification');

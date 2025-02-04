@@ -160,7 +160,7 @@ export const getBooksByPublisherService = async (payload: any, req: any, res: Re
     query.publisherId = req.currentUser;
 
     const totalDataCount = Object.keys(query).length < 1 ? await productsModel.countDocuments() : await productsModel.countDocuments(query);
-    const results = await productsModel.find(query).sort(sort).skip(offset).limit(limit).populate("categoryId");
+    const results = await productsModel.find(query).sort(sort).skip(offset).limit(limit).populate("categoryId").populate("authorId");
     return {
       success: true,
       message: "Books retrieved successfully",
@@ -213,7 +213,7 @@ export const getBookByIdPublisherService = async (bookId: string,payload:any,cur
     const currentMonth = new Date().getMonth() + 1; // January = 0, so add 1
 
     // Step 1: Fetch the book details by ID
-    const book = await productsModel.findById(bookId);
+    const book = await productsModel.findById(bookId).populate("authorId");
     if (!book) {
       throw new Error("Book not found");
     }
