@@ -13,19 +13,18 @@ import { addedUserCreds, sendEmailVerificationMail, sendLoginCredentialsEmail, s
 import { passwordResetTokenModel } from "src/models/password-token-schema";
 import { generateOtpWithTwilio } from "src/utils/sms/sms";
 import { generateUserToken, getSignUpQueryByAuthType, handleExistingUser, hashPasswordIfEmailAuth, sendOTPIfNeeded, validatePassword, validateUserForLogin } from "src/utils/userAuth/signUpAuth";
-import { productsModel } from "src/models/products/products-schema";
-import { eventsModel } from "src/models/events/events-schema";
+
 configDotenv();
 
 export interface UserPayload {
-  _id?:string;
+  _id?: string;
   email: string;
   fullName: string;
   password?: string;
   phoneNumber?: string;
   language?: string;
-  authType?:string;
-  role?:string;
+  authType?: string;
+  role?: string;
 }
 
 const sanitizeUser = (user: any): UserDocument => {
@@ -34,28 +33,27 @@ const sanitizeUser = (user: any): UserDocument => {
   delete sanitized.otp;
   return sanitized;
 };
-export const loginUserService = async (userData:UserDocument, authType:string, res:Response) => {
+export const loginUserService = async (userData: UserDocument, authType: string, res: Response) => {
   try {
     let query = getSignUpQueryByAuthType(userData, authType);
-    let user:any = await usersModel.findOne(query);
-    let validationResponse = validateUserForLogin(user, authType,userData, res);
+    let user: any = await usersModel.findOne(query);
+    let validationResponse = validateUserForLogin(user, authType, userData, res);
     if (validationResponse) return validationResponse;
-    
-    if (authType === 'Email') {
+
+    if (authType === "Email") {
       let passwordValidationResponse = await validatePassword(userData, user.password, res);
       if (passwordValidationResponse) return passwordValidationResponse;
     }
-    
+
     user.token = generateUserToken(user as any);
     await user.save();
     return sanitizeUser(user);
-  } catch (error:any) {
+  } catch (error: any) {
     return errorResponseHandler(error.message, httpStatusCode.INTERNAL_SERVER_ERROR, res);
   }
 };
 
-
-export const signUpService = async (userData:UserDocument, authType:string, res:Response) => {
+export const signUpService = async (userData: UserDocument, authType: string, res: Response) => {
   try {
     if (!authType) {
       return errorResponseHandler("Auth type is required", httpStatusCode.BAD_REQUEST, res);
@@ -93,7 +91,7 @@ export const signUpService = async (userData:UserDocument, authType:string, res:
 };
 
 export const forgotPasswordUserService = async (payload: any, res: Response) => {
-  const {email} = payload;
+  const { email } = payload;
   const user = await usersModel.findOne({ email }).select("+password");
   if (!user) return errorResponseHandler("Email not found", httpStatusCode.NOT_FOUND, res);
   const passwordResetToken = await generatePasswordResetToken(email);
@@ -116,13 +114,13 @@ export const newPassswordAfterOTPVerifiedUserService = async (payload: { passwor
   let existingUser: any;
 
   if (existingToken.email) {
-    existingUser = await usersModel.findOne({ email: existingToken.email, authType:"Email" });
+    existingUser = await usersModel.findOne({ email: existingToken.email, authType: "Email" });
   } else if (existingToken.phoneNumber) {
     existingUser = await usersModel.findOne({ phoneNumber: existingToken.phoneNumber });
   }
- if(!existingUser){
-  return errorResponseHandler(`Please try login with ${existingUser.authType}`, httpStatusCode.BAD_REQUEST, res);
- }
+  if (!existingUser) {
+    return errorResponseHandler(`Please try login with ${existingUser.authType}`, httpStatusCode.BAD_REQUEST, res);
+  }
   const hashedPassword = await bcrypt.hash(password, 10);
   const response = await usersModel.findByIdAndUpdate(existingUser._id, { password: hashedPassword }, { new: true });
   await passwordResetTokenModel.findByIdAndDelete(existingToken._id);
@@ -156,12 +154,11 @@ export const createUserService = async (payload: any, res: Response) => {
   // payload.password = hashedPassword;
 
   const newUser = new usersModel(payload);
-    await addedUserCreds(newUser);        
-    newUser.password = await hashPasswordIfEmailAuth(payload,"Email");
+  await addedUserCreds(newUser);
+  newUser.password = await hashPasswordIfEmailAuth(payload, "Email");
 
   const response = await newUser.save();
 
-  
   return {
     success: true,
     message: "User created successfully",
@@ -172,27 +169,23 @@ export const createUserService = async (payload: any, res: Response) => {
 export const getUserService = async (id: string, res: Response) => {
   const user = await usersModel.findById(id);
   if (!user) return errorResponseHandler("User not found", httpStatusCode.NOT_FOUND, res);
-  const totalAmountPaidResult = await ordersModel.aggregate([
-    { $match: { userId: user._id } },
-    { $group: { _id: null, totalAmount: { $sum: "$totalAmount" } } }
-  ]);
+  const totalAmountPaidResult = await ordersModel.aggregate([{ $match: { userId: user._id } }, { $group: { _id: null, totalAmount: { $sum: "$totalAmount" } } }]);
   const amountPaid = totalAmountPaidResult.length > 0 ? totalAmountPaidResult[0].totalAmount : 0;
- // Fetch all orders for the user
- const userOrders = await ordersModel.find({ userId: user._id }).populate({ path: "productIds", model: "products" });
+  // Fetch all orders for the user
+  const userOrders = await ordersModel.find({ userId: user._id }).populate({ path: "productIds", model: "products" });
 
- // Calculate the number of books purchased by the user
- const booksPurchasedCount = userOrders.reduce((count, order) => {
-   return count + order.productIds.filter((product: any) => product.type === "e-book").length;
- }, 0);
+  // Calculate the number of books purchased by the user
+  const booksPurchasedCount = userOrders.reduce((count, order) => {
+    return count + order.productIds.filter((product: any) => product.type === "e-book").length;
+  }, 0);
 
- // Calculate the number of courses purchased by the user
- const courseCount = userOrders.reduce((count, order) => {
-   return count + order.productIds.filter((product: any) => product.type === "course").length;
- }, 0);
+  // Calculate the number of courses purchased by the user
+  const courseCount = userOrders.reduce((count, order) => {
+    return count + order.productIds.filter((product: any) => product.type === "course").length;
+  }, 0);
 
- // Calculate the number of events attended by the user
-//  const eventsCount = await eventsModel.countDocuments({ userId: user._id });
-
+  // Calculate the number of events attended by the user
+  //  const eventsCount = await eventsModel.countDocuments({ userId: user._id });
 
   return {
     success: true,
@@ -297,7 +290,7 @@ export const getAllUserService = async (payload: any, res: Response) => {
   const page = parseInt(payload.page as string) || 1;
   const limit = parseInt(payload.limit as string) || 0;
   const offset = (page - 1) * limit;
-  let { query, sort } = nestedQueryBuilder(payload, ['name', "email"]);
+  let { query, sort } = nestedQueryBuilder(payload, ["name", "email"]);
   if (payload.duration) {
     const durationDays = parseInt(payload.duration);
     if (durationDays === 30 || durationDays === 7) {
@@ -326,8 +319,6 @@ export const getAllUserService = async (payload: any, res: Response) => {
     };
   }
 };
-
-
 
 export const generateAndSendOTP = async (payload: { email?: string; phoneNumber?: string }) => {
   const { email, phoneNumber } = payload;
@@ -367,7 +358,7 @@ export const verifyOTPService = async (payload: any) => {
     "otp.code": otp,
     "otp.expiresAt": { $gt: new Date() },
   });
-  console.log('user: ', user);
+  console.log("user: ", user);
 
   if (!user) {
     throw new Error("Invalid or expired OTP");
