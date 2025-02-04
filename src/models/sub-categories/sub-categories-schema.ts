@@ -2,18 +2,18 @@ import mongoose, { Mongoose } from "mongoose";
 
 const subCategoriesSchema = new mongoose.Schema(
   {
-    categoryId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "categories",
-      // requried: true,
+    name: {
+      type: Object,
+      requried: true,
     },
     image: {
       type: String,
     //   requried: true,
     },
-    name: {
-      type: Object,
-      requried: true,
+    categoryId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "categories",
+      // requried: true,
     },
   },
   { timestamps: true }
