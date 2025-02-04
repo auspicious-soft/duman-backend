@@ -13,24 +13,24 @@ declare global {
     }
 }
 
-// export const checkAuth = async (req: Request, res: Response, next: NextFunction) => {
-//     try {
-//         const token = req.headers.authorization?.split(" ")[1]
-//         if (!token) return res.status(httpStatusCode.UNAUTHORIZED).json({ success: false, message: "Unauthorized token missing" })
-//         const decoded = await decode({
-//             secret: process.env.AUTH_SECRET as string,
-//             token,
-//             salt: process.env.JWT_SALT as string
-//         })
-//         if (!decoded) return res.status(httpStatusCode.UNAUTHORIZED).json({ success: false, message: "Unauthorized token invalid or expired" });
-//         (req as any).currentUser = decoded.id
+export const checkPublisherAuth = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const token = req.headers.authorization?.split(" ")[1]
+        if (!token) return res.status(httpStatusCode.UNAUTHORIZED).json({ success: false, message: "Unauthorized token missing" })
+        const decoded = await decode({
+            secret: process.env.AUTH_SECRET as string,
+            token,
+            salt: process.env.JWT_SALT as string
+        })
+        if (!decoded) return res.status(httpStatusCode.UNAUTHORIZED).json({ success: false, message: "Unauthorized token invalid or expired" });
+        (req as any).currentUser = decoded.id
 
-//         next()
-//     } catch (error) { 
-//         console.log('error: ', error);
-//         return res.status(httpStatusCode.UNAUTHORIZED).json({ success: false, message: "Unauthorized" })
-//     }
-// }
+        next()
+    } catch (error) { 
+        console.log('error: ', error);
+        return res.status(httpStatusCode.UNAUTHORIZED).json({ success: false, message: "Unauthorized" })
+    }
+}
 export const checkAuth = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const token = req.headers.authorization?.split(" ")[1]

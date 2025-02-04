@@ -71,10 +71,10 @@ export const getBookByIdPublisher = async (req: Request, res: Response) => {
         return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
     }
 };
-export const publisherDashboard = async (req: Request, res: Response) => {
+export const publisherDashboard = async (req: any, res: Response) => {
     try {
-        const currentUser = "6793288c2bf260ac53d4cf4e"
-        const response = await publisherDashboardService(req.query,currentUser, res);
+        //to be improved
+        const response = await publisherDashboardService(req.query,req.currentUser, res);
         return res.status(httpStatusCode.OK).json(response);
     } catch (error: any) {
         const { code, message } = errorParser(error);

@@ -11,7 +11,7 @@ import bodyParser from 'body-parser'
 import { login, newPassswordAfterOTPVerified } from "./controllers/admin/admin-controller"
 import { forgotPassword } from "./controllers/admin/admin-controller"
 import {  verifyOtpPasswordReset, forgotPasswordUser, newPassswordAfterOTPVerifiedUser,verifyOTP, resendOTP, loginUser, userSignup } from "./controllers/user/user-controller";
-import { checkAuth } from "./middleware/check-auth"
+import { checkAuth,checkPublisherAuth } from "./middleware/check-auth"
 
 // Create __dirname equivalent for ES modules
 const __filename = fileURLToPath(import.meta.url) // <-- Define __filename
@@ -59,7 +59,7 @@ app.get("/", (_, res: any) => {
 });
 
 app.use("/api/admin",checkValidAdminRole, admin);
-app.use("/api/publisher",checkValidPublisherRole, publisher);
+app.use("/api/publisher",checkValidPublisherRole,checkPublisherAuth, publisher);
 app.use("/api/user", user);
 
 //adminAuth routes

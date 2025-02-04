@@ -9,7 +9,7 @@ import { ordersModel } from "../../models/orders/orders-schema";
 import { deleteFileFromS3 } from "src/config/s3";
 import { configDotenv } from "dotenv";
 
-import { sendEmailVerificationMail, sendLoginCredentialsEmail, sendPasswordResetEmail } from "src/utils/mails/mail";
+import { addedUserCreds, sendEmailVerificationMail, sendLoginCredentialsEmail, sendPasswordResetEmail } from "src/utils/mails/mail";
 import { passwordResetTokenModel } from "src/models/password-token-schema";
 import { generateOtpWithTwilio } from "src/utils/sms/sms";
 import { generateUserToken, getSignUpQueryByAuthType, handleExistingUser, hashPasswordIfEmailAuth, sendOTPIfNeeded, validatePassword, validateUserForLogin } from "src/utils/userAuth/signUpAuth";
@@ -156,11 +156,12 @@ export const createUserService = async (payload: any, res: Response) => {
   // payload.password = hashedPassword;
 
   const newUser = new usersModel(payload);
+    await addedUserCreds(newUser);        
+    newUser.password = await hashPasswordIfEmailAuth(payload,"Email");
+
   const response = await newUser.save();
 
-  if (response.email && response.password) {
-    await sendLoginCredentialsEmail(response.email, response.password);
-  }
+  
   return {
     success: true,
     message: "User created successfully",

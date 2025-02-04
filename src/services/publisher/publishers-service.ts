@@ -7,14 +7,13 @@ import { publishersModel } from "../../models/publishers/publishers-schema";
 import { productsModel } from "src/models/products/products-schema";
 import { deleteFileFromS3 } from "src/config/s3";
 import mongoose, { PipelineStage } from "mongoose";
-import { ordersModel } from "src/models/orders/orders-schema"; // Add this import
-import moment from "moment"; // Add this import for date manipulation
+import { ordersModel } from "src/models/orders/orders-schema"; 
 import { addedUserCreds } from "src/utils/mails/mail";
 import { hashPasswordIfEmailAuth } from "src/utils/userAuth/signUpAuth";
 
 export const createPublisherService = async (payload: any, res: Response) => {
   const newPublisher = new publishersModel(payload);
-  await addedUserCreds(payload);        
+  await addedUserCreds(newPublisher);        
   newPublisher.password = await hashPasswordIfEmailAuth(payload,"Email");
   
   const savedPublisher = await newPublisher.save();
@@ -158,7 +157,7 @@ export const getBooksByPublisherService = async (payload: any, req: any, res: Re
     if (payload.type) {
       query.type = payload.type;
     }
-    // query.publisherId = req.currentUser;
+    query.publisherId = req.currentUser;
 
     const totalDataCount = Object.keys(query).length < 1 ? await productsModel.countDocuments() : await productsModel.countDocuments(query);
     const results = await productsModel.find(query).sort(sort).skip(offset).limit(limit).populate("categoryId");
