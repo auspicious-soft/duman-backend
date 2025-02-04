@@ -6,6 +6,11 @@ const publishersSchema = new mongoose.Schema(
       type: Object,
       requried: true,
     },
+    role:{
+      type: String,
+      requried: true,
+      default: "publisher"
+    },
     categoryId: {
       type: [mongoose.Schema.Types.ObjectId],
       ref: "categories",

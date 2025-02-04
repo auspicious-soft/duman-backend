@@ -154,7 +154,6 @@ export const getSubCategoriesByCategoryIdService = async (payload: any, category
   // Construct query for sub-categories
   const subCategoriesQuery = { ...query, categoryId: categoryId }; 
 
-  // Get sub-categories with pagination
   const subCategories = await subCategoriesModel
     .find(subCategoriesQuery) 
     .sort(sort)
@@ -166,10 +165,10 @@ export const getSubCategoriesByCategoryIdService = async (payload: any, category
 
   const subCategoriesLength = subCategories.length;
 
-  // Fetch books with pagination
-  const booksQuery = { ...query, categoryId: categoryId }; // Apply the same query to books
+  
+  const booksQuery = { ...query, categoryId: categoryId }; 
   const books = await productsModel
-    .find(booksQuery) // Use the same query for books
+    .find(booksQuery) 
     .sort(sort)
     .skip(subCategoriesLength === 0 ? offset : 0)
     .limit(subCategoriesLength === 0 ? limit : 0)
