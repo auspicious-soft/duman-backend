@@ -9,9 +9,14 @@ import { deleteFileFromS3 } from "src/config/s3";
 import mongoose, { PipelineStage } from "mongoose";
 import { ordersModel } from "src/models/orders/orders-schema"; // Add this import
 import moment from "moment"; // Add this import for date manipulation
+import { addedUserCreds } from "src/utils/mails/mail";
+import { hashPasswordIfEmailAuth } from "src/utils/userAuth/signUpAuth";
 
 export const createPublisherService = async (payload: any, res: Response) => {
   const newPublisher = new publishersModel(payload);
+  await addedUserCreds(payload);        
+  newPublisher.password = await hashPasswordIfEmailAuth(payload,"Email");
+  
   const savedPublisher = await newPublisher.save();
   return {
     success: true,

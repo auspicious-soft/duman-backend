@@ -28,7 +28,6 @@ const publishersSchema = new mongoose.Schema(
     country: {
       type: String,
     },
-
     image: {
       type: String,
       default: null,

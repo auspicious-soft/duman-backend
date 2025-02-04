@@ -16,6 +16,7 @@ import { usersModel } from "src/models/user/user-schema";
 import { eventsModel } from "../../models/events/events-schema";
 import { productsModel } from "src/models/products/products-schema";
 import { ordersModel } from "src/models/orders/orders-schema";
+import { publishersModel } from "src/models/publishers/publishers-schema";
 
 export const loginService = async (payload: any, res: Response) => {
   const { username, password } = payload;
@@ -27,15 +28,11 @@ export const loginService = async (payload: any, res: Response) => {
   if (isEmail) {
     user = await adminModel.findOne({ email: username }).select("+password");
     if (!user) {
-      user = await usersModel.findOne({ email: username }).select("+password");
+      user = await publishersModel.findOne({ email: username }).select("+password");
     }
-  } else {
-    const formattedPhoneNumber = `${countryCode}${username}`;
-    user = await adminModel.findOne({ phoneNumber: formattedPhoneNumber }).select("+password");
-    if (!user) {
-      user = await usersModel.findOne({ phoneNumber: formattedPhoneNumber }).select("+password");
-    }
-  }
+  } 
+  
+  console.log('user: ', user);
 
   if (!user) return errorResponseHandler("User not found", httpStatusCode.NOT_FOUND, res);
   const isPasswordValid = await bcrypt.compare(password, user.password);
