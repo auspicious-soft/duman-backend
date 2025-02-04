@@ -372,7 +372,6 @@ export const publisherDashboardService = async (payload: any, currentUser: strin
       model: "products", // Ensure this matches your Mongoose model name
     });
     
-    console.log('orders: ', orders);
     let bookCounts: Record<string, number> = {};
     // // **2. Extract and Filter Books for the Given Publisher**
     orders.forEach((order) => {

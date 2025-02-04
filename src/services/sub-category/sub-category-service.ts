@@ -86,72 +86,12 @@ export const getAllSubCategoriesService = async (payload: any, res: Response) =>
   }
 };
 
-
-
-// export const getSubCategoriesByCategoryIdService = async (payload: any, categoryId: string, res: Response) => {
-//   console.log('payload: ', payload);
-//   const page = parseInt(payload.page as string) || 1;
-//   const limit = parseInt(payload.limit as string) || 0;
-//   const offset = (page - 1) * limit;
-//   const { query, sort } = nestedQueryBuilder(payload, ["name"]);
-
-//   // Fetch sub-categories with pagination if necessary
-//   const subCategoriesQuery = {  categoryId: categoryId,...query, };
-//   console.log('subCategoriesQuery: ', subCategoriesQuery);
-//   const subCategoriesLength = subCategoriesQuery ? await subCategoriesModel.countDocuments(subCategoriesQuery) : 0;
-//   const subCategories:any[] = subCategoriesQuery
-//     ? await subCategoriesModel
-//         .find(subCategoriesQuery)
-//         .sort(sort)
-//         .skip(subCategoriesLength > 0 ? offset : 0) // Apply pagination only when subCategories are not empty
-//         .limit(subCategoriesLength > 0 ? limit : 0) // Apply limit only when subCategories are not empty
-//         .select("-__v")
-//         .populate("categoryId")
-//         .lean()
-//     : [];
-
-//   // Fetch books with pagination
-//   const booksQuery = { ...query, categoryId: categoryId };
-//   const books = await productsModel
-//     .find(booksQuery)
-//     .sort(sort)
-//     .skip(subCategoriesLength === 0 ? offset : 0) // Apply pagination only if subCategories are empty
-//     .limit(subCategoriesLength === 0 ? limit : 0) // Apply limit only if subCategories are empty
-//     .select("-__v")
-//     .populate("authorId");
-
-//   if (subCategories.length > 0 && (!books || books.length === 0)) {
-//     return errorResponseHandler("No blog found for this category", httpStatusCode.NO_CONTENT, res);
-//   }
-//   if (subCategories.length === 0 && books.length === 0) {
-//     return errorResponseHandler("No sub-categories and book found for this category", httpStatusCode.NO_CONTENT, res);
-//   }
-
-//   const response = subCategories.length > 0 ? { subcategory: subCategories, books: [] } : { subcategory: [], books: books };
-
-//   // If sub-categories are available, count documents for both sub-categories and books
-//   const totalDataCount = subCategories.length < 0 
-//     ? (Object.keys(query).length < 1 ? await productsModel.countDocuments({ categoryId: categoryId }) : await productsModel.countDocuments({ ...query, categoryId: categoryId }))
-//     : (Object.keys(query).length < 1 ? await subCategoriesModel.countDocuments({ categoryId: categoryId }) : await subCategoriesModel.countDocuments({ ...query, categoryId: categoryId }));
-//   return {
-//     success: true,
-//     message: "Sub categories retrieved successfully",
-//     data: response,
-//     page,
-//     limit,
-//     total: totalDataCount,
-//   };
-// };
-
-
 export const getSubCategoriesByCategoryIdService = async (payload: any, categoryId: string, res: Response) => {
-  console.log('payload: ', payload);
   const page = parseInt(payload.page as string) || 1;
   const limit = parseInt(payload.limit as string) || 0;
   const offset = (page - 1) * limit;
   const { query, sort } = nestedQueryBuilder(payload, ["name"]); 
 
-  // Construct query for sub-categories
   const subCategoriesQuery = { ...query, categoryId: categoryId }; 
 
   const subCategories = await subCategoriesModel
@@ -161,7 +101,7 @@ export const getSubCategoriesByCategoryIdService = async (payload: any, category
     .limit(limit)
     .select("-__v")
     .populate("categoryId")
-    // .lean();
+    .lean();
 
   const subCategoriesLength = subCategories.length;
 
@@ -175,9 +115,7 @@ export const getSubCategoriesByCategoryIdService = async (payload: any, category
     .select("-__v")
     .populate("authorId");
 
-  if (subCategoriesLength > 0 && (!books || books.length === 0)) {
-    return errorResponseHandler("No blog found for this category", httpStatusCode.NO_CONTENT, res);
-  }
+  
   if (subCategoriesLength === 0 && books.length === 0) {
     return errorResponseHandler("No sub-categories and book found for this category", httpStatusCode.NO_CONTENT, res);
   }
