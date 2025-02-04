@@ -76,5 +76,5 @@ app.post("/api/resend-otp", resendOTP)
 app.post("/api/app/forgot-password", forgotPasswordUser)
 app.patch("/api/app/new-password-otp-verified", newPassswordAfterOTPVerifiedUser)
 
-
+// initializeFirebase()
 app.listen(PORT, () => console.log(`Server is listening on port ${PORT}`));

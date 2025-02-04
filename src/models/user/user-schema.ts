@@ -88,6 +88,10 @@ const usersSchema = new mongoose.Schema(
       },
       createdAt: { type: Date, default: Date.now, },
       expiredAt: { type: Date, default: () => new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) },
+    },
+    fcmToken: {
+      type: String,
+      default: null
     }
   },
   { timestamps: true }
