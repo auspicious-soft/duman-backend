@@ -35,23 +35,6 @@ export const queryBuilder = (payload: Payload, querySearchKeyInBackend = ['name'
     return { query, sort };
 }
 
-// export const nestedQueryBuilder = (payload: Payload, querySearchKeyInBackend = ['name']) => {
-//     let { description = '', order = '', orderColumn = '' } = payload;
-
-//     const query = description ? {  $or: querySearchKeyInBackend.flatMap(key => {
-//             return [
-//                 { [key]: { $regex: description, $options: 'i' } },
-//                 ...['eng', 'kaz', 'rus'].map(langKey => ({ [`${key}.${langKey}`]: { $regex: description, $options: 'i' } }))
-//             ];
-//         })
-//     } : {};
-
-//     const sort: { [key: string]: SortOrder } = order && orderColumn ? { [orderColumn]: order === 'asc' ? 1 : -1 } : {};
-
-//     return { query, sort };
-// }
-
-
 export const nestedQueryBuilder = (payload: Payload, querySearchKeyInBackend = ['name']) => {
     let { description = '', order = '', orderColumn = '' } = payload;
 

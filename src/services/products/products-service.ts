@@ -56,37 +56,68 @@ export const getBooksService = async (id: string, res: Response) => {
   }
 };
 
-export const getAllBooksService = async (payload: any, res: Response) => {
+
+export const getAllBooksService = async (payload: any) => {
+  console.log('payload: ', payload);
   const page = parseInt(payload.page as string) || 1;
   const limit = parseInt(payload.limit as string) || 0;
   const offset = (page - 1) * limit;
-  const { query, sort } = nestedQueryBuilder(payload, ["name"]) as { query: any; sort: any };
 
-  if (payload.type) {
-    query.type = payload.type;
+  
+  const query: any = payload.type ? { type: payload.type } : {}; 
+  
+  const sort: any = {};
+  if (payload.orderColumn && payload.order) {
+    sort[payload.orderColumn] = payload.order === "asc" ? 1 : -1;
   }
+  
 
-  const totalDataCount = Object.keys(query).length < 1 ? await productsModel.countDocuments() : await productsModel.countDocuments(query);
-  const results = await productsModel.find(query).sort(sort).skip(offset).limit(limit).populate([{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }]);
-  if (results.length)
-    return {
-      page,
-      limit,
-      success: true,
-      total: totalDataCount,
-      data: results,
-    };
-  else {
-    return {
-      data: [],
-      page,
-      limit,
-      success: false,
-      total: 0,
-    };
+  const results = await productsModel
+    .find(query)
+    .sort(sort)
+    .skip(offset)
+    .limit(limit)
+    .select("-__v")
+    .populate([
+        { path: "authorId" },
+        { path: "categoryId" },
+        { path: "subCategoryId" },
+        { path: "publisherId" },
+    ])
+    .lean();
+
+    let filteredResults = results;
+    let totalDataCount
+    totalDataCount = await productsModel.countDocuments(query)
+  if (payload.description) {
+    const searchQuery = payload.description.toLowerCase();
+
+    filteredResults = results.filter((book) => {
+      const product = book as any;
+      const authors = book?.authorId;
+      const productNames = product?.name
+      ? Object.values(product.name).map((val: any) => val.toLowerCase())
+      : [];
+
+      const authorNames: string[] = (authors as any[]).flatMap((author) =>
+        author && author.name ? Object.values(author.name).map((val: any) => val.toLowerCase()) : []
+    );
+    console.log('authorNames: ', authorNames);
+      return (
+        productNames.some((name) => name.includes(searchQuery)) ||
+        authorNames.some((name) => name.includes(searchQuery))
+      );
+    })
+    totalDataCount = filteredResults.length
   }
+  return {
+    page,
+    limit,
+    success: filteredResults.length > 0,
+    total: filteredResults.length > 0 ? totalDataCount : 0,
+    data: filteredResults,
+  };
 };
-
 export const getAllDiscountedBooksService = async (payload: any, res: Response) => {
   const page = parseInt(payload.page as string) || 1;
   const limit = parseInt(payload.limit as string) || 0;

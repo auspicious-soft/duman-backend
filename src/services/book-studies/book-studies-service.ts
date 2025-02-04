@@ -64,41 +64,102 @@ export const getBookStudyService = async (id: string, res: Response) => {
   };
 };
 
-export const getAllBookStudiesService = async (payload: any, res: Response) => {
+// export const getAllBookStudiesService = async (payload: any, res: Response) => {
+//   const page = parseInt(payload.page as string) || 1;
+//   const limit = parseInt(payload.limit as string) || 0;
+//   const offset = (page - 1) * limit;
+//   const { query, sort } = queryBuilder(payload, ["title"]);
+
+//   const totalDataCount = Object.keys(query).length < 1 ? await bookStudiesModel.countDocuments() : await bookStudiesModel.countDocuments(query);
+//   const results = await bookStudiesModel.find(query).sort(sort).skip(offset).limit(limit).select("-__v").populate({
+//     path: "productsId",
+//     populate: [
+//       { path: "authorId" }, 
+//       { path: "categoryId" }, 
+//       { path: "subCategoryId" }, 
+//       { path: "publisherId" }, 
+//     ],
+//   });
+//   if (results.length)
+//     return {
+//       page,
+//       limit,
+//       success: true,
+//       total: totalDataCount,
+//       data: results,
+//     };
+//   else {
+//     return {
+//       data: [],
+//       page,
+//       limit,
+//       success: false,
+//       total: 0,
+//     };
+//   }
+// };
+export const getAllBookStudiesService = async (payload: any) => {
   const page = parseInt(payload.page as string) || 1;
   const limit = parseInt(payload.limit as string) || 0;
   const offset = (page - 1) * limit;
-  const { query, sort } = queryBuilder(payload, ["title"]);
 
-  const totalDataCount = Object.keys(query).length < 1 ? await bookStudiesModel.countDocuments() : await bookStudiesModel.countDocuments(query);
-  const results = await bookStudiesModel.find(query).sort(sort).skip(offset).limit(limit).select("-__v").populate({
-    path: "productsId",
-    populate: [
-      { path: "authorId" }, 
-      { path: "categoryId" }, 
-      { path: "subCategoryId" }, 
-      { path: "publisherId" }, 
-    ],
-  });
-  if (results.length)
-    return {
-      page,
-      limit,
-      success: true,
-      total: totalDataCount,
-      data: results,
-    };
-  else {
-    return {
-      data: [],
-      page,
-      limit,
-      success: false,
-      total: 0,
-    };
+  const query: any = {}; 
+  
+  const sort: any = {};
+  if (payload.orderColumn && payload.order) {
+    sort[payload.orderColumn] = payload.order === "asc" ? 1 : -1;
   }
-};
+  
 
+  const results = await bookStudiesModel
+    .find(query)
+    .sort(sort)
+    .skip(offset)
+    .limit(limit)
+    .select("-__v")
+    .populate({
+      path: "productsId",
+      populate: [
+        { path: "authorId" },
+        { path: "categoryId" },
+        { path: "subCategoryId" },
+        { path: "publisherId" },
+      ],
+    })
+    .lean();
+
+    let filteredResults = results;
+    let totalDataCount
+    totalDataCount = await bookStudiesModel.countDocuments()
+  if (payload.description) {
+    const searchQuery = payload.description.toLowerCase();
+    // totalDataCount = await bookMastersModel.countDocuments(query);
+
+    filteredResults = results.filter((book) => {
+      const product = book.productsId as any;
+      const authors = product?.authorId;
+      const productNames = product?.name
+        ? Object.values(product.name).map((val: any) => val.toLowerCase())
+        : [];
+
+      const authorNames: string[] = (authors as any[]).flatMap((author) =>
+        author && author.name ? Object.values(author.name).map((val: any) => val.toLowerCase()) : []
+      );
+      return (
+        productNames.some((name) => name.includes(searchQuery)) ||
+        authorNames.some((name) => name.includes(searchQuery))
+      );
+    })
+    totalDataCount = filteredResults.length
+  }
+  return {
+    page,
+    limit,
+    success: filteredResults.length > 0,
+    total: filteredResults.length > 0 ? totalDataCount : 0,
+    data: filteredResults,
+  };
+};
 export const updateBookStudyService = async (id: string, payload: any, res: Response) => {
   const updatedBookStudy = await bookStudiesModel.findByIdAndUpdate(id, payload, {
     new: true,
