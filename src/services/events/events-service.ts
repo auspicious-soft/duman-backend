@@ -19,7 +19,7 @@ export const createEvent = async (eventData: Event) => {
   eventData.identifier = identifier();
   const event = new eventsModel(eventData);
   const savedEvent = await event.save();
-  return savedEvent;
+  return {savedEvent, success: true, message: "Event created successfully"};
 };
 
 export const getEventById = async (eventId: string): Promise<Event | null> => {
@@ -57,6 +57,7 @@ export const getAllEvents = async (payload: any) => {
       page,
       limit,
       success: true,
+      message: "Events retrieved successfully",
       total: totalDataCount,
       data: results
   }
@@ -66,6 +67,7 @@ export const getAllEvents = async (payload: any) => {
           page,
           limit,
           success: false,
+          message: "No events found",
           total: 0
       }
   }

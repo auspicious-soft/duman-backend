@@ -1,7 +1,6 @@
 import { Response } from "express";
 import { errorResponseHandler } from "../../lib/errors/error-response-handler";
 import { httpStatusCode } from "../../lib/constant";
-import { queryBuilder } from "src/utils";
 import { bookStudiesModel } from "../../models/book-studies/book-studies-schema"; // Import bookStudiesModel
 import { productsModel } from "src/models/products/products-schema";
 
@@ -18,7 +17,11 @@ export const addBooksToBookStudy = async (payload: any, res: Response) => {
       createdDocuments.push(newDocument); // Store the created document
     }
 
-    return createdDocuments; // Return an array of created documents
+    return {
+      success: true,
+      message: "Books added to bookMaster successfully",
+      createdDocuments
+    }; // Return an array of created documents
   } catch (error) {
     console.error("Error adding books to bookMaster:", error);
     throw new Error("Failed to add books to bookMaster");
@@ -155,6 +158,7 @@ export const getAllBookStudiesService = async (payload: any) => {
   return {
     page,
     limit,
+    message: "Book studies retrieved successfully",
     success: filteredResults.length > 0,
     total: filteredResults.length > 0 ? totalDataCount : 0,
     data: filteredResults,

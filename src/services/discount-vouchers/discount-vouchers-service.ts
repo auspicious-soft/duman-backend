@@ -80,6 +80,7 @@ export const getAllDiscountVouchersService = async (payload: any, res: Response)
       page,
       limit,
       success: true,
+      message: "Discount vouchers retrieved successfully",
       total: totalDataCount,
       data: results.map((voucher) => ({
         voucher,
@@ -91,6 +92,7 @@ export const getAllDiscountVouchersService = async (payload: any, res: Response)
       page,
       limit,
       success: false,
+      message: "Error retrieving discount vouchers",
       total: 0,
       data: [],
       error: error.message,

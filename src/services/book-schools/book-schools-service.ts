@@ -47,6 +47,7 @@ export const getBookSchoolService = async (payload: any, id: string, res: Respon
   return {
     success: true,
     data: { bookSchool, books },
+    message: "Book school retrieved successfully",
     page,
     limit,
     total: totalDataCount,
@@ -71,6 +72,7 @@ export const getAllBookSchoolsService = async (payload: any, res: Response) => {
   if (results.length)
     return {
       page,
+      message: "Book schools retrieved successfully",
       limit,
       success: true,
       total: totalDataCount,
@@ -80,19 +82,20 @@ export const getAllBookSchoolsService = async (payload: any, res: Response) => {
     return {
       data: [],
       page,
+      message: "No book schools found",
       limit,
       success: false,
       total: 0,
     };
   }
 };
-export const getBookSchoolsByCodeService = async (payload: any, res: Response) => {
+export const getBookSchoolsByCodeService = async (payload: any,user:any, res: Response) => {
   const page = parseInt(payload.page as string) || 1;
   const limit = parseInt(payload.limit as string) || 0;
   const offset = (page - 1) * limit;
   const { query, sort } = queryBuilder(payload, ["couponCode"]);
-  //to be improved
-  const userId = "679b1af8fe658ee117ea73f2";
+  //TODO
+  const userId = user.id;
   const schoolVoucher = (await usersModel.findById(userId))?.schoolVoucher;
   const totalDataCount = Object.keys(query).length < 1 ? await bookSchoolsModel.countDocuments() : await bookSchoolsModel.countDocuments(query);
 
@@ -112,6 +115,7 @@ export const getBookSchoolsByCodeService = async (payload: any, res: Response) =
     return {
       page,
       limit,
+      message: "Book schools retrieved successfully",
       success: true,
       total: totalDataCount,
       data: results,
@@ -119,6 +123,7 @@ export const getBookSchoolsByCodeService = async (payload: any, res: Response) =
   else {
     return {
       data: [],
+      message: "No book schools found",
       page,
       limit,
       success: false,
@@ -126,7 +131,7 @@ export const getBookSchoolsByCodeService = async (payload: any, res: Response) =
     };
   }
 };
-export const verifyBookSchoolsByCodeService = async (payload: any, res: Response) => {
+export const verifyBookSchoolsByCodeService = async (payload: any,userData:any, res: Response) => {
   const { query } = queryBuilder(payload, ["couponCode"]);
   const page = parseInt(payload.page as string) || 1;
   const limit = parseInt(payload.limit as string) || 0;
@@ -134,8 +139,15 @@ export const verifyBookSchoolsByCodeService = async (payload: any, res: Response
   const totalDataCount = Object.keys(query).length < 1 ? await bookSchoolsModel.countDocuments() : await bookSchoolsModel.countDocuments(query);
   const bookSchool = await bookSchoolsModel.find({ couponCode: payload.couponCode }).populate([{ path: "publisherId" }]);
   const bookSchoolId = bookSchool.map((school) => school._id);
-  //to be improved
-  const user = await usersModel.findOne({ email: "mansi.bhandari150@gmail.com" });
+   //TODO
+  let userQuery;
+  if(userData.email){
+    userQuery = { email: userData.email };
+  }else{
+    userQuery = { phoneNumber: userData.phoneNumber };
+  }
+  
+  const user = await usersModel.findOne(userQuery).populate([{ path: "schoolVoucher.voucherId" }]);
 
   if (user && user.schoolVoucher) {
     user.schoolVoucher.voucherId = bookSchoolId[0];
@@ -152,6 +164,7 @@ export const verifyBookSchoolsByCodeService = async (payload: any, res: Response
 
   return {
     success: true,
+    message: "Book school verified successfully",
     total: totalDataCount,
     data: user,
   };

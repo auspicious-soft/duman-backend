@@ -47,7 +47,7 @@ export const loginUserService = async (userData: UserDocument, authType: string,
 
     user.token = generateUserToken(user as any);
     await user.save();
-    return sanitizeUser(user);
+    return {success:true, message: "User logged in successfully", data:sanitizeUser(user)};
   } catch (error: any) {
     return errorResponseHandler(error.message, httpStatusCode.INTERNAL_SERVER_ERROR, res);
   }
@@ -80,7 +80,7 @@ export const signUpService = async (userData: UserDocument, authType: string, re
 
     user.token = generateUserToken(user as any);
     await user.save();
-    return sanitizeUser(user);
+    return {success:true, message: "User created successfully", data: sanitizeUser(user)};
   } catch (error) {
     if (error instanceof Error) {
       return errorResponseHandler(error.message, httpStatusCode.INTERNAL_SERVER_ERROR, res);
@@ -306,6 +306,7 @@ export const getAllUserService = async (payload: any, res: Response) => {
       page,
       limit,
       success: true,
+      message: "Users retrieved successfully",
       total: totalDataCount,
       data: results,
     };
@@ -315,6 +316,7 @@ export const getAllUserService = async (payload: any, res: Response) => {
       page,
       limit,
       success: false,
+      message: "No users found",
       total: 0,
     };
   }
@@ -347,7 +349,7 @@ export const generateAndSendOTP = async (payload: { email?: string; phoneNumber?
   if (user) {
     await user.save();
   }
-  return true;
+  return {sucess: true, message: "OTP sent successfully"};
 };
 
 export const verifyOTPService = async (payload: any) => {
@@ -375,5 +377,5 @@ export const verifyOTPService = async (payload: any) => {
   }
   await user.save();
 
-  return { user: sanitizeUser(user) };
+  return { user: sanitizeUser(user) , message: "OTP verified successfully" };
 };

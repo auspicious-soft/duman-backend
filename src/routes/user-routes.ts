@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { getAllAuthors } from "src/controllers/authors/authors-controller";
-import { getAllBookLives, getAllBookLivesWithBlogs, getBookLive } from "src/controllers/book-lives/book-lives-controller";
+import {  getAllBookLivesWithBlogs, getBookLive } from "src/controllers/book-lives/book-lives-controller";
 import { getBookSchoolsByCode, verifyBookSchoolsByCode } from "src/controllers/book-schools/book-schools-controller";
 import { getAllCollections, getCollection } from "src/controllers/collections/collections-controller";
 import { getAllEventsHandler, getEventByIdHandler } from "src/controllers/events/events-controller";

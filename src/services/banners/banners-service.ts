@@ -2,7 +2,6 @@ import { Response } from "express";
 import { errorResponseHandler } from "../../lib/errors/error-response-handler";
 import { httpStatusCode } from "../../lib/constant";
 import { nestedQueryBuilder, queryBuilder } from "src/utils";
-import { storiesModel } from "../../models/stories/stories-schema";
 import { deleteFileFromS3 } from "src/config/s3";
 import { bannersModel } from "../../models/banners/banners-schema";
 
@@ -39,6 +38,7 @@ export const getAllBannersService = async (payload: any, res: Response) => {
       page,
       limit,
       success: true,
+      message: "Banners retrieved successfully",
       total: totalDataCount,
       data: results,
     };
@@ -47,6 +47,7 @@ export const getAllBannersService = async (payload: any, res: Response) => {
       data: [],
       page,
       limit,
+      message: "No banners found",
       success: false,
       total: 0,
     };

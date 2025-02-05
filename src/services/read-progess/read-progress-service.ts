@@ -91,6 +91,7 @@ export const getAllReadProgress = async (payload: any, user: any) => {
   return {
     page,
     limit,
+    message: "Read Progress retrieved successfully",
     success: results.length > 0,
     total: totalDataCount,
     data: results,

@@ -6,11 +6,7 @@ import jwt from "jsonwebtoken";
 import { httpStatusCode } from "../../lib/constant";
 import { queryBuilder } from "../../utils";
 import { sendPasswordResetEmail } from "src/utils/mails/mail";
-import {
-  generatePasswordResetToken,
-  getPasswordResetTokenByToken,
-  generatePasswordResetTokenByPhone,
-} from "src/utils/mails/token";
+import { generatePasswordResetToken, getPasswordResetTokenByToken, generatePasswordResetTokenByPhone } from "src/utils/mails/token";
 import { passwordResetTokenModel } from "src/models/password-token-schema";
 import { usersModel } from "src/models/user/user-schema";
 import { eventsModel } from "../../models/events/events-schema";
@@ -30,9 +26,9 @@ export const loginService = async (payload: any, res: Response) => {
     if (!user) {
       user = await publishersModel.findOne({ email: username }).select("+password");
     }
-  } 
-  
-  console.log('user: ', user);
+  }
+
+  console.log("user: ", user);
 
   if (!user) return errorResponseHandler("User not found", httpStatusCode.NOT_FOUND, res);
   const isPasswordValid = await bcrypt.compare(password, user.password);
@@ -57,15 +53,12 @@ export const forgotPasswordService = async (email: string, res: Response) => {
   const passwordResetToken = await generatePasswordResetToken(email);
 
   if (passwordResetToken !== null) {
-    await sendPasswordResetEmail(email, passwordResetToken.token,"eng");
+    await sendPasswordResetEmail(email, passwordResetToken.token, "eng");
     return { success: true, message: "Password reset email sent with otp" };
   }
 };
 
-export const newPassswordAfterOTPVerifiedService = async (
-  payload: { password: string; otp: string },
-  res: Response
-) => {
+export const newPassswordAfterOTPVerifiedService = async (payload: { password: string; otp: string }, res: Response) => {
   const { password, otp } = payload;
 
   const existingToken = await getPasswordResetTokenByToken(otp);
@@ -114,14 +107,14 @@ export const getNewUsersService = async (payload: any) => {
       (query as any) = { ...query, createdAt: { $gte: date } };
     }
   }
-  const totalDataCount =
-    Object.keys(query).length < 1 ? await usersModel.countDocuments() : await usersModel.countDocuments(query);
+  const totalDataCount = Object.keys(query).length < 1 ? await usersModel.countDocuments() : await usersModel.countDocuments(query);
   const results = await usersModel.find(query).sort(sort).skip(offset).limit(limit).select("-__v");
   if (results.length)
     return {
+      success: true,
+      message: "Users retrieved successfully",
       page,
       limit,
-      success: true,
       total: totalDataCount,
       data: results,
     };
@@ -182,7 +175,6 @@ export const deleteAUserService = async (id: string, res: Response) => {
 
 // Dashboard
 export const getDashboardStatsService = async (payload: any, res: Response) => {
-
   try {
     const overviewDuration = payload.overviewDuration ? parseInt(payload.overviewDuration) : null;
     const usersDuration = payload.usersDuration ? parseInt(payload.usersDuration) : null;
@@ -214,13 +206,10 @@ export const getDashboardStatsService = async (payload: any, res: Response) => {
     const newUsersCount = await usersModel.countDocuments(overviewDate ? { createdAt: { $gte: overviewDate } } : {});
     const eventsCount = await eventsModel.countDocuments(overviewDate ? { createdAt: { $gte: overviewDate } } : {});
     const newBooks = await productsModel.countDocuments(overviewDate ? { createdAt: { $gte: overviewDate } } : {});
-    const totalRevenueResult = await ordersModel.aggregate([
-      { $match: overviewDate ? { createdAt: { $gte: overviewDate } } : {} },
-      { $group: { _id: null, totalRevenue: { $sum: "$totalAmount" } } }
-    ]);
+    const totalRevenueResult = await ordersModel.aggregate([{ $match: overviewDate ? { createdAt: { $gte: overviewDate } } : {} }, { $group: { _id: null, totalRevenue: { $sum: "$totalAmount" } } }]);
 
-    const totalRevenue = totalRevenueResult.length > 0 ? totalRevenueResult[0].totalRevenue : 0;    
-    
+    const totalRevenue = totalRevenueResult.length > 0 ? totalRevenueResult[0].totalRevenue : 0;
+
     return {
       success: true,
       message: "Dashboard stats fetched successfully",
@@ -230,7 +219,7 @@ export const getDashboardStatsService = async (payload: any, res: Response) => {
         newUsersCount,
         eventsCount,
         newBooks,
-        totalRevenue
+        totalRevenue,
       },
     };
   } catch (error) {

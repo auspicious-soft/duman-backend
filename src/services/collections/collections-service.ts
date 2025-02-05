@@ -4,7 +4,6 @@ import { httpStatusCode } from "../../lib/constant";
 import { nestedQueryBuilder, queryBuilder } from "src/utils";
 import { deleteFileFromS3 } from "src/config/s3";
 import { collectionsModel } from "../../models/collections/collections-schema";
-import { addBooksToCollection } from 'src/controllers/collections/collections-controller';
 
 
 export const createCollectionService = async (payload: any, res: Response) => {
@@ -57,6 +56,7 @@ export const getAllCollectionsService = async (payload: any, res: Response) => {
       page,
       limit,
       success: true,
+      message: "Collections retrieved successfully",
       total: totalDataCount,
       data: results,
     };

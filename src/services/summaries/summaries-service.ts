@@ -1,10 +1,8 @@
 import { Response } from "express";
 import { errorResponseHandler } from "../../lib/errors/error-response-handler";
 import { httpStatusCode } from "../../lib/constant";
-import { nestedQueryBuilder, queryBuilder } from "src/utils";
-import { storiesModel } from "../../models/stories/stories-schema";
+import { nestedQueryBuilder } from "src/utils";
 import { deleteFileFromS3 } from "src/config/s3";
-import { bannersModel } from "../../models/banners/banners-schema";
 import { summariesModel } from "../../models/summaries/summaries-schema";
 
 
@@ -44,6 +42,7 @@ export const getAllSummariesService = async (payload: any, res: Response) => {
       page,
       limit,
       success: true,
+      message: "Summaries retrieved successfully",
       total: totalDataCount,
       data: results,
     };
@@ -53,6 +52,7 @@ export const getAllSummariesService = async (payload: any, res: Response) => {
       page,
       limit,
       success: false,
+      message: "No summaries found",
       total: 0,
     };
   }

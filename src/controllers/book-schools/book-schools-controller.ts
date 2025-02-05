@@ -56,7 +56,7 @@ export const getAllBookSchools = async (req: Request, res: Response) => {
 };
 export const getBookSchoolsByCode = async (req: Request, res: Response) => {
     try {
-        const response = await getBookSchoolsByCodeService(req.query, res);
+        const response = await getBookSchoolsByCodeService(req.query,req.user, res);
         return res.status(httpStatusCode.OK).json(response);
     } catch (error: any) {
         const { code, message } = errorParser(error);
@@ -65,7 +65,7 @@ export const getBookSchoolsByCode = async (req: Request, res: Response) => {
 };
 export const verifyBookSchoolsByCode = async (req: Request, res: Response) => {
     try {
-        const response = await verifyBookSchoolsByCodeService(req.query, res);
+        const response = await verifyBookSchoolsByCodeService(req.query,req.user, res);
         return res.status(httpStatusCode.OK).json(response);
     } catch (error: any) {
         const { code, message } = errorParser(error);

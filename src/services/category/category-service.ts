@@ -52,6 +52,7 @@ export const getAllCategoriesService = async (payload: any, res: Response) => {
       page,
       limit,
       success: true,
+      message: "Categories retrieved successfully",
       total: totalDataCount,
       data: results,
     };
@@ -60,6 +61,7 @@ export const getAllCategoriesService = async (payload: any, res: Response) => {
       data: [],
       page,
       limit,
+      message: "No categories found",
       success: false,
       total: 0,
     };

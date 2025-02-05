@@ -43,6 +43,7 @@ export const getBooksService = async (id: string, res: Response) => {
 
     return {
       success: true,
+      message: "Books retrieved successfully",
       data: {
         books,
         totalBookSold,
@@ -109,6 +110,7 @@ export const getAllBooksService = async (payload: any) => {
   return {
     page,
     limit,
+    message: "Books retrieved successfully",
     success: filteredResults.length > 0,
     total: filteredResults.length > 0 ? totalDataCount : 0,
     data: filteredResults,
@@ -133,6 +135,7 @@ export const getAllDiscountedBooksService = async (payload: any, res: Response) 
       page,
       limit,
       success: true,
+      message: "Books retrieved successfully",
       total: totalDataCount,
       data: results,
     };
@@ -142,6 +145,7 @@ export const getAllDiscountedBooksService = async (payload: any, res: Response) 
       page,
       limit,
       success: false,
+      message: "No books found",
       total: 0,
     };
   }
@@ -153,6 +157,7 @@ export const getBookByIdService = async (id: string, res: Response) => {
     if (!book) return errorResponseHandler("Book not found", httpStatusCode.NOT_FOUND, res);
     return {
       success: true,
+      message: "Book retrieved successfully",
       data: book,
     };
   } catch (error) {
@@ -296,7 +301,7 @@ export const getProductsForHomePage = async () => {
     const books = await productsModel.find({ type: 'e-book' }).limit(10);
     const courses = await productsModel.find({ type: 'course' }).limit(10);
 
-    return { books, courses };
+    return { books:books, courses:courses , success: true, message: "Products retrieved successfully" };
   } catch (error) {
     console.error(error);
     throw error;

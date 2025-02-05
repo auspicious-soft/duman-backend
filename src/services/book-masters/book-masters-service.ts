@@ -19,7 +19,11 @@ export const addBooksToBookMaster = async (payload: any, res: Response) => {
       createdDocuments.push(newDocument); // Store the created document
     }
 
-    return createdDocuments; // Return an array of created documents
+    return {
+      success: true,
+      message: "Books added to bookMaster successfully",
+      createdDocuments
+    }; // Return an array of created documents
   } catch (error) {
     console.error("Error adding books to bookMaster:", error);
     throw new Error("Failed to add books to bookMaster");
@@ -122,6 +126,7 @@ export const getAllBookMastersService = async (payload: any) => {
   return {
     page,
     limit,
+    message: "Book masters retrieved successfully",
     success: filteredResults.length > 0,
     total: filteredResults.length > 0 ? totalDataCount : 0,
     data: filteredResults,

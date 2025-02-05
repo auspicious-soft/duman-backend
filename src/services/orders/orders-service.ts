@@ -71,6 +71,7 @@ export const getAllOrdersService = async (payload: any, res: Response) => {
       page,
       limit,
       success: true,
+      message: "Orders retrieved successfully",
       total: totalDataCount,
       data: results,
     };
@@ -80,6 +81,7 @@ export const getAllOrdersService = async (payload: any, res: Response) => {
       page,
       limit,
       success: false,
+      message: "No orders found",
       total: 0,
     };
   }

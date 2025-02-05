@@ -102,6 +102,7 @@ export const getAllPublishersService = async (payload: any, res: Response) => {
       page,
       limit,
       success: true,
+      message: "Publishers retrieved successfully",
       total: totalDataCount,
       data: results.map((publisher) => ({
         publisher,
@@ -119,33 +120,6 @@ export const getAllPublishersService = async (payload: any, res: Response) => {
     };
   }
 };
-
-// export const getAllPublishersService = async (payload: any, res: Response) => {
-//   const page = parseInt(payload.page as string) || 1;
-//   const limit = parseInt(payload.limit as string) || 0;
-//   const offset = (page - 1) * limit;
-//   const { query, sort } = queryBuilder(payload, ["name"]);
-
-//   const totalDataCount = Object.keys(query).length < 1 ? await publishersModel.countDocuments() : await publishersModel.countDocuments(query);
-//   const results = await publishersModel.find(query).sort(sort).skip(offset).limit(limit).populate("categoryId").select("-__v");
-//   if (results.length)
-//     return {
-//       page,
-//       limit,
-//       success: true,
-//       total: totalDataCount,
-//       data: results,
-//     };
-//   else {
-//     return {
-//       data: [],
-//       page,
-//       limit,
-//       success: false,
-//       total: 0,
-//     };
-//   }
-// };
 
 export const getBooksByPublisherService = async (payload: any, req: any, res: Response) => {
   try {
@@ -272,6 +246,8 @@ export const getBookByIdPublisherService = async (bookId: string,payload:any,cur
 
     // Step 3: Return the combined data
     return {
+      success: true,
+      message: "Book analytics retrieved successfully",
       book,
       analytics: {
         currentMonthCount,
@@ -284,68 +260,6 @@ export const getBookByIdPublisherService = async (bookId: string,payload:any,cur
     throw new Error("Failed to fetch book analytics");
   }
 };
-
-// export const publisherDashboardService = async (payload: any, currentUser: string, res: Response) => {
-//   try {
-//     const publisherId = currentUser;
-//     const selectedYear = payload?.year ? parseInt(payload?.year as string, 10) : new Date().getFullYear();
-//     const currentYear = new Date().getFullYear();
-//     const currentMonth = new Date().getMonth() + 1; // January = 0, so add 1
-
-//     // Step 1: Fetch orders and populate productIds
-//     const orders = await ordersModel.find({
-//       createdAt: {
-//         $gte: new Date(`${selectedYear}-01-01`), // Start of the selected year
-//         $lt: new Date(`${selectedYear + 1}-01-01`), // Start of the next year
-//       },
-//     }).populate('productIds'); // Populate product details
-
-//     // Step 2: Extract books with matching publisherId
-//     const books = orders
-//       .flatMap(order => order.productIds) // Flatten the productIds from all orders
-//       .filter((book: any) => book?.publisherId?.toString() === publisherId); // Filter by publisherId
-
-//     // Step 3: Count orders and books
-//     const uniqueBooks = Array.from(new Set(books.map(book => book._id.toString()))); // Ensure unique books
-//     const totalBooks = uniqueBooks.length;
-
-//     const monthlyCounts = await ordersModel.aggregate([
-//       {
-//         $match: {
-//           "productIds.publisherId": new mongoose.Types.ObjectId(publisherId), // Match by publisherId in populated products
-//           createdAt: {
-//             $gte: new Date(`${selectedYear}-01-01`),
-//             $lt: new Date(`${selectedYear + 1}-01-01`),
-//           },
-//         },
-//       },
-//       {
-//         $group: {
-//           _id: { $month: "$createdAt" },
-//           count: { $sum: 1 },
-//         },
-//       },
-//       { $sort: { _id: 1 } },
-//     ]);
-
-//     const monthlyCountArray = monthlyCounts.map(({ _id, count }) => {
-//       const month = new Date(selectedYear, _id - 1); // _id is the month (1 = January)
-//       const formattedMonth = month.toLocaleString("default", { year: "numeric", month: "2-digit" });
-//       return { month: formattedMonth, count };
-//     });
-
-//     // Step 4: Return the data
-//     return {
-//       totalBooks,
-//       analytics: {
-//         monthlyCounts: monthlyCountArray,
-//       },
-//     };
-//   } catch (error) {
-//     console.error("Error in publisherDashboardService:", error);
-//     throw new Error("Failed to fetch publisher dashboard data");
-//   }
-// };
 
 
 export const publisherDashboardService = async (payload: any, currentUser: string, res: Response) => {
@@ -441,6 +355,8 @@ export const publisherDashboardService = async (payload: any, currentUser: strin
 
     // **6. Return the Data**
     return {
+      success: true,
+      message: "Publisher dashboard data retrieved successfully",
       TotalBooksCount,
       NewBooks,
       averageRating,

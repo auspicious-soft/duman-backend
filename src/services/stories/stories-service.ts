@@ -39,6 +39,7 @@ export const getAllStoriesService = async (payload: any, res: Response) => {
       page,
       limit,
       success: true,
+      message: "Stories retrieved successfully",
       total: totalDataCount,
       data: results,
     };
@@ -47,6 +48,7 @@ export const getAllStoriesService = async (payload: any, res: Response) => {
       data: [],
       page,
       limit,
+      message: "No stories found",
       success: false,
       total: 0,
     };

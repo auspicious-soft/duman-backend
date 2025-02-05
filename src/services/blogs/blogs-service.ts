@@ -53,6 +53,7 @@ export const getAllBlogsService = async (payload: any, res: Response) => {
       page,
       limit,
       success: true,
+      message: "Blogs retrieved successfully",
       total: totalDataCount,
       data: results,
     };

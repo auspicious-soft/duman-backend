@@ -4,8 +4,8 @@ import { Response } from "express";
 import { getAllBannersService } from "../banners/banners-service";
 import { getAllStoriesService } from "../stories/stories-service";
 import { getAllCollectionsService } from "../collections/collections-service";
-import { getAllBookLivesService, getAllBookLivesWithBlogsService } from "../book-lives/book-lives-service";
-import { getAllBooksService, getProductsForHomePage } from "../products/products-service";
+import {  getAllBookLivesWithBlogsService } from "../book-lives/book-lives-service";
+import { getAllBooksService } from "../products/products-service";
 
 export const getHomePageService = async (payload: any, res: Response) => {
   try {
