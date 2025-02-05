@@ -6,11 +6,11 @@ const notificationsSchema = new Schema({
         ref: "users"
     },
     title: {
-        type: String,
+        type: Object,
         required: true
     },
     description: {
-        type: String,
+        type: Object,
         required: true
     },
     read: {

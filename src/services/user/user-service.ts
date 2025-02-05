@@ -4,7 +4,7 @@ import { UserDocument, usersModel } from "../../models/user/user-schema";
 import bcrypt from "bcryptjs";
 import { generatePasswordResetToken, generatePasswordResetTokenByPhone, getPasswordResetTokenByToken } from "../../utils/mails/token";
 import { httpStatusCode } from "../../lib/constant";
-import { nestedQueryBuilder, queryBuilder } from "src/utils";
+import { nestedQueryBuilder,  } from "src/utils";
 import { ordersModel } from "../../models/orders/orders-schema";
 import { deleteFileFromS3 } from "src/config/s3";
 import { configDotenv } from "dotenv";
