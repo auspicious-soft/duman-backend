@@ -39,7 +39,6 @@ export const deleteCategory = async (req: Request, res: Response) => {
         return res.status(httpStatusCode.OK).json(response);
     } catch (error: any) {
         const { code, message } = errorParser(error);
-        console.log('message: ', message);
         return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "Failed to delete sub-category" });
     }
 };

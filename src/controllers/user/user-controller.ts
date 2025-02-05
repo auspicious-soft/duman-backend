@@ -155,7 +155,6 @@ export const deleteUser = async (req: Request, res: Response) => {
 
 export const verifyOTP = async (req: Request, res: Response) => {
   try {
-    console.log('req.body: ', req.body);
     const { user } = await verifyOTPService(req.body);
 
     res.status(200).json({

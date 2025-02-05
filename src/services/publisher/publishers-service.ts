@@ -288,9 +288,7 @@ export const getBookByIdPublisherService = async (bookId: string,payload:any,cur
 // export const publisherDashboardService = async (payload: any, currentUser: string, res: Response) => {
 //   try {
 //     const publisherId = currentUser;
-//     console.log('publisherId: ', publisherId);
 //     const selectedYear = payload?.year ? parseInt(payload?.year as string, 10) : new Date().getFullYear();
-//     console.log('selectedYear: ', selectedYear);
 //     const currentYear = new Date().getFullYear();
 //     const currentMonth = new Date().getMonth() + 1; // January = 0, so add 1
 

@@ -32,7 +32,6 @@ export const generateSignedUrlToUploadOn = async (fileName: string, fileType: st
 }
 
 export const deleteFileFromS3 = async (imageKey: string) => {
-    console.log('imageKey: ', imageKey);
     const params = {
         Bucket: process.env.AWS_BUCKET_NAME,
         Key: imageKey,
@@ -41,7 +40,6 @@ export const deleteFileFromS3 = async (imageKey: string) => {
         const s3Client = await createS3Client()
         const command = new DeleteObjectCommand(params)
         const response = await s3Client.send(command)
-        console.log('response: ', response);
         return response
     } catch (error) {
         console.error('Error deleting file from S3:', error)

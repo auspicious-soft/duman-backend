@@ -27,7 +27,6 @@ export const checkPublisherAuth = async (req: Request, res: Response, next: Next
 
         next()
     } catch (error) { 
-        console.log('error: ', error);
         return res.status(httpStatusCode.UNAUTHORIZED).json({ success: false, message: "Unauthorized" })
     }
 }

@@ -60,7 +60,7 @@ app.get("/", (_, res: any) => {
 
 app.use("/api/admin",checkValidAdminRole, admin);
 app.use("/api/publisher",checkValidPublisherRole,checkPublisherAuth, publisher);
-app.use("/api/user", user);
+app.use("/api/user",checkAuth, user);
 
 //adminAuth routes
 app.post("/api/login", login)
@@ -69,12 +69,12 @@ app.post("/api/forgot-password", forgotPassword)
 app.patch("/api/new-password-otp-verified", newPassswordAfterOTPVerified)
 
 //userAuth routes
-app.post("/api/user/login", loginUser)
-app.post("/api/user/signup", userSignup)  
-app.post("/api/signup/verify-otp", verifyOTP)
+app.post("/api/user-login", loginUser)
+app.post("/api/user-signup", userSignup)  
+app.post("/api/user-verify-otp", verifyOTP)
 app.post("/api/resend-otp", resendOTP)
-app.post("/api/app/forgot-password", forgotPasswordUser)
-app.patch("/api/app/new-password-otp-verified", newPassswordAfterOTPVerifiedUser)
+app.post("/api/user-forgot-password", forgotPasswordUser)
+app.patch("/api/user-new-password-otp-verified", newPassswordAfterOTPVerifiedUser)
 
 // initializeFirebase()
 app.listen(PORT, () => console.log(`Server is listening on port ${PORT}`));

@@ -48,7 +48,6 @@ const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID!, process.env.TWILIO_
 // };
 
 export const generateOtpWithTwilio = async (phoneNumber: string, otp: string) => {
-  console.log('phoneNumber: ', phoneNumber);
   try {
      const res= await twilioClient.messages.create({
        body: `Your OTP is: ${otp}`,

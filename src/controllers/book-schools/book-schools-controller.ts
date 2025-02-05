@@ -65,7 +65,6 @@ export const getBookSchoolsByCode = async (req: Request, res: Response) => {
 };
 export const verifyBookSchoolsByCode = async (req: Request, res: Response) => {
     try {
-        console.log('req.query: ', req.query);
         const response = await verifyBookSchoolsByCodeService(req.query, res);
         return res.status(httpStatusCode.OK).json(response);
     } catch (error: any) {

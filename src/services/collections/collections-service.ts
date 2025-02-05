@@ -43,7 +43,15 @@ export const getAllCollectionsService = async (payload: any, res: Response) => {
   const { query, sort } = nestedQueryBuilder(payload, ["name"]);
 
   const totalDataCount = Object.keys(query).length < 1 ? await collectionsModel.countDocuments() : await collectionsModel.countDocuments(query);
-  const results = await collectionsModel.find(query).sort(sort).skip(offset).limit(limit).select("-__v");
+  const results = await collectionsModel.find(query).sort(sort).skip(offset).limit(limit).select("-__v").populate({
+    path: "booksId",
+    populate: [
+      { path: "authorId",select: "name" }, 
+      { path: "categoryId",select: "name" }, 
+      { path: "subCategoryId",select: "name" }, 
+      { path: "publisherId",select: "name" }, 
+    ],
+  });
   if (results.length)
     return {
       page,
@@ -102,3 +110,4 @@ export const deleteCollectionService = async (id: string, res: Response) => {
     data: deletedCollection,
   };
 };
+

@@ -7,12 +7,10 @@ import { customAlphabet } from "nanoid";
 import { productsModel } from "../../models/products/products-schema"; // Assuming you have a products model
 
 export const createOrderService = async (payload: any, res: Response) => {
-  console.log('payload: ', payload);
 
   // Check if any product is discounted
   const products = await productsModel.find({ _id: { $in: payload.productIds } });
   const hasDiscountedProduct = products.some(product => product.isDiscounted);
-  console.log('hasDiscountedProduct: ', hasDiscountedProduct);
 
   if (hasDiscountedProduct && payload.voucherId) {
     return errorResponseHandler(

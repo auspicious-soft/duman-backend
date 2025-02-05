@@ -90,6 +90,54 @@ export const getAllBookLivesService = async (payload: any, res: Response) => {
   }
 };
 
+
+
+
+export const getAllBookLivesWithBlogsService = async (payload: any, res: Response) => {
+  const page = parseInt(payload.page as string) || 1;
+  const limit = parseInt(payload.limit as string) || 0;
+  const offset = (page - 1) * limit;
+  const { query, sort } = nestedQueryBuilder(payload, ["name"]);
+
+  const totalDataCount =
+    Object.keys(query).length < 1
+      ? await bookLivesModel.countDocuments()
+      : await bookLivesModel.countDocuments(query);
+
+  const bookLivesResults = await bookLivesModel
+    .find(query)
+    .sort(sort)
+    .skip(offset)
+    .limit(limit)
+    .select("-__v");
+
+  if (!bookLivesResults.length) {
+    return {
+      data: [],
+      page,
+      limit,
+      success: false,
+      total: 0,
+    };
+  }
+
+  // Fetch blogs related to each bookLives entry
+  const bookLivesWithBlogs = await Promise.all(
+    bookLivesResults.map(async (bookLife) => {
+      const blogs = await blogsModel.find({ categoryId: bookLife._id }).select("-__v");
+      return { ...bookLife.toObject(), blogs };
+    })
+  );
+
+  return {
+    page,
+    limit,
+    success: true,
+    total: totalDataCount,
+    data: bookLivesWithBlogs,
+  };
+};
+
 export const updateBookLiveService = async (
   id: string,
   payload: any,

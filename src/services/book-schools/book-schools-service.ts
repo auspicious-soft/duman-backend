@@ -32,7 +32,6 @@ export const getBookSchoolService = async (payload: any, id: string, res: Respon
           ...query,
         })
       : await productsModel.countDocuments(query);
-  console.log("totalDataCount: ", totalDataCount);
   const books = await productsModel
     .find({
       publisherId: { $in: bookSchool?.publisherId },

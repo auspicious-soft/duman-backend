@@ -7,7 +7,6 @@ import { formatZodErrors } from "src/validation/format-zod-errors";
 
 export const sendNotificationToUsers = async (req: Request, res: Response) => {
     // const validation = sendNotificationToUserSchema.safeParse(req.body)
-    console.log('req.body: ', req.body);
     // if (!validation.success) return res.status(httpStatusCode.BAD_REQUEST).json({ success: false, message: formatZodErrors(validation.error) })
     try {
         const response = await sendNotificationToUsersService(req.body, res)

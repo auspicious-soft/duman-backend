@@ -19,7 +19,6 @@ export const createBookService = async (payload: any, res: Response) => {
 };
 
 export const getBooksService = async (id: string, res: Response) => {
-  console.log('id: ', id);
   try {
     const books = await productsModel.find({ _id: id }).populate([
       { path: "authorId" },
@@ -27,7 +26,6 @@ export const getBooksService = async (id: string, res: Response) => {
       { path: "subCategoryId" },
       { path: "publisherId" }
     ]);
-    console.log('books: ', books);
 
     if (!books || books.length === 0) {
       return errorResponseHandler("Book not found", httpStatusCode.NOT_FOUND, res);
@@ -58,7 +56,6 @@ export const getBooksService = async (id: string, res: Response) => {
 
 
 export const getAllBooksService = async (payload: any) => {
-  console.log('payload: ', payload);
   const page = parseInt(payload.page as string) || 1;
   const limit = parseInt(payload.limit as string) || 0;
   const offset = (page - 1) * limit;
@@ -102,7 +99,6 @@ export const getAllBooksService = async (payload: any) => {
       const authorNames: string[] = (authors as any[]).flatMap((author) =>
         author && author.name ? Object.values(author.name).map((val: any) => val.toLowerCase()) : []
     );
-    console.log('authorNames: ', authorNames);
       return (
         productNames.some((name) => name.includes(searchQuery)) ||
         authorNames.some((name) => name.includes(searchQuery))
@@ -235,7 +231,6 @@ export const deleteBookService = async (id: string, res: Response) => {
     const deletedBook = await productsModel.findByIdAndDelete(id);
     if (!deletedBook) return errorResponseHandler("Book not found", httpStatusCode.NOT_FOUND, res);
     if (deletedBook?.image) {
-      console.log('deletedBook?.image: ', deletedBook?.image);
       await deleteFileFromS3(deletedBook.image);
     }
     if (deletedBook?.file && deletedBook.file instanceof Map) {
@@ -293,5 +288,17 @@ export const addBookRatingService = async (
     };
   } catch (error) {
     return errorResponseHandler("Failed to add rating", httpStatusCode.INTERNAL_SERVER_ERROR, res);
+  }
+};
+
+export const getProductsForHomePage = async () => {
+  try {
+    const books = await productsModel.find({ type: 'e-book' }).limit(10);
+    const courses = await productsModel.find({ type: 'course' }).limit(10);
+
+    return { books, courses };
+  } catch (error) {
+    console.error(error);
+    throw error;
   }
 };

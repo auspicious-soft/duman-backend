@@ -220,7 +220,6 @@ export const getDashboardStatsService = async (payload: any, res: Response) => {
     ]);
 
     const totalRevenue = totalRevenueResult.length > 0 ? totalRevenueResult[0].totalRevenue : 0;    
-    console.log('overviewDate: ', overviewDate);
     
     return {
       success: true,

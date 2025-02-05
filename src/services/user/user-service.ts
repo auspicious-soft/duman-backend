@@ -358,7 +358,6 @@ export const verifyOTPService = async (payload: any) => {
     "otp.code": otp,
     "otp.expiresAt": { $gt: new Date() },
   });
-  console.log("user: ", user);
 
   if (!user) {
     throw new Error("Invalid or expired OTP");
