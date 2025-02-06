@@ -13,6 +13,7 @@ import { addedUserCreds, sendEmailVerificationMail, sendLoginCredentialsEmail, s
 import { passwordResetTokenModel } from "src/models/password-token-schema";
 import { generateOtpWithTwilio } from "src/utils/sms/sms";
 import { generateUserToken, getSignUpQueryByAuthType, handleExistingUser, hashPasswordIfEmailAuth, sendOTPIfNeeded, validatePassword, validateUserForLogin } from "src/utils/userAuth/signUpAuth";
+import { customAlphabet } from "nanoid";
 
 configDotenv();
 
@@ -70,7 +71,8 @@ export const signUpService = async (userData: UserDocument, authType: string, re
 
     const newUserData = { ...userData, authType };
     newUserData.password = await hashPasswordIfEmailAuth(userData, authType);
-
+    const identifier = customAlphabet("0123456789", 5);
+    (newUserData as any).identifier = identifier();
     const user = await usersModel.create(newUserData);
     await sendOTPIfNeeded(userData, authType);
 
@@ -152,10 +154,11 @@ export const createUserService = async (payload: any, res: Response) => {
   // Hash the password before saving the user
   // const hashedPassword = bcrypt.hashSync(payload.password, 10);
   // payload.password = hashedPassword;
-
   const newUser = new usersModel(payload);
   await addedUserCreds(newUser);
   newUser.password = await hashPasswordIfEmailAuth(payload, "Email");
+  const identifier = customAlphabet("0123456789", 5);
+  (newUser as any).identifier = identifier();
 
   const response = await newUser.save();
 

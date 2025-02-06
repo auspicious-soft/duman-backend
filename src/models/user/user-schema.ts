@@ -20,6 +20,11 @@ export interface UserDocument extends Document {
 }
 const usersSchema = new mongoose.Schema(
   {
+    identifier: {
+      type: String,
+      // required: true,
+      unique: true,
+    },
     role: {
       type: String,
       required: true,
