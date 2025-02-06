@@ -4,9 +4,9 @@ import { httpStatusCode } from "../../lib/constant";
 import { favoritesModel } from "../../models/favorites/favorites-schema";
 import { queryBuilder } from "src/utils";
 
-export const createFavoriteService = async (payload: any,user:any, res: Response) => {
+export const createFavoriteService = async (payload: any, user: any, res: Response) => {
   try {
-    const newFavorite = new favoritesModel({...payload,userId:user.id});
+    const newFavorite = new favoritesModel({ ...payload, userId: user.id });
     const savedFavorite = await newFavorite.save();
     return {
       success: true,
@@ -22,12 +22,7 @@ export const getFavoriteService = async (id: string, user: any, res: Response) =
   try {
     const favorite = await favoritesModel.findById(id).populate({
       path: "productId",
-      populate: [
-        { path: "authorId" }, 
-        { path: "categoryId" }, 
-        { path: "subCategoryId" }, 
-        { path: "publisherId" }, 
-      ],
+      populate: [{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }],
     });
     if (!favorite) return errorResponseHandler("Favorite not found", httpStatusCode.NOT_FOUND, res);
     return {
@@ -48,10 +43,7 @@ export const getAllFavoritesService = async (payload: any, user: any, res: Respo
 
   (query as any).userId = user.id;
 
-  const totalDataCount =
-    Object.keys(query).length < 1
-      ? await favoritesModel.countDocuments()
-      : await favoritesModel.countDocuments(query);
+  const totalDataCount = Object.keys(query).length < 1 ? await favoritesModel.countDocuments() : await favoritesModel.countDocuments(query);
 
   const results = await favoritesModel
     .find(query)
@@ -68,7 +60,7 @@ export const getAllFavoritesService = async (payload: any, user: any, res: Respo
         { path: "publisherId", select: "name" },
       ],
     })
-    .lean(); 
+    .lean();
 
   const modifiedResults = results.map((item) => {
     if (item.productId) {
@@ -105,9 +97,8 @@ export const getAllFavoritesService = async (payload: any, user: any, res: Respo
 };
 
 export const updateFavoriteService = async (user: any, payload: any, res: Response) => {
-
-  try {
-    const isFavorite = typeof payload.favorite === 'string' ? JSON.parse(payload.favorite) : payload.favorite;
+    const isFavorite = typeof payload.favorite === "string" ? JSON.parse(payload.favorite) : payload.favorite;
+    console.log("isFavorite: ", isFavorite);
 
     if (isFavorite) {
       const updatedFavorite = await favoritesModel.findOneAndUpdate(
@@ -115,7 +106,6 @@ export const updateFavoriteService = async (user: any, payload: any, res: Respon
         { $set: { productId: payload.productId, userId: user.id } }, // Update fields
         { new: true, upsert: true } // Create if not found
       );
-      console.log('updatedFavorite: ', updatedFavorite);
       // if (!updatedFavorite) return errorResponseHandler("Favorite not found", httpStatusCode.NOT_FOUND, res);
       return {
         success: true,
@@ -123,26 +113,33 @@ export const updateFavoriteService = async (user: any, payload: any, res: Respon
         data: updatedFavorite,
       };
     } else {
-      return await deleteFavoriteService(user, payload.productId, res);
+      console.log("payload.productId: ", payload.productId);
+      const Favorite = await favoritesModel.find({ productId: payload.productId, userId: user.id });
+      console.log('Favorite: ', Favorite);
+      if (!Favorite || Favorite.length === 0) {
+        return errorResponseHandler("Favorite not found", httpStatusCode.NOT_FOUND, res);
+      }
+      const deletedFavorite = await favoritesModel.findOneAndDelete({ productId: payload.productId, userId: user.id });
+
+      return {
+        success: true,
+        message: "Favorite deleted successfully",
+        data: deletedFavorite,
+      };
     }
-  } catch (error) {
-    return errorResponseHandler("Error updating favorite", httpStatusCode.INTERNAL_SERVER_ERROR, res);
-  }
+  
 };
 
 export const deleteFavoriteService = async (user: any, id: string, res: Response) => {
-  console.log('user: ', user);
-  console.log('id: ', id);
-  try {
     const deletedFavorite = await favoritesModel.findOneAndDelete({ productId: id, userId: user.id });
-    if (!deletedFavorite) return errorResponseHandler("Favorite not found", httpStatusCode.NOT_FOUND, res);
-    console.log('deletedFavorite: ', deletedFavorite);
+    if (!deletedFavorite) {
+      console.log("deletedFavorite: ", deletedFavorite);
+      return errorResponseHandler("Favorite not found", httpStatusCode.NOT_FOUND, res);
+    }
     return {
       success: true,
       message: "Favorite deleted successfully",
-      data: deletedFavorite,
+      data: deletedFavorite ? deletedFavorite : {},
     };
-  } catch (error) {
-    return errorResponseHandler("Error deleting favorite", httpStatusCode.INTERNAL_SERVER_ERROR, res);
-  }
+  
 };

@@ -7,6 +7,10 @@ import { nestedQueryBuilder, queryBuilder } from "src/utils";
 import { deleteFileFromS3 } from "src/config/s3";
 import { productRatingsModel } from "src/models/ratings/ratings-schema";
 import { ordersModel } from "src/models/orders/orders-schema";
+import { favoritesModel } from "src/models/favorites/favorites-schema";
+import { collectionsModel } from "src/models/collections/collections-schema";
+import { categoriesModel } from "src/models/categories/categroies-schema";
+import { readProgressModel } from "src/models/read-progress/read-progress-schema";
 
 export const createBookService = async (payload: any, res: Response) => {
   const newBook = new productsModel(payload);
@@ -26,7 +30,6 @@ export const getBooksService = async (id: string, res: Response) => {
       { path: "subCategoryId" },
       { path: "publisherId" }
     ]);
-
     if (!books || books.length === 0) {
       return errorResponseHandler("Book not found", httpStatusCode.NOT_FOUND, res);
     }
@@ -56,7 +59,7 @@ export const getBooksService = async (id: string, res: Response) => {
 };
 
 
-export const getAllBooksService = async (payload: any) => {
+export const getAllBooksService = async (payload: any, res: Response) => {
   const page = parseInt(payload.page as string) || 1;
   const limit = parseInt(payload.limit as string) || 0;
   const offset = (page - 1) * limit;
@@ -256,45 +259,7 @@ export const deleteBookService = async (id: string, res: Response) => {
   }
 };
 
-export const addBookRatingService = async (
-  productId: string,
-  ratingData: { userId: string; rating: number; comment?: string },
-  res: Response
-) => {
-  try {
-    // Find the product
-    const product = await productsModel.findById(productId);
 
-    if (!product) {
-      return errorResponseHandler("Product not found", httpStatusCode.NOT_FOUND, res);
-    }
-
-    // Add the new rating to the productRatingsModel
-    const newRating = new productRatingsModel({
-      productId: new mongoose.Types.ObjectId(productId),
-      userId: new mongoose.Types.ObjectId(ratingData.userId),
-      rating: ratingData.rating,
-      comment: ratingData.comment || "",
-    });
-    await newRating.save();
-
-    // Recalculate the average rating
-    const ratings = await productRatingsModel.find({ productId: productId });
-    const averageRating: number = ratings.reduce((acc: number, rating: { rating: number }) => acc + rating.rating, 0) / ratings.length;
-
-    // Update the product's average rating
-    product.averageRating = averageRating;
-    await product.save();
-
-    return {
-      success: true,
-      message: "Rating added successfully",
-      data: product,
-    };
-  } catch (error) {
-    return errorResponseHandler("Failed to add rating", httpStatusCode.INTERNAL_SERVER_ERROR, res);
-  }
-};
 
 export const getProductsForHomePage = async () => {
   try {
@@ -306,4 +271,37 @@ export const getProductsForHomePage = async () => {
     console.error(error);
     throw error;
   }
+};
+
+export const getBookForUserService = async (id: string, user: any, res: Response) => {
+    const book = await productsModel.findById(id).populate([
+      { path: "authorId" },
+      { path: "categoryId" },
+      { path: "subCategoryId" },
+      { path: "publisherId" }
+    ]);
+
+    const readers = await readProgressModel.countDocuments({ bookId: id });
+    console.log('readers: ', readers);
+    if (!book) {
+      return errorResponseHandler("Book not found", httpStatusCode.NOT_FOUND, res);
+    }
+    const isFavorite = await favoritesModel.exists({ userId: user.id, productId: id });
+    const relatedBooks = await productsModel.find({ categoryId: { $in: book?.categoryId} }).populate([
+      { path: "authorId"  },
+    ]);
+
+    return {
+      success: true,
+      message: "Book retrieved successfully",
+      data: {
+        book: {
+          ...book.toObject(), 
+          favorite: isFavorite? true : false,
+          readers: readers > 0 ? readers : 0
+        },
+        relatedBooks: relatedBooks
+      },
+    };
+  
 };

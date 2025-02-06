@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { errorParser } from "../../lib/errors/error-response-handler";
 import { httpStatusCode } from "../../lib/constant";
-import { createBookService, getBooksService, updateBookService, deleteBookService, getAllBooksService, addBookToDiscountsService, removeBookFromDiscountsService, getAllDiscountedBooksService, addBookRatingService } from "../../services/products/products-service";
+import { createBookService, getBooksService, updateBookService, deleteBookService, getAllBooksService, addBookToDiscountsService, removeBookFromDiscountsService, getAllDiscountedBooksService, getBookForUserService } from "../../services/products/products-service";
 
 export const createBook = async (req: Request, res: Response) => {
   try {
@@ -41,6 +41,15 @@ export const getBook = async (req: Request, res: Response) => {
     return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
   }
 };
+export const getBookforUser = async (req: Request, res: Response) => {
+  try {
+    const response = await getBookForUserService(req.params.id,req.user, res);
+    return res.status(httpStatusCode.OK).json(response);
+  } catch (error: any) {
+    const { code, message } = errorParser(error);
+    return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
+  }
+};
 
 export const updateBook = async (req: Request, res: Response) => {
   try {
@@ -52,15 +61,7 @@ export const updateBook = async (req: Request, res: Response) => {
   }
 };
 
-export const AddBookRating = async (req: Request, res: Response) => {
-  try {
-    const response = await addBookRatingService(req.params.id, req.body,res );
-    return res.status(httpStatusCode.OK).json(response);
-  } catch (error: any) {
-    const { code, message } = errorParser(error);
-    return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
-  }
-};
+
 export const addBookToDiscounts = async (req: Request, res: Response) => {
   try {
     const response = await addBookToDiscountsService( req.body, res);

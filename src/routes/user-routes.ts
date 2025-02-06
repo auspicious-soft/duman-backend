@@ -6,7 +6,8 @@ import { getAllCollections, getCollection } from "src/controllers/collections/co
 import { getAllEventsHandler, getEventByIdHandler } from "src/controllers/events/events-controller";
 import { createFavorite, deleteFavorite, getAllFavorites, getFavorite, updateFavorite } from "src/controllers/favorites/favorites-controller";
 import { getAllNotificationsOfUser, markAllNotificationsAsRead } from "src/controllers/notifications/notifications-controller";
-import { AddBookRating, getAllBooks, getBook } from "src/controllers/products/products-controller";
+import { getAllBooks, getBook, getBookforUser } from "src/controllers/products/products-controller";
+import { AddBookRating, getRating } from "src/controllers/rating/rating-controller";
 import { getAllReadProgressHandler, getReadProgressByIdHandler, updateReadProgressHandler } from "src/controllers/read-progess/read-progress-controller";
 import { getAllStories, getStory } from "src/controllers/stories/stories-controller";
 import { getHomePageHandler, getproductsTabHandler } from "src/controllers/user-home-page/user-home-page-controller";
@@ -28,6 +29,8 @@ router.get("/book-lives/:id", getBookLive);
 
 //rating route
 router.put("/books/rating/:id", AddBookRating);
+router.get("/books/rating/:id", getRating);
+
 //coupon route
 router.get("/book-schools/verify", verifyBookSchoolsByCode);
 router.get("/book-schools/books", getBookSchoolsByCode);
@@ -45,7 +48,7 @@ router.get("/stories/:id", getStory);
 
 // books routes
 router.get("/books", getAllBooks);
-router.get("/books/:id", getBook);
+router.get("/books/:id", getBookforUser);
 
 // collections route
 router.get("/collections", getAllCollections);
@@ -61,9 +64,9 @@ router.get("/authors", getAllAuthors);
 
 //favorites route
 // router.post("/favorites", createFavorite);
-router.get("/favorites", getAllFavorites);
-router.get("/favorites/:id", getFavorite);
-router.put("/favorites", updateFavorite);
-router.delete("/favorites/:id", deleteFavorite);
+router.get("/favourites", getAllFavorites);
+router.get("/favourites/:id", getFavorite);
+router.put("/favourites", updateFavorite);
+router.delete("/favourites/:id", deleteFavorite);
 
 export { router }
