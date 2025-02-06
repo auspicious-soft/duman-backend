@@ -4,6 +4,7 @@ import {  getAllBookLivesWithBlogs, getBookLive } from "src/controllers/book-liv
 import { getBookSchoolsByCode, verifyBookSchoolsByCode } from "src/controllers/book-schools/book-schools-controller";
 import { getAllCollections, getCollection } from "src/controllers/collections/collections-controller";
 import { getAllEventsHandler, getEventByIdHandler } from "src/controllers/events/events-controller";
+import { createFavorite, deleteFavorite, getAllFavorites, getFavorite, updateFavorite } from "src/controllers/favorites/favorites-controller";
 import { getAllNotificationsOfUser, markAllNotificationsAsRead } from "src/controllers/notifications/notifications-controller";
 import { AddBookRating, getAllBooks, getBook } from "src/controllers/products/products-controller";
 import { getAllReadProgressHandler, getReadProgressByIdHandler, updateReadProgressHandler } from "src/controllers/read-progess/read-progress-controller";
@@ -57,4 +58,12 @@ router.put("/read-progress/:id", updateReadProgressHandler);
 
 //author route
 router.get("/authors", getAllAuthors);
+
+//favorites route
+// router.post("/favorites", createFavorite);
+router.get("/favorites", getAllFavorites);
+router.get("/favorites/:id", getFavorite);
+router.put("/favorites", updateFavorite);
+router.delete("/favorites/:id", deleteFavorite);
+
 export { router }
