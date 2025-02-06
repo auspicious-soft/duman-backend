@@ -7,7 +7,7 @@ import { getDiscountVoucher, verifyDiscountVoucher } from "src/controllers/disco
 import { getAllEventsHandler, getEventByIdHandler } from "src/controllers/events/events-controller";
 import { createFavorite, deleteFavorite, getAllFavorites, getFavorite, updateFavorite } from "src/controllers/favorites/favorites-controller";
 import { getAllNotificationsOfUser, markAllNotificationsAsRead } from "src/controllers/notifications/notifications-controller";
-import { getAllBooks, getBook, getBookforUser } from "src/controllers/products/products-controller";
+import { getAllBooks, getBook, getBookforUser, getBookMarketForUser } from "src/controllers/products/products-controller";
 import { AddBookRating, getRating } from "src/controllers/rating/rating-controller";
 import { getAllReadProgressHandler, getReadProgressByIdHandler, updateReadProgressHandler } from "src/controllers/read-progess/read-progress-controller";
 import { getAllStories, getStory } from "src/controllers/stories/stories-controller";
@@ -72,6 +72,10 @@ router.delete("/favourites/:id", deleteFavorite);
 
 //voucher route
 router.get("/vouchers/:id", verifyDiscountVoucher);
+
+//book-masters route
+router.get("/book-market", getBookMarketForUser);
+
 
 
 export { router }

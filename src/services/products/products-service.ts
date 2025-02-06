@@ -11,6 +11,8 @@ import { favoritesModel } from "src/models/favorites/favorites-schema";
 import { collectionsModel } from "src/models/collections/collections-schema";
 import { categoriesModel } from "src/models/categories/categroies-schema";
 import { readProgressModel } from "src/models/read-progress/read-progress-schema";
+import { publishersModel } from "src/models/publishers/publishers-schema";
+import { authorsModel } from "src/models/authors/authors-schema";
 
 export const createBookService = async (payload: any, res: Response) => {
   const newBook = new productsModel(payload);
@@ -304,3 +306,83 @@ export const getBookForUserService = async (id: string, user: any, res: Response
     };
   
 };
+
+export const getBookMarketForUserService = async (user:any, res: Response) => {
+  const categories = await categoriesModel.find();
+  const collections = await collectionsModel.find()
+  .populate({
+    path: "booksId",
+    populate: [
+      { path: "authorId",select: "name" }
+    ],
+  });
+  const publisher = await publishersModel.find().limit(10);
+  const author = await authorsModel.find().limit(10);
+  const readProgress = await readProgressModel.find({ userId: user.id }).populate({
+    path: "bookId",
+    populate: [
+      { path: "authorId",select: "name" }
+    ],
+  });
+  const audiobooks = await productsModel.find({ type: 'audiobook' }).populate([
+    { path: "authorId",select: "name" },
+    { path: "categoryId",select: "name" },
+  ]);
+  const bestSellers = await ordersModel.aggregate([
+    {
+      $group: {
+        _id: "$bookId",  // Group by bookId (assuming this is the field linking to the product)
+        orderCount: { $sum: 1 }  // Count how many times this book was ordered
+      }
+    },
+    {
+      $sort: { orderCount: -1 }  // Sort by the orderCount in descending order (most ordered first)
+    },
+    {
+      $limit: 10  // Limit to the top 10 bestsellers
+    },
+    {
+      $lookup: {
+        from: "products",  // Assuming the products collection is named "products"
+        localField: "_id",  // The bookId from the ordersModel
+        foreignField: "_id",  // The _id field in the productsModel
+        as: "book"  // Name of the field to store the populated data
+      }
+    },
+    {
+      $unwind: "$book"  // Flatten the array of books to have each book object directly
+    },
+    {
+      $project: {
+        _id: 0,  // Exclude the _id field from the final result
+        book: 1  // Include the book data
+      }
+    }
+  ]);
+  console.log(bestSellers);
+  // Best sellers will contain the top 10 books sorted by order count
+  
+  const newBooks = await productsModel
+  .find({ type: 'e-book' })
+  .sort({ createdAt: -1 })  // Sort by createdAt in descending order (latest first)
+  .limit(20)  // Limit the results to the latest 20 books
+  .populate([
+    { path: "authorId", select: "name" },
+    { path: "categoryId", select: "name" },
+  ]);
+
+  return {
+    success: true,
+    message: "Book retrieved successfully",
+    data: {
+      readProgress: readProgress,
+      audiobooks: audiobooks,
+      categories: categories,
+      collections: collections,
+      publisher: publisher,
+      author: author,
+      newBooks: newBooks,
+      bestSellers: bestSellers
+    },
+  };
+}
