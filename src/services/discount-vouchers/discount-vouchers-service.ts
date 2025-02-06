@@ -25,6 +25,16 @@ export const getDiscountVoucherService = async (id: string, res: Response) => {
     data: voucher,
   };
 };
+export const verifyDiscountVoucherService = async (id: string, res: Response) => {
+  const voucher = await discountVouchersModel.findById(id);
+//TODO CHECK VERIFY ACORDING TO USEAGE
+  if (!voucher) return errorResponseHandler("Coupon not found", httpStatusCode.NOT_FOUND, res);
+  return {
+    success: true,
+    message: "Discount voucher retrieved successfully",
+    data: voucher,
+  };
+};
 
 export const getAllDiscountVouchersService = async (payload: any, res: Response) => {
   const page = parseInt(payload.page as string) || 1;

@@ -28,7 +28,6 @@ export const loginService = async (payload: any, res: Response) => {
     }
   }
 
-  console.log("user: ", user);
 
   if (!user) return errorResponseHandler("User not found", httpStatusCode.NOT_FOUND, res);
   const isPasswordValid = await bcrypt.compare(password, user.password);

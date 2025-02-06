@@ -282,7 +282,6 @@ export const getBookForUserService = async (id: string, user: any, res: Response
     ]);
 
     const readers = await readProgressModel.countDocuments({ bookId: id });
-    console.log('readers: ', readers);
     if (!book) {
       return errorResponseHandler("Book not found", httpStatusCode.NOT_FOUND, res);
     }

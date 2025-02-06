@@ -98,7 +98,6 @@ export const getAllFavoritesService = async (payload: any, user: any, res: Respo
 
 export const updateFavoriteService = async (user: any, payload: any, res: Response) => {
     const isFavorite = typeof payload.favorite === "string" ? JSON.parse(payload.favorite) : payload.favorite;
-    console.log("isFavorite: ", isFavorite);
 
     if (isFavorite) {
       const updatedFavorite = await favoritesModel.findOneAndUpdate(
@@ -113,9 +112,7 @@ export const updateFavoriteService = async (user: any, payload: any, res: Respon
         data: updatedFavorite,
       };
     } else {
-      console.log("payload.productId: ", payload.productId);
       const Favorite = await favoritesModel.find({ productId: payload.productId, userId: user.id });
-      console.log('Favorite: ', Favorite);
       if (!Favorite || Favorite.length === 0) {
         return errorResponseHandler("Favorite not found", httpStatusCode.NOT_FOUND, res);
       }
@@ -133,7 +130,6 @@ export const updateFavoriteService = async (user: any, payload: any, res: Respon
 export const deleteFavoriteService = async (user: any, id: string, res: Response) => {
     const deletedFavorite = await favoritesModel.findOneAndDelete({ productId: id, userId: user.id });
     if (!deletedFavorite) {
-      console.log("deletedFavorite: ", deletedFavorite);
       return errorResponseHandler("Favorite not found", httpStatusCode.NOT_FOUND, res);
     }
     return {

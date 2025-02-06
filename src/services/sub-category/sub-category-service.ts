@@ -169,7 +169,6 @@ export const deleteSubCategoryService = async (id: string, res: Response) => {
 };
 
 export const addBookToSubCategoryService = async (payload: any, id: string, res: Response) => {
-  try {
     const { booksId } = payload;
 
     const updatedBooks = await productsModel.updateMany(
@@ -188,8 +187,5 @@ export const addBookToSubCategoryService = async (payload: any, id: string, res:
       message: "Books Added to Sub-Category successfully",
       data: updatedBooks,
     };
-  } catch (error) {
-    console.error("Error updating books:", error); // Log the error for debugging
-    return errorResponseHandler("Failed to update books", httpStatusCode.INTERNAL_SERVER_ERROR, res);
-  }
+  
 };

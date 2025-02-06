@@ -3,6 +3,7 @@ import { getAllAuthors } from "src/controllers/authors/authors-controller";
 import {  getAllBookLivesWithBlogs, getBookLive } from "src/controllers/book-lives/book-lives-controller";
 import { getBookSchoolsByCode, verifyBookSchoolsByCode } from "src/controllers/book-schools/book-schools-controller";
 import { getAllCollections, getCollection } from "src/controllers/collections/collections-controller";
+import { getDiscountVoucher, verifyDiscountVoucher } from "src/controllers/discount-vouchers/discount-vouchers-controller";
 import { getAllEventsHandler, getEventByIdHandler } from "src/controllers/events/events-controller";
 import { createFavorite, deleteFavorite, getAllFavorites, getFavorite, updateFavorite } from "src/controllers/favorites/favorites-controller";
 import { getAllNotificationsOfUser, markAllNotificationsAsRead } from "src/controllers/notifications/notifications-controller";
@@ -68,5 +69,9 @@ router.get("/favourites", getAllFavorites);
 router.get("/favourites/:id", getFavorite);
 router.put("/favourites", updateFavorite);
 router.delete("/favourites/:id", deleteFavorite);
+
+//voucher route
+router.get("/vouchers/:id", verifyDiscountVoucher);
+
 
 export { router }

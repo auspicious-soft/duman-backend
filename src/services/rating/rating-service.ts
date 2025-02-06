@@ -18,8 +18,8 @@ export const createRatingService = async (payload: any, res: Response) => {
 
 export const getRatingService = async (id: string, res: Response) => {
   const ratings = await productRatingsModel.find({ productId: id }).populate([{ path: "userId", select: "-password -__v -otp -token" }]);
+  const totalRatings = ratings.length;
   const product = await productsModel.findById(id);
-  console.log('product: ', product?.averageRating);
   if (!ratings || ratings.length === 0) {
     return errorResponseHandler("Rating not found", httpStatusCode.NOT_FOUND, res);
   }
@@ -40,7 +40,7 @@ export const getRatingService = async (id: string, res: Response) => {
   return {
     success: true,
     message: "Ratings retrieved successfully",
-    data: { ratings, ...ratingStats , averageRating: product? product?.averageRating : 0 },
+    data: { ratings, ...ratingStats , averageRating: product? product?.averageRating : 0 ,totalRatings},
   };
 };
 
@@ -114,9 +114,7 @@ export const addBookRatingService = async (productId: string, ratingData: any, u
   }
 
   const ratings = await productRatingsModel.find({ productId: productId });
-  console.log('ratings: ', ratings);
   const averageRating: number = ratings.reduce((acc: number, rating: { rating: number }) => acc + rating.rating, 0) / ratings.length;
-  console.log('averageRating: ', averageRating);
 
   // Update the product's average rating
   product.averageRating = averageRating;
