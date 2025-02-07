@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { createSummaryService, getSummaryService, updateSummaryService, deleteSummaryService, getAllSummariesService, addBooksToSummaryService } from "../../services/summaries/summaries-service";
+import { createSummaryService, getSummaryService, updateSummaryService, deleteSummaryService, getAllSummariesService, addBooksToSummaryService, getSummaryForUserService } from "../../services/summaries/summaries-service";
 import { errorParser } from "../../lib/errors/error-response-handler";
 import { httpStatusCode } from "../../lib/constant";
 
@@ -17,6 +17,15 @@ export const createSummary = async (req: Request, res: Response) => {
 export const getSummary = async (req: Request, res: Response) => {
     try {
         const response = await getSummaryService(req.params.id, res);
+        return res.status(httpStatusCode.OK).json(response);
+    } catch (error: any) {
+        const { code, message } = errorParser(error);
+        return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
+    }
+};
+export const getSummaryForUser = async (req: Request, res: Response) => {
+    try {
+        const response = await getSummaryForUserService(req.user,req.params.id, res);
         return res.status(httpStatusCode.OK).json(response);
     } catch (error: any) {
         const { code, message } = errorParser(error);

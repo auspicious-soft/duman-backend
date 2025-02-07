@@ -56,6 +56,42 @@ export const nestedQueryBuilder = (payload: Payload, querySearchKeyInBackend = [
     return { query, sort };
 };
 
+export const applyFilters = (
+    data: any[],
+    query: any,
+    language: string = 'eng'
+  ) => {
+    const { minRating = 5, sortBy = 'createdAt', sortOrder = 'desc' } = query;
+    console.log('sortOrder: ', sortOrder);
+    console.log('sortBy: ', sortBy);
+    console.log('minRating: ', minRating);
+  
+    // Filter by minimum average rating
+    let filteredData = data.filter((item) => item.averageRating >= parseFloat(minRating));
+  
+    // Alphabetical sorting by the book name in the chosen language
+    filteredData = filteredData.sort((a, b) => {
+      const nameA = a.name[language] || a.name['eng']; // Default to 'eng' if specific language is unavailable
+      const nameB = b.name[language] || b.name['eng']; 
+      return nameA.localeCompare(nameB); 
+    });
+  
+    // Sorting by the specified field (`sortBy`), default is 'createdAt'
+    filteredData = filteredData.sort((a, b) => {
+      const dateA = new Date(a[sortBy]).getTime();
+      const dateB = new Date(b[sortBy]).getTime();
+      return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+    });
+  
+    // Filter based on language presence in the name field
+    if (language !== 'eng') {
+      filteredData = filteredData.filter((item) => item.name[language]); // Exclude items without the specified language name
+    }
+  
+    return filteredData;
+  };
+  
+
 export const convertToBoolean = (value: string) => {
     if (value === 'true') return true
     else if (value === 'false') return false

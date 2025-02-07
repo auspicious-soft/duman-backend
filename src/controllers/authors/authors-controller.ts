@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { createPublisherService, getPublisherService, updatePublisherService, deletePublisherService, getAllPublishersService } from "../../services/publisher/publishers-service";
-import { createAuthorService, getAuthorService, updateAuthorService, deleteAuthorService, getAllAuthorsService } from "../../services/authors/authors-service";
+import { createAuthorService, getAuthorService, updateAuthorService, deleteAuthorService, getAllAuthorsService, getAllAuthorsForUserService, getAuthorForUserService, getAuthorCountriesService } from "../../services/authors/authors-service";
 import { errorParser } from "../../lib/errors/error-response-handler";
 import { httpStatusCode } from "../../lib/constant";
 
@@ -73,6 +73,15 @@ export const getAuthor = async (req: Request, res: Response) => {
         return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
     }
 };
+export const getAuthorForUser = async (req: Request, res: Response) => {
+    try {
+        const response = await getAuthorForUserService(req.user, req.params.id, res);
+        return res.status(httpStatusCode.OK).json(response);
+    } catch (error: any) {
+        const { code, message } = errorParser(error);
+        return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
+    }
+};
 
 export const updateAuthor = async (req: Request, res: Response) => {
     try {
@@ -97,6 +106,25 @@ export const deleteAuthor = async (req: Request, res: Response) => {
 export const getAllAuthors = async (req: Request, res: Response) => {
     try {
         const response = await getAllAuthorsService(req.query, res);
+        return res.status(httpStatusCode.OK).json(response);
+    } catch (error: any) {
+        const { code, message } = errorParser(error);
+        return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
+    }
+};
+export const getAllAuthorsForUser = async (req: Request, res: Response) => {
+    try {
+        const response = await getAllAuthorsForUserService(req.user,req.query, res);
+        return res.status(httpStatusCode.OK).json(response);
+    } catch (error: any) {
+        const { code, message } = errorParser(error);
+        return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
+    }
+};
+export const getAuthorCountries = async (req: Request, res: Response) => {
+    try {
+        console.log('getAuthorCountries');
+        const response = await getAuthorCountriesService( res);
         return res.status(httpStatusCode.OK).json(response);
     } catch (error: any) {
         const { code, message } = errorParser(error);

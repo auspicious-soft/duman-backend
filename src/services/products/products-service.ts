@@ -7,7 +7,7 @@ import { nestedQueryBuilder, queryBuilder } from "src/utils";
 import { deleteFileFromS3 } from "src/config/s3";
 import { productRatingsModel } from "src/models/ratings/ratings-schema";
 import { ordersModel } from "src/models/orders/orders-schema";
-import { favoritesModel } from "src/models/favorites/favorites-schema";
+import { favoritesModel } from "src/models/product-favorites/product-favorites-schema";
 import { collectionsModel } from "src/models/collections/collections-schema";
 import { categoriesModel } from "src/models/categories/categroies-schema";
 import { readProgressModel } from "src/models/read-progress/read-progress-schema";
@@ -278,6 +278,76 @@ export const getBookForUserService = async (id: string, user: any, res: Response
         readers: readers > 0 ? readers : 0,
       },
       relatedBooks: relatedBooks,
+    },
+  };
+};
+
+export const getNewbookForUserService = async (user: any, payload: any, res: Response) => {
+  const page = parseInt(payload.page as string) || 1;
+  const limit = parseInt(payload.limit as string) || 0;
+  const offset = (page - 1) * 20;
+  const totalDataCount = await productsModel.countDocuments({ type: "e-book" }) ;
+
+  const newBooks = await productsModel
+    .find({ type: "e-book" })
+    .sort({ createdAt: -1 })
+    .skip(offset)
+    .limit(20)
+    .populate([
+      { path: "authorId", select: "name" },
+      { path: "categoryId", select: "name" },
+    ]);
+  const favoriteBooks = await favoritesModel.find({ userId: user.id }).populate("productId");
+  const favoriteIds = favoriteBooks
+    .filter((book) => book.productId && book.productId._id) // Ensure valid productId and _id
+    .map((book) => book.productId._id.toString());
+  const newBooksWithFavoriteStatus = newBooks.map((book) => ({
+    ...book.toObject(),
+    isFavorite: favoriteIds.includes(book._id.toString()), // Check if the book is in the user's favorites
+  }));
+  return {
+    success: true,
+    message: "Book retrieved successfully",
+    page,
+    limit,
+    total: totalDataCount,
+    data: {
+      newBooks: newBooksWithFavoriteStatus,
+    },
+  };
+};
+export const getAllAudioBookForUserService = async (payload: any, user: any, res: Response) => {
+  const page = parseInt(payload.page as string) || 1;
+  const limit = parseInt(payload.limit as string) || 0;
+  const offset = (page - 1) * limit;
+  const audiobooks = await productsModel
+    .find({ type: "audiobook" })
+    .sort({ createdAt: -1 })
+    .skip(offset)
+    .limit(limit)
+    .populate([
+      { path: "authorId", select: "name" },
+      { path: "categoryId", select: "name" },
+    ]);
+    const totalDataCount = await productsModel.countDocuments({ type: "audiobook" });
+
+  const favoriteBooks = await favoritesModel.find({ userId: user.id }).populate("productId");
+  const favoriteIds = favoriteBooks
+    .filter((book) => book.productId && book.productId._id) // Ensure valid productId and _id
+    .map((book) => book.productId._id.toString());
+
+  const audiobooksWithFavoriteStatus = audiobooks.map((book) => ({
+    ...book.toObject(),
+    isFavorite: favoriteIds.includes(book._id.toString()), // Check if the book is in the user's favorites
+  }));
+  return {
+    success: true,
+    message: "Book retrieved successfully",
+    page,
+    limit,
+    total: totalDataCount,
+    data: {
+      audioBooks: audiobooksWithFavoriteStatus,
     },
   };
 };

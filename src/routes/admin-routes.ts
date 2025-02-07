@@ -57,7 +57,6 @@ router.get("/sub-categories", getAllSubCategory);
 router.get("/sub-categories/:id", getSubCategory);
 router.put("/sub-categories/:id", updateSubCategory);
 router.put("/sub-categories/:id/add", addBooksToSubCategory);
-
 router.delete("/sub-categories/:id", deleteSubCategory);
 
 // books routes

@@ -10,7 +10,7 @@ import mongoose, { PipelineStage } from "mongoose";
 import { ordersModel } from "src/models/orders/orders-schema"; 
 import { addedUserCreds } from "src/utils/mails/mail";
 import { hashPasswordIfEmailAuth } from "src/utils/userAuth/signUpAuth";
-import { favoritesModel } from "src/models/favorites/favorites-schema";
+import { favoritesModel } from "src/models/product-favorites/product-favorites-schema";
 
 export const createPublisherService = async (payload: any, res: Response) => {
   const newPublisher = new publishersModel(payload);

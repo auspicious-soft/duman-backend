@@ -1,5 +1,5 @@
 import { Request, Response } from "express"
-import { createCategoryService, getCategoryService, updateCategoryService, deleteCategoryService, getAllCategoriesService, addBookToCategoryService } from "../../services/category/category-service";
+import { createCategoryService, getCategoryService, updateCategoryService, deleteCategoryService, getAllCategoriesService, addBookToCategoryService, getBooksByCategoryIdService } from "../../services/category/category-service";
 import { errorParser } from "../../lib/errors/error-response-handler";
 import { httpStatusCode } from "../../lib/constant";
 
@@ -16,6 +16,15 @@ export const createCategory = async (req: Request, res: Response) => {
 export const getCategory = async (req: Request, res: Response) => {
     try {
         const response = await getCategoryService(req.params.id, res);
+        return res.status(httpStatusCode.OK).json(response);
+    } catch (error: any) {
+        const { code, message } = errorParser(error);
+        return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
+    }
+};
+export const getBooksByCategoryId = async (req: Request, res: Response) => {
+    try {
+        const response = await getBooksByCategoryIdService(req.params.id, req.user,req.query, res);
         return res.status(httpStatusCode.OK).json(response);
     } catch (error: any) {
         const { code, message } = errorParser(error);
@@ -42,6 +51,7 @@ export const deleteCategory = async (req: Request, res: Response) => {
         return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "Failed to delete sub-category" });
     }
 };
+
 
 export const getAllCategories = async (req: Request, res: Response) => {
     try {

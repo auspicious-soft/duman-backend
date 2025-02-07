@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { httpStatusCode } from "src/lib/constant";
 import { errorParser } from "src/lib/errors/error-response-handler";
-import { createFavoriteService, getFavoriteService, getAllFavoritesService, updateFavoriteService, deleteFavoriteService } from "src/services/favorites/favorites-service";
+import { createFavoriteService, getFavoriteService, getAllFavoritesService, updateFavoriteService, deleteFavoriteService } from "src/services/product-favorites/product-favorites-service";
 
 export const createFavorite = async (req: Request, res: Response) => {
   try {

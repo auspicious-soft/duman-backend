@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { createCollectionService, getCollectionService, updateCollectionService, deleteCollectionService, getAllCollectionsService, addBooksToCollectionService } from "../../services/collections/collections-service";
+import { createCollectionService, getCollectionService, updateCollectionService, deleteCollectionService, getAllCollectionsService, addBooksToCollectionService, getCollectionForUserService } from "../../services/collections/collections-service";
 import { errorParser } from "../../lib/errors/error-response-handler";
 import { httpStatusCode } from "../../lib/constant";
 
@@ -17,6 +17,15 @@ export const createCollection = async (req: Request, res: Response) => {
 export const getCollection = async (req: Request, res: Response) => {
     try {
         const response = await getCollectionService(req.params.id, res);
+        return res.status(httpStatusCode.OK).json(response);
+    } catch (error: any) {
+        const { code, message } = errorParser(error);
+        return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
+    }
+};
+export const getCollectionForUser = async (req: Request, res: Response) => {
+    try {
+        const response = await getCollectionForUserService(req.user,req.params.id, res);
         return res.status(httpStatusCode.OK).json(response);
     } catch (error: any) {
         const { code, message } = errorParser(error);

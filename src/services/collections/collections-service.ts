@@ -4,6 +4,8 @@ import { httpStatusCode } from "../../lib/constant";
 import { nestedQueryBuilder, queryBuilder } from "src/utils";
 import { deleteFileFromS3 } from "src/config/s3";
 import { collectionsModel } from "../../models/collections/collections-schema";
+import { favoritesModel } from "src/models/product-favorites/product-favorites-schema";
+import { productsModel } from "src/models/products/products-schema";
 
 
 export const createCollectionService = async (payload: any, res: Response) => {
@@ -34,6 +36,59 @@ export const getCollectionService = async (id: string, res: Response) => {
     data: collection,
   };
 };
+
+export const getCollectionForUserService = async (user: any, id: string, res: Response) => {
+  // Find the collection by ID and populate the books with their relevant information
+  const collection = await collectionsModel.findById(id).populate({
+    path: "booksId",
+    populate: [
+      { path: "authorId" }, 
+      { path: "categoryId" }, 
+      { path: "subCategoryId" }, 
+      { path: "publisherId" }, 
+    ],
+  });
+
+  // If collection is not found, return an error response
+  if (!collection) return errorResponseHandler("Collection not found", httpStatusCode.NOT_FOUND, res);
+
+  // Find the user's favorite books
+  const favoriteBooks = await favoritesModel.find({ userId: user.id }).populate("productId");
+
+  // Safe check to ensure each favorite book has a valid productId and productId._id
+  const favoriteIds = favoriteBooks
+    .filter((book) => book.productId && book.productId._id)  // Ensure valid productId and _id
+    .map((book) => book.productId._id.toString());
+
+  // Check if booksId exists and is an array, then map through it
+  if (!collection.booksId || !Array.isArray(collection.booksId)) {
+    return errorResponseHandler("Invalid books data in the collection", httpStatusCode.BAD_REQUEST, res);
+  }
+
+  // Map through the books in the collection and add the isFavorite field
+  const updatedBooks = collection.booksId.map((book: any) => {
+    if (!book || !book._id) {
+      return null; // Skip invalid or incomplete book objects
+    }
+
+    return {
+      ...book.toObject(),  // Convert mongoose object to plain JS object
+      isFavorite: favoriteIds.includes(book._id.toString()),  // Check if the book is in the user's favorites
+    };
+  }).filter((book) => book !== null); // Remove any null values from the mapped array
+
+  // Return the updated collection data with the favorite status added to each book
+  return {
+    success: true,
+    message: "Collection retrieved successfully",
+    data: {
+      ...collection.toObject(),
+      booksId: updatedBooks,  // Replace the booksId with the updated books
+    },
+  };
+};
+
+
 
 export const getAllCollectionsService = async (payload: any, res: Response) => {
   const page = parseInt(payload.page as string) || 1;
