@@ -10,6 +10,7 @@ import mongoose, { PipelineStage } from "mongoose";
 import { ordersModel } from "src/models/orders/orders-schema"; 
 import { addedUserCreds } from "src/utils/mails/mail";
 import { hashPasswordIfEmailAuth } from "src/utils/userAuth/signUpAuth";
+import { favoritesModel } from "src/models/favorites/favorites-schema";
 
 export const createPublisherService = async (payload: any, res: Response) => {
   const newPublisher = new publishersModel(payload);
@@ -42,6 +43,80 @@ export const getPublisherService = async (id: string, res: Response) => {
     },
   };
 };
+export const getPublisherForUserService = async (id: string,user: any, res: Response) => {
+  const publisher = await publishersModel.findById(id).populate("categoryId");
+  if (!publisher) return errorResponseHandler("Publisher not found", httpStatusCode.NOT_FOUND, res);
+
+  const favoriteBooks = await favoritesModel.find({ userId: user.id }).populate("productId");
+  const favoriteIds = favoriteBooks.map((book) => book.productId._id.toString());
+  
+  // Map the `isFavorite` to each book in `publisherBooks`
+  const publisherBooks = await productsModel.find({ publisherId: id }).populate([{ path: "authorId", select: "name" }, { path: "categoryId", select: "name" }, { path: "subCategoryId", select: "name" }]).limit(5);
+  const publisherBooksWithFavoriteStatus = publisherBooks.map((book) => ({
+    ...book.toObject(),
+    isFavorite: favoriteIds.includes(book._id.toString()),  // Check if the book is in the user's favorites
+  }));
+
+
+  const booksCount = await productsModel.countDocuments({ publisherId: id });
+
+  return {
+    success: true,
+    message: "Publisher retrieved successfully",
+    data: {
+      publisher,
+      booksCount,
+      publisherBooks:publisherBooksWithFavoriteStatus,
+    },
+  };
+};
+// export const getPublisherWorkService = async (id: string, user: any, res: Response) => {
+//   const publisher = await publishersModel.findById(id);
+//   if (!publisher) return errorResponseHandler("Publisher not found", httpStatusCode.NOT_FOUND, res);
+
+//   const publisherBooks = await productsModel.find({ publisherId: id }).populate([{ path: "authorId", select: "name" }, { path: "categoryId", select: "name" }, { path: "subCategoryId" , select: "name"}]);
+//   console.log('publisherBooks: ', publisherBooks);
+  
+//   const favoriteBooks = await favoritesModel.find({ userId: user.id }).populate("productId");
+//   const favoriteIds = favoriteBooks.map((book) => book.productId._id.toString());
+//   const isFavorite = publisherBooks.some((book) => favoriteIds.includes(book._id.toString()));
+//   console.log('isFavorite: ', isFavorite);
+
+//   return {
+//     success: true,
+//     message: "Publisher retrieved successfully",
+//     data: {
+//       publisher,
+//       publisherBooks,
+//     },
+//   };
+// };
+
+export const getPublisherWorkService = async (id: string, user: any, res: Response) => {
+  const publisher = await publishersModel.findById(id);
+  if (!publisher) return errorResponseHandler("Publisher not found", httpStatusCode.NOT_FOUND, res);
+
+  const publisherBooks = await productsModel.find({ publisherId: id }).populate([{ path: "authorId", select: "name" }, { path: "categoryId", select: "name" }, { path: "subCategoryId", select: "name" }]);
+  
+  const favoriteBooks = await favoritesModel.find({ userId: user.id }).populate("productId");
+  const favoriteIds = favoriteBooks.map((book) => book.productId._id.toString());
+  
+  const publisherBooksWithFavoriteStatus = publisherBooks.map((book) => ({
+    ...book.toObject(),
+    isFavorite: favoriteIds.includes(book._id.toString()),  
+  }));
+
+
+  return {
+    success: true,
+    message: "Publisher retrieved successfully",
+    data: {
+      publisher,
+      publisherBooks: publisherBooksWithFavoriteStatus,
+    },
+  };
+};
+
 
 export const getAllPublishersService = async (payload: any, res: Response) => {
   const page = parseInt(payload.page as string) || 1;

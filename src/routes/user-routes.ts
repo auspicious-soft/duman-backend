@@ -8,6 +8,7 @@ import { getAllEventsHandler, getEventByIdHandler } from "src/controllers/events
 import { createFavorite, deleteFavorite, getAllFavorites, getFavorite, updateFavorite } from "src/controllers/favorites/favorites-controller";
 import { getAllNotificationsOfUser, markAllNotificationsAsRead } from "src/controllers/notifications/notifications-controller";
 import { getAllBooks, getBook, getBookforUser, getBookMarketForUser } from "src/controllers/products/products-controller";
+import { getAllPublishers, getPublisher, getPublisherForUser, getPublisherWorkForUser } from "src/controllers/publisher/publishers-controller";
 import { AddBookRating, getRating } from "src/controllers/rating/rating-controller";
 import { getAllReadProgressHandler, getReadProgressByIdHandler, updateReadProgressHandler } from "src/controllers/read-progess/read-progress-controller";
 import { getAllStories, getStory } from "src/controllers/stories/stories-controller";
@@ -75,6 +76,11 @@ router.get("/vouchers/:id", verifyDiscountVoucher);
 
 //book-masters route
 router.get("/book-market", getBookMarketForUser);
+
+//publishers route
+router.get("/publishers", getAllPublishers);
+router.get("/publishers/:id", getPublisherForUser);
+router.get("/publishers/:id/work", getPublisherWorkForUser);
 
 
 

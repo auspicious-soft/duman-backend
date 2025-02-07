@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { createPublisherService, getPublisherService, updatePublisherService, deletePublisherService, getAllPublishersService, getBooksByPublisherService, getBookByIdPublisherService, publisherDashboardService } from "../../services/publisher/publishers-service";
+import { createPublisherService, getPublisherService, updatePublisherService, deletePublisherService, getAllPublishersService, getBooksByPublisherService, getBookByIdPublisherService, publisherDashboardService, getPublisherWorkService, getPublisherForUserService } from "../../services/publisher/publishers-service";
 import { errorParser } from "../../lib/errors/error-response-handler";
 import { httpStatusCode } from "../../lib/constant";
 
@@ -16,6 +16,24 @@ export const createPublisher = async (req: Request, res: Response) => {
 export const getPublisher = async (req: Request, res: Response) => {
     try {
         const response = await getPublisherService(req.params.id, res);
+        return res.status(httpStatusCode.OK).json(response);
+    } catch (error: any) {
+        const { code, message } = errorParser(error);
+        return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
+    }
+};
+export const getPublisherForUser = async (req: Request, res: Response) => {
+    try {
+        const response = await getPublisherForUserService(req.params.id,req.user, res);
+        return res.status(httpStatusCode.OK).json(response);
+    } catch (error: any) {
+        const { code, message } = errorParser(error);
+        return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
+    }
+};
+export const getPublisherWorkForUser = async (req: Request, res: Response) => {
+    try {
+        const response = await getPublisherWorkService(req.params.id, req.user, res);
         return res.status(httpStatusCode.OK).json(response);
     } catch (error: any) {
         const { code, message } = errorParser(error);
