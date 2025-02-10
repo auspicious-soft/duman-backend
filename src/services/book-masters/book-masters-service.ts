@@ -139,7 +139,6 @@ export const deleteBookMasterService = async (id: string, res: Response) => {
     data: deletedBookMaster,
   };
 };
-
 export const getBookMasterCategoryService = async (user: any, payload: any, res: Response) => {
   const page = parseInt(payload.page as string) || 1;
   const limit = parseInt(payload.limit as string) || 0;
@@ -148,33 +147,35 @@ export const getBookMasterCategoryService = async (user: any, payload: any, res:
   const bookStudy = await bookMastersModel.find().populate({
     path: "productsId",
     populate: [
-      { path: "authorId" }, 
-      { path: "categoryId" }, 
-      { path: "subCategoryId" }, 
+      { path: "authorId" },
+      { path: "categoryId" },
+      { path: "subCategoryId" },
       { path: "publisherId" },
     ],
   });
-  
+
   if (!bookStudy) {
     return errorResponseHandler("Book study not found", httpStatusCode.NOT_FOUND, res);
   }
-  
+
   let categories: any[] = [];
-  
-  bookStudy.forEach((study) => {
-    if (study.productsId && !Array.isArray(study.productsId)) {
-      categories.push((study.productsId as any).categoryId);
-    } else if (Array.isArray(study.productsId)) {
-      categories.push(...study.productsId.map((product: any) => product.categoryId));
+
+  bookStudy.forEach((study:any) => {
+    if (study.productsId && study.productsId.categoryId) {
+      categories.push(...study.productsId.categoryId);
     }
   });
 
-  const uniqueCategories = [...new Set(categories)];
+  const uniqueCategories = categories.filter((value, index, self) =>
+    index === self.findIndex((t) => (
+      t._id === value._id
+    ))
+  );
 
   return {
     success: true,
-    message: "Book Master categories retrieved successfully",
-    data: { categories: uniqueCategories },  
+    message: "Book University categories retrieved successfully",
+    data: { categories: uniqueCategories },
   };
 };
 

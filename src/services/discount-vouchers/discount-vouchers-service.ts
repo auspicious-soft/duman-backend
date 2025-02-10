@@ -29,6 +29,12 @@ export const verifyDiscountVoucherService = async (id: string, res: Response) =>
   const voucher = await discountVouchersModel.findById(id);
 //TODO CHECK VERIFY ACORDING TO USEAGE
   if (!voucher) return errorResponseHandler("Coupon not found", httpStatusCode.NOT_FOUND, res);
+  if(voucher.codeActivated >= voucher.activationAllowed){
+    return errorResponseHandler("Coupon limit exceeded", httpStatusCode.BAD_REQUEST, res);
+  }else{
+    voucher.codeActivated += 1;
+    await voucher.save();
+  }
   return {
     success: true,
     message: "Discount voucher retrieved successfully",

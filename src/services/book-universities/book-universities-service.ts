@@ -158,6 +158,81 @@ export const deleteBookUniversityService = async (id: string, res: Response) => 
   };
 };
 
+// export const getBookUniversityCategoryService = async (user: any, payload: any, res: Response) => {
+//   const page = parseInt(payload.page as string) || 1;
+//   const limit = parseInt(payload.limit as string) || 0;
+//   const offset = (page - 1) * limit;
+
+//   // Fetch book studies and populate with related fields
+//   const bookStudy = await bookUniversitiesModel.find().populate({
+//     path: "productsId",
+//     populate: [
+//       { path: "authorId" }, 
+//       { path: "categoryId" }, 
+//       { path: "subCategoryId" }, 
+//       { path: "publisherId" },
+//     ],
+//   });
+
+//   if (!bookStudy) {
+//     return errorResponseHandler("Book study not found", httpStatusCode.NOT_FOUND, res);
+//   }
+
+//   let categories: any[] = [];
+
+//   // Log the fetched data for debugging
+//   console.log("Fetched bookStudy data:", bookStudy);
+
+//   // Iterate through each study to extract categories
+//   bookStudy.forEach((study:any) => {
+//     if (study.productsId && !Array.isArray(study.productsId)) {
+//       // Handle single product (not an array)
+//       if (study.productsId.categoryId) {
+//         console.log("Single product categoryId:", study.productsId.categoryId);
+//         categories.push(study.productsId.categoryId._id); // Push category _id into categories array
+//       }
+//     } else if (Array.isArray(study.productsId)) {
+//       // Handle array of products
+//       study.productsId.forEach((product: any) => {
+//         if (product.categoryId) {
+//           console.log("Product categoryId:", product.categoryId);
+//           categories.push(product.categoryId._id); // Push category _id into categories array
+//         }
+//       });
+//     }
+//   });
+
+//   // Log the raw categories array before removing duplicates
+//   console.log("Raw categories array:", categories);
+
+//   // Remove duplicate category _ids using Set
+//   const uniqueCategoryIds = Array.from(new Set(categories));
+//   console.log("Unique categoryIds:", uniqueCategoryIds);
+
+//   // Map unique category _ids to category objects
+//   const uniqueCategories = uniqueCategoryIds.map((id) => {
+//     return bookStudy
+//       .map((study:any) => {
+//         // Look for the category that matches the _id
+//         const matchingCategory = (study?.productsId)?.find((product: any) => product.categoryId?._id.toString() === id.toString());
+//         return matchingCategory ? matchingCategory.categoryId : null;
+//       })
+//       .find((category) => category); // Get the first valid category (non-null)
+//   }).filter(Boolean); // Remove null values
+
+//   // Log the final result of unique categories
+//   console.log("Final unique categories:", uniqueCategories);
+
+//   return {
+//     success: true,
+//     message: "Book University categories retrieved successfully",
+//     data: { categories: uniqueCategories },
+//   };
+// };
+
+
+
+
 export const getBookUniversityCategoryService = async (user: any, payload: any, res: Response) => {
   const page = parseInt(payload.page as string) || 1;
   const limit = parseInt(payload.limit as string) || 0;
@@ -166,35 +241,77 @@ export const getBookUniversityCategoryService = async (user: any, payload: any, 
   const bookStudy = await bookUniversitiesModel.find().populate({
     path: "productsId",
     populate: [
-      { path: "authorId" }, 
-      { path: "categoryId" }, 
-      { path: "subCategoryId" }, 
+      { path: "authorId" },
+      { path: "categoryId" },
+      { path: "subCategoryId" },
       { path: "publisherId" },
     ],
   });
-  
+
   if (!bookStudy) {
     return errorResponseHandler("Book study not found", httpStatusCode.NOT_FOUND, res);
   }
-  
+
   let categories: any[] = [];
-  
-  bookStudy.forEach((study) => {
-    if (study.productsId && !Array.isArray(study.productsId)) {
-      categories.push((study.productsId as any).categoryId);
-    } else if (Array.isArray(study.productsId)) {
-      categories.push(...study.productsId.map((product: any) => product.categoryId));
+
+  bookStudy.forEach((study:any) => {
+    if (study.productsId && study.productsId.categoryId) {
+      categories.push(...study.productsId.categoryId);
     }
   });
 
-  const uniqueCategories = [...new Set(categories)];
+  const uniqueCategories = categories.filter((value, index, self) =>
+    index === self.findIndex((t) => (
+      t._id === value._id
+    ))
+  );
 
   return {
     success: true,
     message: "Book University categories retrieved successfully",
-    data: { categories: uniqueCategories },  
+    data: { categories: uniqueCategories },
   };
 };
+
+
+
+// export const getBookUniversityCategoryService = async (user: any, payload: any, res: Response) => {
+//   const page = parseInt(payload.page as string) || 1;
+//   const limit = parseInt(payload.limit as string) || 0;
+//   const offset = (page - 1) * limit;
+
+//   const bookStudy = await bookUniversitiesModel.find().populate({
+//     path: "productsId",
+//     populate: [
+//       { path: "authorId" }, 
+//       { path: "categoryId" }, 
+//       { path: "subCategoryId" }, 
+//       { path: "publisherId" },
+//     ],
+//   });
+  
+//   if (!bookStudy) {
+//     return errorResponseHandler("Book study not found", httpStatusCode.NOT_FOUND, res);
+//   }
+  
+//   let categories: any[] = [];
+  
+//   bookStudy.forEach((study) => {
+//     if (study.productsId && !Array.isArray(study.productsId)) {
+//       categories.push((study.productsId as any).categoryId);
+//     } else if (Array.isArray(study.productsId)) {
+//       categories.push(...study.productsId.map((product: any) => product.categoryId));
+//     }
+//   });
+
+//   const uniqueCategories = [...new Set(categories)];
+
+//   return {
+//     success: true,
+//     message: "Book University categories retrieved successfully",
+//     data: { categories: uniqueCategories },  
+//   };
+// };
 
 
 export const getBookUniversityTeacherService = async (payload: any, user: any, res: Response) => {

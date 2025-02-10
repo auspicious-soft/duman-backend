@@ -58,7 +58,7 @@ export const getBooksByCategoryIdService = async (id: string, user: any,query: a
 
   // Get the user's favorite books and their IDs
   const favoriteBooks = await favoritesModel.find({ userId: user.id }).populate("productId");
-  const favoriteIds = favoriteBooks.map((book) => book.productId._id.toString());
+  const favoriteIds = favoriteBooks.map((book) => book.productId?._id.toString());
 
   // Fetch books by category and populate necessary fields
   const categoryBooks = await productsModel.find({ categoryId: id }).populate([
@@ -73,14 +73,13 @@ export const getBooksByCategoryIdService = async (id: string, user: any,query: a
     isFavorite: favoriteIds.includes(book._id.toString()), // Check if the book is in the user's favorites
   }));
   
-  console.log('categoryBooksWithFavoriteStatus: ', categoryBooksWithFavoriteStatus);
-  const filteredBooks = applyFilters(categoryBooksWithFavoriteStatus, query, language);
-  console.log('filteredBooks: ', filteredBooks);
+  // const filteredBooks = applyFilters(categoryBooksWithFavoriteStatus, query, language);
+  // console.log('filteredBooks: ', filteredBooks);
 
   return {
     success: true,
     message: "Category retrieved successfully",
-    data: { category, books: filteredBooks },
+    data: { category, books: categoryBooksWithFavoriteStatus },
   };
 };
 

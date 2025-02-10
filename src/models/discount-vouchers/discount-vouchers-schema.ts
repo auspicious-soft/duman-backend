@@ -10,6 +10,14 @@ const discountVouchersSchema = new Schema({
         type:Number,
         required: true
     },
+    activationAllowed: {
+        type: Number,
+        required: true
+    },
+    codeActivated: {
+        type: Number,
+        default: 0
+    },
   
 },
     { timestamps: true }
