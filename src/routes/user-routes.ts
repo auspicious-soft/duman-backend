@@ -19,6 +19,9 @@ import {  getUserDashboardStats,  } from "src/controllers/user/user-controller";
 import { getAllBookLivesWithBlogsService } from "src/services/book-lives/book-lives-service";
 import { getAllAuthorFavorites, getAuthorFavorite, updateAuthorFavorite } from "src/controllers/author-favorites/author-favorites-controller";
 import { getAllSummaries, getSummaryForUser } from "src/controllers/summaries/summaries-controller";
+import { getBookStudyCategoriesStudy, getBookStudyForUser, getBookStudyNewbooks, getBookStudyReadProgress, getBookStudyTeachers, getPopularCourses } from "src/controllers/book-studies/book-studies-controller";
+import { getBookMasterCategories, getBookMasterForUser, getBookMasterNewbooks, getBookMasterReadProgress, getBookMasterTeachers, getPopularCoursesBookMaster } from "src/controllers/book-masters/book-masters-controller";
+import { getBookUniversityCategories, getBookUniversityForUser, getBookUniversityNewbooks, getBookUniversityReadProgress, getBookUniversityTeachers, getPopularCoursesBookUniversity } from "src/controllers/book-universities/book-universities-controller";
 
 
 const router = Router();
@@ -104,5 +107,29 @@ router.get("/author-countries", getAuthorCountries);
 //summaries route
 router.get("/summaries", getAllSummaries);
 router.get("/summaries/:id", getSummaryForUser);
+
+//books-studies route   
+router.get("/books-studies", getBookStudyForUser);
+router.get("/books-studies/categories", getBookStudyCategoriesStudy);
+router.get("/books-studies/teachers", getBookStudyTeachers);
+router.get("/books-studies/popular-courses", getPopularCourses);
+router.get("/books-studies/new-books", getBookStudyNewbooks);
+router.get("/books-studies/read-progress", getBookStudyReadProgress);
+
+//books-masters route   
+router.get("/books-masters", getBookMasterForUser);
+router.get("/books-masters/categories", getBookMasterCategories);
+router.get("/books-masters/speakers", getBookMasterTeachers);
+router.get("/books-masters/popular-courses", getPopularCoursesBookMaster);
+// router.get("/books-masters/new-books", getBookMasterNewbooks);
+// router.get("/books-masters/read-progress", getBookMasterReadProgress);
+
+//books-studies route   
+router.get("/books-universities", getBookUniversityForUser);
+router.get("/books-universities/categories", getBookUniversityCategories);
+router.get("/books-universities/speakers", getBookUniversityTeachers);
+router.get("/books-universities/popular-courses", getPopularCoursesBookUniversity);
+router.get("/books-universities/new-books", getBookUniversityNewbooks);
+router.get("/books-universities/read-progress", getBookUniversityReadProgress);
 
 export { router }

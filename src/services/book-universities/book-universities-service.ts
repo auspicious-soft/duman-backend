@@ -3,6 +3,8 @@ import { errorResponseHandler } from "../../lib/errors/error-response-handler";
 import { httpStatusCode } from "../../lib/constant";
 import { bookUniversitiesModel } from "../../models/book-universities/book-universities-schema";
 import { productsModel } from "src/models/products/products-schema";
+import { favoritesModel } from "src/models/product-favorites/product-favorites-schema";
+import { readProgressModel } from "src/models/read-progress/read-progress-schema";
 
 
 
@@ -20,12 +22,12 @@ export const addBooksToBookUniversity = async (payload: any, res: Response) => {
 
     return {
       success: true,
-      message: "Books added to bookMaster successfully",
+      message: "Books added to Book University successfully",
       createdDocuments
     }; // Return an array of created documents
   } catch (error) {
-    console.error("Error adding books to bookMaster:", error);
-    throw new Error("Failed to add books to bookMaster");
+    console.error("Error adding books to Book University:", error);
+    throw new Error("Failed to add books to Book University");
   }
 };
 
@@ -155,3 +157,211 @@ export const deleteBookUniversityService = async (id: string, res: Response) => 
     data: deletedBookUniversity,
   };
 };
+
+export const getBookUniversityCategoryService = async (user: any, payload: any, res: Response) => {
+  const page = parseInt(payload.page as string) || 1;
+  const limit = parseInt(payload.limit as string) || 0;
+  const offset = (page - 1) * limit;
+
+  const bookStudy = await bookUniversitiesModel.find().populate({
+    path: "productsId",
+    populate: [
+      { path: "authorId" }, 
+      { path: "categoryId" }, 
+      { path: "subCategoryId" }, 
+      { path: "publisherId" },
+    ],
+  });
+  
+  if (!bookStudy) {
+    return errorResponseHandler("Book study not found", httpStatusCode.NOT_FOUND, res);
+  }
+  
+  let categories: any[] = [];
+  
+  bookStudy.forEach((study) => {
+    if (study.productsId && !Array.isArray(study.productsId)) {
+      categories.push((study.productsId as any).categoryId);
+    } else if (Array.isArray(study.productsId)) {
+      categories.push(...study.productsId.map((product: any) => product.categoryId));
+    }
+  });
+
+  const uniqueCategories = [...new Set(categories)];
+
+  return {
+    success: true,
+    message: "Book University categories retrieved successfully",
+    data: { categories: uniqueCategories },  
+  };
+};
+
+
+export const getBookUniversityTeacherService = async (payload: any, user: any, res: Response) => {
+  const bookStudy = await bookUniversitiesModel.find().populate({
+    path: "productsId",
+    populate: [
+      { path: "authorId" },
+      { path: "categoryId" },
+      { path: "subCategoryId" },
+      { path: "publisherId" },
+    ],
+  });
+
+  if (!bookStudy) {
+    return errorResponseHandler("Book study not found", httpStatusCode.NOT_FOUND, res);
+  }
+
+  let authors: any[] = [];
+
+  bookStudy.forEach((study:any) => {
+    if (study.productsId && !Array.isArray(study.productsId)) {
+      if (study.productsId.authorId) {
+        authors.push(study.productsId.authorId);
+      }
+    } else if (Array.isArray(study.productsId)) {
+      study.productsId.forEach((product: any) => {
+        if (product.authorId) {
+          authors.push(product.authorId);
+        }
+      });
+    }
+  });
+
+  authors = authors.flat();
+
+  const uniqueAuthors = Array.from(
+    new Map(
+      authors
+        .filter((author: any) => author && author._id)  // Filter out authors without _id
+        .map((author: any) => [author._id.toString(), author])  // Map to _id
+    ).values()
+  );
+
+  return {
+    success: true,
+    message: "Book University Authors retrieved successfully",
+    data: { teachers: uniqueAuthors },  
+  };
+};
+
+export const getPopularCoursesBookUniversityService = async (payload: any, user: any, res: Response) => {
+  const bookStudy = await bookUniversitiesModel.find()
+  .populate({
+    path: "productsId",
+    match: { averageRating: { $gte: 4, $lte: 5 } }, 
+    populate: [
+      { path: "authorId" },
+      { path: "categoryId" },
+      { path: "subCategoryId" },
+      { path: "publisherId" },
+    ],
+  })
+  .sort({
+    "productsId.averageRating": 1, 
+  });
+  const filteredBookStudy = bookStudy.filter((study) => study.productsId !== null);
+
+  return {
+    success: true,
+    message: "Book Master Authors retrieved successfully",
+    data: { popularCourses: filteredBookStudy },
+  };
+};
+
+export const getBookUniversityNewbookService = async (user: any, payload: any, res: Response) => {
+  const page = parseInt(payload.page as string) || 1;
+  const limit = parseInt(payload.limit as string) || 0;
+  const offset = (page - 1) * 20;
+  
+  const today = new Date();
+  
+  const sixMonthsAgo = new Date(today.setMonth(today.getMonth() - 6));
+  const totalDataCount = await bookUniversitiesModel.countDocuments({
+    createdAt: { $gte: sixMonthsAgo } 
+  });
+  
+  const newBooks = await bookUniversitiesModel.find({
+    createdAt: { $gte: sixMonthsAgo } 
+  })
+    .populate({
+      path: "productsId",
+      populate: [
+        { path: "authorId" },
+        { path: "categoryId" },
+        { path: "subCategoryId" },
+        { path: "publisherId" },
+      ],
+    })
+    .sort({ createdAt: -1 })  
+    .skip(offset)
+    .limit(limit);
+
+  const favoriteBooks = await favoritesModel.find({ userId: user.id }).populate("productId");
+  const favoriteIds = favoriteBooks
+    .filter((book) => book.productId && book.productId._id) 
+    .map((book) => book.productId._id.toString());
+
+  const newBooksWithFavoriteStatus = newBooks.map((book) => ({
+    ...book.toObject(),
+    isFavorite: favoriteIds.includes(book._id.toString()), 
+  }));
+
+  return {
+    success: true,
+    message: "Books retrieved successfully",
+    page,
+    limit,
+    total: totalDataCount,
+    data: {
+      newBooks: newBooksWithFavoriteStatus,
+    },
+  };
+};
+export const getBookUniversityReadProgressService = async (user: any, payload: any, res: Response) => {
+  const Books = await bookUniversitiesModel.find({});
+  const bookIds = Books.map(book => book.productsId);
+
+  const readProgress = await readProgressModel.find({ 
+    userId: user.id, 
+    bookId: { $in: bookIds } 
+  })
+  .populate({
+    path: "bookId",
+    populate: [
+      { path: "authorId" },
+      { path: "categoryId" },
+      { path: "subCategoryId" },
+      { path: "publisherId" },
+    ],
+  });
+
+
+  return {
+    success: true,
+    message: "Books retrieved successfully",
+    data: {
+      readBooks: readProgress,
+    },
+  };
+};
+
+export const getBookUniversityForUserService = async (user: any, payload: any, res: Response) => {
+  const readProgress = await getBookUniversityReadProgressService(user, payload, res);
+  const newBook = await getBookUniversityNewbookService(user, payload, res);
+  const teachers = await getBookUniversityTeacherService(payload, user, res);
+  const categories = await getBookUniversityCategoryService(payload, user, res);
+  const popularCourses = await getPopularCoursesBookUniversityService(payload, user, res);
+
+  return {
+    success: true,
+    message: "Book Master retrieved successfully",
+    data: {
+      readBooks: readProgress.data.readBooks,
+      newBooks: newBook.data.newBooks,
+      teachers: teachers.data.teachers,
+      categories: categories?.data?.categories,
+      popularCourses: popularCourses.data.popularCourses
+    },
+  };
+};  

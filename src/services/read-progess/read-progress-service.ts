@@ -69,10 +69,8 @@ export const getAllReadProgress = async (payload: any, user: any) => {
   const offset = (page - 1) * limit;
   const { query, sort } = queryBuilder(payload, ["userId", "bookId"]);
 
-  // Ensure userId is always in the query
   (query as any).userId = user.id;
 
-  // Filter by type (finished or reading)
   if (payload.type === "finished") {
     (query as any).progress = 100;
   } else if (payload.type === "reading") {
