@@ -59,9 +59,6 @@ const usersSchema = new mongoose.Schema(
       type: String,
       default: null,  
     },
-    level: {
-      type: String,
-    },
     profilePic: {
       type: String,
       default: null,

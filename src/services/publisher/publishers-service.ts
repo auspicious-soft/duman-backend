@@ -327,7 +327,7 @@ export const getBookByIdPublisherService = async (bookId: string,payload:any,cur
       analytics: {
         currentMonthCount,
         totalCount,
-        monthlyCounts: monthlyCountArray, // Array with counts for each month
+        monthlyCounts: monthlyCountArray, 
       },
     };
   } catch (error) {
@@ -356,7 +356,7 @@ export const publisherDashboardService = async (payload: any, currentUser: strin
     .find()
     .populate({
       path: "productIds",
-      model: "products", // Ensure this matches your Mongoose model name
+      model: "products", 
     });
     
     let bookCounts: Record<string, number> = {};
@@ -380,11 +380,7 @@ export const publisherDashboardService = async (payload: any, currentUser: strin
     path:"authorId",
     select:"name"
   }]);
-    // **3. Get Unique Books and Count**
-    // const uniqueBooks: string[] = Array.from(new Set(books.map((book: any) => book._id.toString())));
-    // const totalBooks = uniqueBooks.length;
 
-    // **4. Compute Monthly Order Statistics**
     const monthlyCounts = await ordersModel.aggregate([
       {
         $match: {
@@ -394,16 +390,16 @@ export const publisherDashboardService = async (payload: any, currentUser: strin
           },
         },
       },
-      { $unwind: "$productIds" }, // Unwind the array to process each book separately
+      { $unwind: "$productIds" }, 
       {
         $lookup: {
-          from: "products", // Ensure this matches your MongoDB collection name
+          from: "products", 
           localField: "productIds",
           foreignField: "_id",
           as: "bookDetails",
         },
       },
-      { $unwind: "$bookDetails" }, // Extract book details
+      { $unwind: "$bookDetails" },
       {
         $match: {
           "bookDetails.publisherId": publisherId,
@@ -418,9 +414,8 @@ export const publisherDashboardService = async (payload: any, currentUser: strin
       { $sort: { _id: 1 } },
     ]);
 
-    // **5. Convert Monthly Aggregation to Proper Format**
     const monthlyCountArray = monthlyCounts.map(({ _id, count }) => {
-      const month = new Date(selectedYear, _id - 1); // _id is the month, 1 = January
+      const month = new Date(selectedYear, _id - 1); 
       const formattedMonth = month.toLocaleString("default", { year: "numeric", month: "2-digit" }); // Format as "YYYY-MM"
       return {
         month: formattedMonth,
@@ -428,7 +423,6 @@ export const publisherDashboardService = async (payload: any, currentUser: strin
       };
     });
 
-    // **6. Return the Data**
     return {
       success: true,
       message: "Publisher dashboard data retrieved successfully",

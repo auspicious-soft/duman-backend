@@ -1,8 +1,9 @@
 import { readProgressModel } from "../../models/read-progress/read-progress-schema";
 import { queryBuilder } from "src/utils";
 import { errorResponseHandler } from "src/lib/errors/error-response-handler";
-import { httpStatusCode } from "src/lib/constant";
+import { badges, httpStatusCode } from "src/lib/constant";
 import { Response } from "express";
+import { awardsModel } from "src/models/awards/awards-schema";
 
 export interface ReadProgress {
   _id?: string;
@@ -12,23 +13,36 @@ export interface ReadProgress {
 }
 
 export const getReadProgressById = async (readProgressId: string, userId: string) => {
-  return await readProgressModel.findOne({userId, bookId: readProgressId}).populate([{ path: "bookId" }]);
+  return await readProgressModel.findOne({ userId, bookId: readProgressId }).populate([{ path: "bookId" }]);
 };
 
 export const updateReadProgress = async (readProgressId: string, readProgressData: ReadProgress, user: any, res: Response) => {
-  if (readProgressData.progress < 0 || readProgressData.progress > 100) return errorResponseHandler("Progress must be between 0 and 100", httpStatusCode.BAD_REQUEST, res);
+  if (readProgressData.progress < 0 || readProgressData.progress > 100) {
+    return errorResponseHandler("Progress must be between 0 and 100", httpStatusCode.BAD_REQUEST, res);
+  }
   const userId = user.id;
-  const ReadProgress = await readProgressModel
-    .findOneAndUpdate({ userId: userId, bookId: readProgressId }, { progress: readProgressData.progress }, { new: true, upsert: true })
-    .populate([{ path: "bookId" }]);
-  if (!ReadProgress) return errorResponseHandler("Read Progress not found", httpStatusCode.NOT_FOUND, res);
+  let updatedBadge = null;
+  const ReadProgress = await readProgressModel.findOneAndUpdate({ userId, bookId: readProgressId }, { progress: readProgressData.progress }, { new: true, upsert: true }).populate("bookId");
+
+  if (!ReadProgress) {
+    return errorResponseHandler("Read Progress not found", httpStatusCode.NOT_FOUND, res);
+  }
+
+  if (readProgressData.progress === 100) {
+    const bookRead = await readProgressModel.countDocuments({ userId, progress: 100 });
+    const awardedBadge = badges.find(({ count }) => bookRead === count);
+
+    if (awardedBadge) {
+      updatedBadge = await awardsModel.findOneAndUpdate({ userId }, { level: awardedBadge.level, badge: awardedBadge.badge }, { new: true, upsert: true });
+    }
+  }
+
   return {
     success: true,
     message: "Read Progress updated successfully",
-    data: ReadProgress,
+    data: { ReadProgress, updatedBadge },
   };
 };
-
 
 // export const getAllReadProgress = async (payload: any,user:any) => {
 //   const page = parseInt(payload.page as string) || 1;
@@ -62,7 +76,6 @@ export const updateReadProgress = async (readProgressId: string, readProgressDat
 //   }
 // };
 
-
 export const getAllReadProgress = async (payload: any, user: any) => {
   const page = parseInt(payload.page as string) || 1;
   const limit = parseInt(payload.limit as string) || 0;
@@ -79,12 +92,7 @@ export const getAllReadProgress = async (payload: any, user: any) => {
 
   const totalDataCount = await readProgressModel.countDocuments(query);
 
-  const results = await readProgressModel
-    .find(query)
-    .sort(sort)
-    .skip(offset)
-    .limit(limit)
-    .select("-__v");
+  const results = await readProgressModel.find(query).sort(sort).skip(offset).limit(limit).select("-__v");
 
   return {
     page,

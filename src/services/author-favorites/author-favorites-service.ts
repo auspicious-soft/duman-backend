@@ -48,6 +48,7 @@ export const getAllAuthorFavoritesService = async (payload: any, user: any, res:
     .sort(sort)
     .skip(offset)
     .limit(limit)
+    .populate("authorId")
     .select("-__v")
     .lean();
 
@@ -90,9 +91,9 @@ export const updateAuthorFavoriteService = async (user: any, payload: any, res: 
 
     if (isFavorite) {
       const updatedFavorite = await authorFavoritesModel.findOneAndUpdate(
-        { authorId: payload.productId, userId: user.id }, // Find existing favorite
-        { $set: { authorId: payload.authorId, userId: user.id } }, // Update fields
-        { new: true, upsert: true } // Create if not found
+        { authorId: payload.productId, userId: user.id }, 
+        { $set: { authorId: payload.authorId, userId: user.id } }, 
+        { new: true, upsert: true } 
       );
       return {
         success: true,

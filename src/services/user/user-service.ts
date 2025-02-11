@@ -14,6 +14,7 @@ import { passwordResetTokenModel } from "src/models/password-token-schema";
 import { generateOtpWithTwilio } from "src/utils/sms/sms";
 import { generateUserToken, getSignUpQueryByAuthType, handleExistingUser, hashPasswordIfEmailAuth, sendOTPIfNeeded, validatePassword, validateUserForLogin } from "src/utils/userAuth/signUpAuth";
 import { customAlphabet } from "nanoid";
+import { awardsModel } from "src/models/awards/awards-schema";
 
 configDotenv();
 
@@ -289,11 +290,13 @@ export const getUserProfileDetailService = async (id: string, payload: any, res:
   };
 };
 
+
 export const getAllUserService = async (payload: any, res: Response) => {
   const page = parseInt(payload.page as string) || 1;
   const limit = parseInt(payload.limit as string) || 0;
   const offset = (page - 1) * limit;
   let { query, sort } = nestedQueryBuilder(payload, ["name", "email"]);
+  
   if (payload.duration) {
     const durationDays = parseInt(payload.duration);
     if (durationDays === 30 || durationDays === 7) {
@@ -302,18 +305,14 @@ export const getAllUserService = async (payload: any, res: Response) => {
       (query as any) = { ...query, createdAt: { $gte: date } };
     }
   }
-  const totalDataCount = Object.keys(query).length < 1 ? await usersModel.countDocuments() : await usersModel.countDocuments(query);
-  const results = await usersModel.find(query).sort(sort).skip(offset).limit(limit).select("-__v");
-  if (results.length)
-    return {
-      page,
-      limit,
-      success: true,
-      message: "Users retrieved successfully",
-      total: totalDataCount,
-      data: results,
-    };
-  else {
+  
+  const totalDataCount = Object.keys(query).length < 1 
+    ? await usersModel.countDocuments() 
+    : await usersModel.countDocuments(query);
+  
+  const users = await usersModel.find(query).sort(sort).skip(offset).limit(limit).select("-__v -password -otp -token -fcmToken -whatsappNumberVerified -emailVerified");
+  
+  if (!users.length) {
     return {
       data: [],
       page,
@@ -323,6 +322,25 @@ export const getAllUserService = async (payload: any, res: Response) => {
       total: 0,
     };
   }
+  
+  const userIds = users.map(user => user._id);
+  const awards = await awardsModel.find({ userId: { $in: userIds } }).select("userId level badge");
+  
+  const awardsMap = new Map(awards.map(award => [award.userId.toString(), award]));
+  
+  const results = users.map(user => ({
+    ...user.toObject(),
+    award: awardsMap.get(user._id.toString()) || null,
+  }));
+  
+  return {
+    page,
+    limit,
+    success: true,
+    message: "Users retrieved successfully",
+    total: totalDataCount,
+    data: results,
+  };
 };
 
 export const generateAndSendOTP = async (payload: { email?: string; phoneNumber?: string }) => {
@@ -381,4 +399,23 @@ export const verifyOTPService = async (payload: any) => {
   await user.save();
 
   return { user: sanitizeUser(user) , message: "OTP verified successfully" };
+};
+
+export const changePasswordService = async (payload: any, res: Response) => {
+  const { oldPassword, newPassword } = payload;
+  const user = await usersModel.findById(payload.id).select("+password");
+  if (!user) return errorResponseHandler("User not found", httpStatusCode.NOT_FOUND, res);
+
+  // const isPasswordValid = await bcrypt.compare(oldPassword, user);
+  // if (!isPasswordValid) {
+  //   return errorResponseHandler("Invalid password", httpStatusCode.UNAUTHORIZED, res);
+  // }
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+  user.password = hashedPassword;
+  await user.save();
+  return {
+    success: true,
+    message: "Password updated successfully",
+    data: sanitizeUser(user),
+  };
 };

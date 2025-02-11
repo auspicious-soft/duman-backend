@@ -22,6 +22,8 @@ import { getAllSummaries, getSummaryForUser } from "src/controllers/summaries/su
 import { getBookStudyCategoriesStudy, getBookStudyForUser, getBookStudyNewbooks, getBookStudyReadProgress, getBookStudyTeachers, getPopularCourses } from "src/controllers/book-studies/book-studies-controller";
 import { getBookMasterCategories, getBookMasterForUser, getBookMasterNewbooks, getBookMasterReadProgress, getBookMasterTeachers, getPopularCoursesBookMaster } from "src/controllers/book-masters/book-masters-controller";
 import { getBookUniversityCategories, getBookUniversityForUser, getBookUniversityNewbooks, getBookUniversityReadProgress, getBookUniversityTeachers, getPopularCoursesBookUniversity } from "src/controllers/book-universities/book-universities-controller";
+import { getAllFaviouriteBooks, getAllFinishedBooks, getAllReadingBooks, getCoursesForBookRoom } from "src/controllers/book-room/book-room-controller";
+import { getAward } from "src/controllers/awards/awards-controller";
 
 
 const router = Router();
@@ -131,5 +133,15 @@ router.get("/books-universities/speakers", getBookUniversityTeachers);
 router.get("/books-universities/popular-courses", getPopularCoursesBookUniversity);
 router.get("/books-universities/new-books", getBookUniversityNewbooks);
 router.get("/books-universities/read-progress", getBookUniversityReadProgress);
+
+//book-room route
+router.get("/book-rooms/reading-now", getAllReadingBooks);
+router.get("/book-rooms/finished-books", getAllFinishedBooks);
+router.get("/book-rooms/favourite-books", getAllFaviouriteBooks);
+router.get("/book-rooms/courses", getCoursesForBookRoom);
+
+//awards route
+router.get("/awards", getAward);
+
 
 export { router }
