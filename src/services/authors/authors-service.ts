@@ -82,7 +82,19 @@ export const getAllAuthorsForUserService = async (user: any, payload: any, res: 
   const limit = parseInt(payload.limit as string) || 0;
   const offset = (page - 1) * limit;
   const { query, sort } = nestedQueryBuilder(payload, ["name"]);
-
+  // ['type', 'genres', 'country'].forEach((key) => {
+  //   if (payload[key]) {
+  //     (query as any)[key === 'type' ? 'profession' : key] = payload[key];
+  //   }
+  // });
+  ['type', 'genres', 'country'].forEach((key) => {
+    if (payload[key]) {
+      (query as any)[key === 'type' ? 'profession' : key] = {
+        $in: Array.isArray(payload[key]) ? payload[key] : [payload[key]],
+      };
+    }
+  });
+  console.log("query",query);
   const totalDataCount = Object.keys(query).length < 1 ? await authorsModel.countDocuments() : await authorsModel.countDocuments(query);
   const authors = await authorsModel.find(query).sort(sort).skip(offset).limit(limit).select("-__v");
   const favoriteAuthors = await authorFavoritesModel.find({ userId: user.id}).populate("authorId");

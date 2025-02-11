@@ -26,9 +26,7 @@ export const getDiscountVoucherService = async (id: string, res: Response) => {
   };
 };
 export const verifyDiscountVoucherService = async (id: string, res: Response) => {
-  console.log('id: ', id);
   const voucher = await discountVouchersModel.findById(id);
-//TODO CHECK VERIFY ACORDING TO USEAGE
   if (!voucher) return errorResponseHandler("Coupon not found", httpStatusCode.NOT_FOUND, res);
   if(voucher.codeActivated >= voucher.activationAllowed){
     return errorResponseHandler("Coupon limit exceeded", httpStatusCode.BAD_REQUEST, res);
@@ -56,7 +54,6 @@ export const getAllDiscountVouchersService = async (payload: any, res: Response)
   }
 
   try {
-    // Aggregation pipeline to fetch discount vouchers and activation counts
     const pipeline: PipelineStage[] = [
       {
         $match: query, // Filter by search query

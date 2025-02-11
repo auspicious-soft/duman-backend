@@ -5,6 +5,7 @@ import { nestedQueryBuilder, queryBuilder } from "src/utils";
 import { productsModel } from "src/models/products/products-schema";
 import { usersModel } from "src/models/user/user-schema";
 import { bookSchoolsModel } from "./../../models/book-schools/book-schools-schema";
+import mongoose from "mongoose";
 
 export const createBookSchoolService = async (payload: any, res: Response) => {
   const newBookSchool = new bookSchoolsModel(payload);
@@ -89,36 +90,42 @@ export const getAllBookSchoolsService = async (payload: any, res: Response) => {
     };
   }
 };
-export const getBookSchoolsByCodeService = async (payload: any,user:any, res: Response) => {
+export const getBookSchoolsByCodeService = async (payload: any, user: any, res: Response) => {
   const page = parseInt(payload.page as string) || 1;
   const limit = parseInt(payload.limit as string) || 0;
   const offset = (page - 1) * limit;
-  const { query, sort } = queryBuilder(payload, ["couponCode"]);
-  //TODO
   const userId = user.id;
   const schoolVoucher = (await usersModel.findById(userId))?.schoolVoucher;
-  const totalDataCount = Object.keys(query).length < 1 ? await bookSchoolsModel.countDocuments() : await bookSchoolsModel.countDocuments(query);
 
   let results: any[] = [];
   if (schoolVoucher) {
-    const modifiedQuery = { ...query, _id: schoolVoucher.voucherId };
-    results = await bookSchoolsModel
-      .find(modifiedQuery)
-      .sort(sort)
-      .skip(offset)
-      .limit(limit)
-      .select("-__v")
-      .populate([{ path: "publisherId" }]);
+    const modifiedQuery = {  _id: schoolVoucher.voucherId };
+    results = await bookSchoolsModel.find(modifiedQuery).select("-__v");
   }
+  const publisherId = results.map((school) => school.publisherId).flat(); // Flatten the array if needed
 
+  const publisherObjectIds = publisherId.map((id: any) => new mongoose.Types.ObjectId(id));
+
+  const bookSchoolData = await productsModel
+    .find({ publisherId: { $in: publisherObjectIds }, type: "e-book" })
+    .skip(offset)
+    .limit(limit)
+    .populate([
+      { path: "publisherId", select: "name" },
+      { path: "authorId", select: "name" },
+      { path: "categoryId", select: "name" },
+      { path: "subCategoryId", select: "name" },
+    ]);
+
+  const total = bookSchoolData.length;
   if (results.length)
     return {
       page,
       limit,
       message: "Book schools retrieved successfully",
       success: true,
-      total: totalDataCount,
-      data: results,
+      total: total,
+      data: bookSchoolData,
     };
   else {
     return {
@@ -131,22 +138,20 @@ export const getBookSchoolsByCodeService = async (payload: any,user:any, res: Re
     };
   }
 };
-export const verifyBookSchoolsByCodeService = async (payload: any,userData:any, res: Response) => {
+export const verifyBookSchoolsByCodeService = async (payload: any, userData: any, res: Response) => {
   const { query } = queryBuilder(payload, ["couponCode"]);
   const page = parseInt(payload.page as string) || 1;
   const limit = parseInt(payload.limit as string) || 0;
-  const offset = (page - 1) * limit;
   const totalDataCount = Object.keys(query).length < 1 ? await bookSchoolsModel.countDocuments() : await bookSchoolsModel.countDocuments(query);
   const bookSchool = await bookSchoolsModel.find({ couponCode: payload.couponCode }).populate([{ path: "publisherId" }]);
   const bookSchoolId = bookSchool.map((school) => school._id);
-   //TODO
   let userQuery;
-  if(userData.email){
+  if (userData.email) {
     userQuery = { email: userData.email };
-  }else{
+  } else {
     userQuery = { phoneNumber: userData.phoneNumber };
   }
-  
+
   const user = await usersModel.findOne(userQuery).populate([{ path: "schoolVoucher.voucherId" }]);
 
   if (user && user.schoolVoucher) {

@@ -4,7 +4,7 @@ import { UserDocument, usersModel } from "../../models/user/user-schema";
 import bcrypt from "bcryptjs";
 import { generatePasswordResetToken, generatePasswordResetTokenByPhone, getPasswordResetTokenByToken } from "../../utils/mails/token";
 import { httpStatusCode } from "../../lib/constant";
-import { nestedQueryBuilder,  } from "src/utils";
+import { nestedQueryBuilder } from "src/utils";
 import { ordersModel } from "../../models/orders/orders-schema";
 import { deleteFileFromS3 } from "src/config/s3";
 import { configDotenv } from "dotenv";
@@ -15,6 +15,7 @@ import { generateOtpWithTwilio } from "src/utils/sms/sms";
 import { generateUserToken, getSignUpQueryByAuthType, handleExistingUser, hashPasswordIfEmailAuth, sendOTPIfNeeded, validatePassword, validateUserForLogin } from "src/utils/userAuth/signUpAuth";
 import { customAlphabet } from "nanoid";
 import { awardsModel } from "src/models/awards/awards-schema";
+import { readProgressModel } from "src/models/read-progress/read-progress-schema";
 
 configDotenv();
 
@@ -49,7 +50,7 @@ export const loginUserService = async (userData: UserDocument, authType: string,
 
     user.token = generateUserToken(user as any);
     await user.save();
-    return {success:true, message: "User logged in successfully", data:sanitizeUser(user)};
+    return { success: true, message: "User logged in successfully", data: sanitizeUser(user) };
   } catch (error: any) {
     return errorResponseHandler(error.message, httpStatusCode.INTERNAL_SERVER_ERROR, res);
   }
@@ -83,7 +84,7 @@ export const signUpService = async (userData: UserDocument, authType: string, re
 
     user.token = generateUserToken(user as any);
     await user.save();
-    return {success:true, message: "User created successfully", data: sanitizeUser(user)};
+    return { success: true, message: "User created successfully", data: sanitizeUser(user) };
   } catch (error) {
     if (error instanceof Error) {
       return errorResponseHandler(error.message, httpStatusCode.INTERNAL_SERVER_ERROR, res);
@@ -290,13 +291,12 @@ export const getUserProfileDetailService = async (id: string, payload: any, res:
   };
 };
 
-
 export const getAllUserService = async (payload: any, res: Response) => {
   const page = parseInt(payload.page as string) || 1;
   const limit = parseInt(payload.limit as string) || 0;
   const offset = (page - 1) * limit;
   let { query, sort } = nestedQueryBuilder(payload, ["name", "email"]);
-  
+
   if (payload.duration) {
     const durationDays = parseInt(payload.duration);
     if (durationDays === 30 || durationDays === 7) {
@@ -305,13 +305,11 @@ export const getAllUserService = async (payload: any, res: Response) => {
       (query as any) = { ...query, createdAt: { $gte: date } };
     }
   }
-  
-  const totalDataCount = Object.keys(query).length < 1 
-    ? await usersModel.countDocuments() 
-    : await usersModel.countDocuments(query);
-  
+
+  const totalDataCount = Object.keys(query).length < 1 ? await usersModel.countDocuments() : await usersModel.countDocuments(query);
+
   const users = await usersModel.find(query).sort(sort).skip(offset).limit(limit).select("-__v -password -otp -token -fcmToken -whatsappNumberVerified -emailVerified");
-  
+
   if (!users.length) {
     return {
       data: [],
@@ -322,17 +320,17 @@ export const getAllUserService = async (payload: any, res: Response) => {
       total: 0,
     };
   }
-  
-  const userIds = users.map(user => user._id);
+
+  const userIds = users.map((user) => user._id);
   const awards = await awardsModel.find({ userId: { $in: userIds } }).select("userId level badge");
-  
-  const awardsMap = new Map(awards.map(award => [award.userId.toString(), award]));
-  
-  const results = users.map(user => ({
+
+  const awardsMap = new Map(awards.map((award) => [award.userId.toString(), award]));
+
+  const results = users.map((user) => ({
     ...user.toObject(),
     award: awardsMap.get(user._id.toString()) || null,
   }));
-  
+
   return {
     page,
     limit,
@@ -370,7 +368,7 @@ export const generateAndSendOTP = async (payload: { email?: string; phoneNumber?
   if (user) {
     await user.save();
   }
-  return {sucess: true, message: "OTP sent successfully"};
+  return { sucess: true, message: "OTP sent successfully" };
 };
 
 export const verifyOTPService = async (payload: any) => {
@@ -398,18 +396,13 @@ export const verifyOTPService = async (payload: any) => {
   }
   await user.save();
 
-  return { user: sanitizeUser(user) , message: "OTP verified successfully" };
+  return { user: sanitizeUser(user), message: "OTP verified successfully" };
 };
 
-export const changePasswordService = async (payload: any, res: Response) => {
-  const { oldPassword, newPassword } = payload;
-  const user = await usersModel.findById(payload.id).select("+password");
+export const changePasswordService = async (userData: any, payload: any, res: Response) => {
+  const { newPassword } = payload;
+  const user = await usersModel.findById(userData.id).select("+password");
   if (!user) return errorResponseHandler("User not found", httpStatusCode.NOT_FOUND, res);
-
-  // const isPasswordValid = await bcrypt.compare(oldPassword, user);
-  // if (!isPasswordValid) {
-  //   return errorResponseHandler("Invalid password", httpStatusCode.UNAUTHORIZED, res);
-  // }
   const hashedPassword = await bcrypt.hash(newPassword, 10);
   user.password = hashedPassword;
   await user.save();
@@ -417,5 +410,39 @@ export const changePasswordService = async (payload: any, res: Response) => {
     success: true,
     message: "Password updated successfully",
     data: sanitizeUser(user),
+  };
+};
+
+export const getCurrentUserDetailsService = async (userData: any, res: Response) => {
+  const user = await usersModel.findById(userData.id).select("-__v -password -otp -token -fcmToken -whatsappNumberVerified -emailVerified");
+  if (!user) return errorResponseHandler("User not found", httpStatusCode.NOT_FOUND, res);
+  const award = await awardsModel.findOne({ userId: userData.id });
+  const booksReadCount = await readProgressModel.countDocuments({ userId: userData.id, progress: 100 });
+
+  return {
+    success: true,
+    message: "User retrieved successfully",
+    data: {
+      data: user,
+      award,
+      booksReadCount,
+    },
+  };
+};
+export const updateCurrentUserDetailsService = async (userData: any, payload: any, res: Response) => {
+  const user = await usersModel.findById(userData.id);
+  if (!user) return errorResponseHandler("User not found", httpStatusCode.NOT_FOUND, res);
+  const updatedUser = await usersModel
+    .findByIdAndUpdate(userData.id, payload, {
+      new: true,
+    })
+    .select("-__v -password -otp -token -fcmToken -whatsappNumberVerified -emailVerified");
+
+  return {
+    success: true,
+    message: "User retrieved successfully",
+    data: {
+      data: updatedUser,
+    },
   };
 };

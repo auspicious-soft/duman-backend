@@ -6,7 +6,7 @@ import { Response } from "express";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { configDotenv } from "dotenv";
-configDotenv()
+configDotenv();
 
 export const generateUserToken = (user: UserDocument) => {
   const tokenPayload = {
@@ -51,7 +51,7 @@ export const sendOTPIfNeeded = async (userData: UserDocument, authType: string) 
   }
 };
 
-export const validateUserForLogin = (user: any, authType: string, userData: UserDocument, res: Response) => {
+export const validateUserForLogin = async (user: any, authType: string, userData: UserDocument, res: Response) => {
   if (!user) {
     return errorResponseHandler(authType === "Email" ? "User not found" : "Number is not registered", httpStatusCode.BAD_REQUEST, res);
   }
@@ -62,18 +62,16 @@ export const validateUserForLogin = (user: any, authType: string, userData: User
     return errorResponseHandler("Password is required for Email login", httpStatusCode.BAD_REQUEST, res);
   }
   if (authType === "Email" && user.emailVerified === false) {
-    //TODO: SEND MAIL OF AGAIN OF VERIFICATION
+    await sendOTPIfNeeded(userData, authType);
     return errorResponseHandler("Email not verified, verfication email sent to your email", httpStatusCode.BAD_REQUEST, res);
   }
   // if (authType === "Whatsapp" && user.whatsappNumberVerified === false) {
   //   return errorResponseHandler(`Try login from ${user.authType}`, httpStatusCode.BAD_REQUEST, res);
   // }
-  if (authType === "Whatsapp" && !user.whatsappNumberVerified ) {
-    //TODO: SEND SMS OF AGAIN OF VERIFICATION
-
-    return errorResponseHandler("Number is not verified", httpStatusCode.BAD_REQUEST, res);
+  if (authType === "Whatsapp" && !user.whatsappNumberVerified) {
+    await sendOTPIfNeeded(userData, authType);
+    return errorResponseHandler("Number is not verified, verfication otp sent to your number", httpStatusCode.BAD_REQUEST, res);
   }
-
 };
 
 export const validatePassword = async (user: UserDocument, userPassword: string, res: Response) => {
@@ -84,5 +82,5 @@ export const validatePassword = async (user: UserDocument, userPassword: string,
   if (!isPasswordValid) {
     return errorResponseHandler("Invalid email or password", httpStatusCode.BAD_REQUEST, res);
   }
-  return null
-}
+  return null;
+};

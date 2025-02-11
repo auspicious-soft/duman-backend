@@ -59,6 +59,7 @@ export const getSubCategoriesService = async (payload: any, id: string, res: Res
     return errorResponseHandler("Failed to fetch sub-categories", httpStatusCode.INTERNAL_SERVER_ERROR, res);
   }
 };
+
 export const getSubCategoriesForUserService = async (user:any, payload: any, id: string, res: Response) => {
   try {
     const subCategories = await subCategoriesModel.findById(id);
@@ -100,10 +101,10 @@ export const getSubCategoriesForUserService = async (user:any, payload: any, id:
     return {
       success: true,
       message: "Sub categories retrieved successfully",
-      data: { subCategories, books: subCategoryBooksWithFavoriteStatus },
       page,
       limit,
       total: totalDataCount,
+      data: { subCategories, books: subCategoryBooksWithFavoriteStatus },
     };
   } catch (error) {
     return errorResponseHandler("Failed to fetch sub-categories", httpStatusCode.INTERNAL_SERVER_ERROR, res);

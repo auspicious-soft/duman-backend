@@ -13,13 +13,16 @@ import {
   forgotPasswordUserService,
   signUpService,
   loginUserService,
+  changePasswordService,
+  getCurrentUserDetailsService,
+  updateCurrentUserDetailsService,
 } from "src/services/user/user-service";
-import {  newPassswordAfterOTPVerifiedService } from "src/services/admin/admin-service";
-import { verifyOtpPasswordResetService,newPassswordAfterOTPVerifiedUserService } from "../../services/user/user-service";
+import { newPassswordAfterOTPVerifiedService } from "src/services/admin/admin-service";
+import { verifyOtpPasswordResetService, newPassswordAfterOTPVerifiedUserService } from "../../services/user/user-service";
 
 export const userSignup = async (req: Request, res: Response) => {
   try {
-    const user = await signUpService( req.body, req.body.authType, res );
+    const user = await signUpService(req.body, req.body.authType, res);
 
     res.status(200).json({
       success: true,
@@ -36,7 +39,7 @@ export const userSignup = async (req: Request, res: Response) => {
 
 export const loginUser = async (req: Request, res: Response) => {
   try {
-    const loginResponse = await loginUserService(req.body,req.body.authType, res);
+    const loginResponse = await loginUserService(req.body, req.body.authType, res);
 
     res.status(200).json({
       success: true,
@@ -89,7 +92,6 @@ export const newPassswordAfterOTPVerifiedApp = async (req: Request, res: Respons
     return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
   }
 };
-
 
 // Dashboard
 export const getUserDashboardStats = async (req: Request, res: Response) => {
@@ -150,8 +152,15 @@ export const deleteUser = async (req: Request, res: Response) => {
     return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
   }
 };
-
-
+export const changePasswordUser = async (req: Request, res: Response) => {
+  try {
+    const response = await changePasswordService(req.user,req.body, res);
+    return res.status(httpStatusCode.OK).json(response);
+  } catch (error: any) {
+    const { code, message } = errorParser(error);
+    return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
+  }
+};
 
 export const verifyOTP = async (req: Request, res: Response) => {
   try {
@@ -181,5 +190,24 @@ export const resendOTP = async (req: Request, res: Response) => {
       success: false,
       message: error instanceof Error ? error.message : "An error occurred",
     });
+  }
+};
+
+export const getCurrentUserDetails = async (req: Request, res: Response) => {
+  try {
+    const response = await getCurrentUserDetailsService(req.user, res);
+    return res.status(httpStatusCode.OK).json(response);
+  } catch (error: any) {
+    const { code, message } = errorParser(error);
+    return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
+  }
+};
+export const updateCurrentUserDetails = async (req: Request, res: Response) => {
+  try {
+    const response = await updateCurrentUserDetailsService(req.user,req.body, res);
+    return res.status(httpStatusCode.OK).json(response);
+  } catch (error: any) {
+    const { code, message } = errorParser(error);
+    return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
   }
 };

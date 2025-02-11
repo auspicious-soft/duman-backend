@@ -94,7 +94,18 @@ const usersSchema = new mongoose.Schema(
     fcmToken: {
       type: String,
       default: null
-    }
+    },
+    productsLanguage: {
+      type: [String],
+      enum: ["kaz", "eng", "rus"],
+      default: "eng"
+    },
+    dob: {
+      type: Date,
+    },
+    country: {
+      type: String,
+    }                                            
   },
   { timestamps: true }
 );

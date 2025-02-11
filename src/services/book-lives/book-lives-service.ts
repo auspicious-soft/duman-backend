@@ -37,10 +37,10 @@ export const getBookLiveService = async (id: string, payload: any, res: Response
   return {
     success: true,
     message: "Book live retrieved successfully",
-    data: { bookLive, blogs },
     page,
     limit,
     total: totalDataCount,
+    data: { bookLive, blogs },
   };
 };
 
@@ -94,7 +94,6 @@ export const getAllBookLivesWithBlogsService = async (payload: any, res: Respons
     };
   }
 
-  // Fetch blogs related to each bookLives entry
   const bookLivesWithBlogs = await Promise.all(
     bookLivesResults.map(async (bookLife) => {
       const blogs = await blogsModel.find({ categoryId: bookLife._id }).select("-__v");

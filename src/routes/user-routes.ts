@@ -1,26 +1,25 @@
 import { Router } from "express";
-import { getAllAuthors, getAllAuthorsForUser, getAuthor, getAuthorCountries, getAuthorForUser } from "src/controllers/authors/authors-controller";
+import {  getAllAuthorsForUser, getAuthorCountries, getAuthorForUser } from "src/controllers/authors/authors-controller";
 import {  getAllBookLivesWithBlogs, getBookLive } from "src/controllers/book-lives/book-lives-controller";
 import { getBookSchoolsByCode, verifyBookSchoolsByCode } from "src/controllers/book-schools/book-schools-controller";
 import { getAllCategories, getBooksByCategoryId } from "src/controllers/categories/categories-controller";
-import { getAllCollections, getCollection, getCollectionForUser } from "src/controllers/collections/collections-controller";
-import { getDiscountVoucher, verifyDiscountVoucher } from "src/controllers/discount-vouchers/discount-vouchers-controller";
+import { getAllCollections, getCollectionForUser } from "src/controllers/collections/collections-controller";
+import {  verifyDiscountVoucher } from "src/controllers/discount-vouchers/discount-vouchers-controller";
 import { getAllEventsHandler, getEventByIdHandler } from "src/controllers/events/events-controller";
-import { createFavorite, deleteFavorite, getAllFavorites, getFavorite, updateFavorite } from "src/controllers/product-favorites/product-favorites-controller";
+import {  getAllFavorites, getFavorite, updateFavorite } from "src/controllers/product-favorites/product-favorites-controller";
 import { getAllNotificationsOfUser, markAllNotificationsAsRead } from "src/controllers/notifications/notifications-controller";
 import { getAllAudioBookForUser, getAllBooks, getBook, getBookforUser, getBookMarketForUser, getNewbookForUser } from "src/controllers/products/products-controller";
-import { getAllPublishers, getPublisher, getPublisherForUser, getPublisherWorkForUser } from "src/controllers/publisher/publishers-controller";
+import { getAllPublishers, getPublisherForUser, getPublisherWorkForUser } from "src/controllers/publisher/publishers-controller";
 import { AddBookRating, getRating } from "src/controllers/rating/rating-controller";
 import { getAllReadProgressHandler, getReadProgressByIdHandler, updateReadProgressHandler } from "src/controllers/read-progess/read-progress-controller";
 import { getAllStories, getStory } from "src/controllers/stories/stories-controller";
-import { getSubCategoriesByCategoryId, getSubCategoriesByCategoryIdForUser, getSubCategory, getSubCategoryforUser } from "src/controllers/sub-categories/sub-categories-controller";
+import {  getSubCategoriesByCategoryIdForUser, getSubCategoryforUser } from "src/controllers/sub-categories/sub-categories-controller";
 import { getHomePageHandler, getproductsTabHandler } from "src/controllers/user-home-page/user-home-page-controller";
-import {  getUserDashboardStats,  } from "src/controllers/user/user-controller";
-import { getAllBookLivesWithBlogsService } from "src/services/book-lives/book-lives-service";
+import {  changePasswordUser, getCurrentUserDetails, getUserDashboardStats, updateCurrentUserDetails,  } from "src/controllers/user/user-controller";
 import { getAllAuthorFavorites, getAuthorFavorite, updateAuthorFavorite } from "src/controllers/author-favorites/author-favorites-controller";
 import { getAllSummaries, getSummaryForUser } from "src/controllers/summaries/summaries-controller";
 import { getBookStudyCategoriesStudy, getBookStudyForUser, getBookStudyNewbooks, getBookStudyReadProgress, getBookStudyTeachers, getPopularCourses } from "src/controllers/book-studies/book-studies-controller";
-import { getBookMasterCategories, getBookMasterForUser, getBookMasterNewbooks, getBookMasterReadProgress, getBookMasterTeachers, getPopularCoursesBookMaster } from "src/controllers/book-masters/book-masters-controller";
+import { getBookMasterCategories, getBookMasterForUser, getBookMasterTeachers, getPopularCoursesBookMaster } from "src/controllers/book-masters/book-masters-controller";
 import { getBookUniversityCategories, getBookUniversityForUser, getBookUniversityNewbooks, getBookUniversityReadProgress, getBookUniversityTeachers, getPopularCoursesBookUniversity } from "src/controllers/book-universities/book-universities-controller";
 import { getAllFaviouriteBooks, getAllFinishedBooks, getAllReadingBooks, getCoursesForBookRoom } from "src/controllers/book-room/book-room-controller";
 import { getAward } from "src/controllers/awards/awards-controller";
@@ -143,5 +142,10 @@ router.get("/book-rooms/courses", getCoursesForBookRoom);
 //awards route
 router.get("/awards", getAward);
 
+//change-password route
+router.put("/change-password", changePasswordUser);
 
+//user-details route
+router.get("/user-details", getCurrentUserDetails);
+router.put("/user-details", updateCurrentUserDetails);
 export { router }
