@@ -1,11 +1,12 @@
 import { Response } from "express";
 import { errorResponseHandler } from "../../lib/errors/error-response-handler";
 import { httpStatusCode } from "../../lib/constant";
-import { nestedQueryBuilder, queryBuilder } from "src/utils";
+import { nestedQueryBuilder, queryBuilder, sortByLanguagePriority } from "src/utils";
 import { deleteFileFromS3 } from "src/config/s3";
 import { collectionsModel } from "../../models/collections/collections-schema";
 import { favoritesModel } from "src/models/product-favorites/product-favorites-schema";
 import { productsModel } from "src/models/products/products-schema";
+import { usersModel } from "src/models/user/user-schema";
 
 
 export const createCollectionService = async (payload: any, res: Response) => {
@@ -38,7 +39,7 @@ export const getCollectionService = async (id: string, res: Response) => {
 };
 
 export const getCollectionForUserService = async (user: any, id: string, res: Response) => {
-  // Find the collection by ID and populate the books with their relevant information
+  const userData = await usersModel.findById(user.id);
   const collection = await collectionsModel.findById(id).populate({
     path: "booksId",
     populate: [
@@ -70,12 +71,14 @@ export const getCollectionForUserService = async (user: any, id: string, res: Re
     if (!book || !book._id) {
       return null; // Skip invalid or incomplete book objects
     }
-
+    
     return {
       ...book.toObject(),  // Convert mongoose object to plain JS object
       isFavorite: favoriteIds.includes(book._id.toString()),  // Check if the book is in the user's favorites
     };
   }).filter((book) => book !== null); // Remove any null values from the mapped array
+  console.log('updatedBooks: ', updatedBooks);
+  sortByLanguagePriority(updatedBooks, "file", userData?.productsLanguage || []);
 
   // Return the updated collection data with the favorite status added to each book
   return {

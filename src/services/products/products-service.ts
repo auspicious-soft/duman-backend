@@ -13,6 +13,7 @@ import { categoriesModel } from "src/models/categories/categroies-schema";
 import { readProgressModel } from "src/models/read-progress/read-progress-schema";
 import { publishersModel } from "src/models/publishers/publishers-schema";
 import { authorsModel } from "src/models/authors/authors-schema";
+import { courseLessonsModel } from "src/models/course-lessons/course-lessons-schema";
 
 export const createBookService = async (payload: any, res: Response) => {
   const newBook = new productsModel(payload);
@@ -24,13 +25,20 @@ export const createBookService = async (payload: any, res: Response) => {
   };
 };
 
-export const getBooksService = async (id: string, res: Response) => {
+export const getBooksService = async (payload: any, id: string, res: Response) => {
   try {
+    const page = parseInt(payload.page as string) || 1;
+    const limit = parseInt(payload.limit as string) || 0;
+    const offset = (page - 1) * limit;
+    let lessons, totalDataCount;
     const books = await productsModel.find({ _id: id }).populate([{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }]);
     if (!books || books.length === 0) {
       return errorResponseHandler("Book not found", httpStatusCode.NOT_FOUND, res);
     }
-
+    if (books && books[0]?.type === "course") {
+      totalDataCount = Object.keys({ productId: id }).length < 1 ? await courseLessonsModel.countDocuments() : await courseLessonsModel.countDocuments({ productId: id });
+      lessons = await courseLessonsModel.find({ productId: id }).skip(offset).limit(limit).select("-__v");
+    }
     const bookPrice = books[0]?.price;
 
     if (!bookPrice) {
@@ -48,7 +56,11 @@ export const getBooksService = async (id: string, res: Response) => {
         books,
         totalBookSold,
         totalRevenue,
+        lessons: lessons ? lessons : [],
       },
+      page,
+      limit,
+      total: totalDataCount,
     };
   } catch (error) {
     return errorResponseHandler("Failed to fetch books", httpStatusCode.INTERNAL_SERVER_ERROR, res);
@@ -222,11 +234,21 @@ export const removeBookFromDiscountsService = async (payload: any, res: Response
   }
 };
 export const deleteBookService = async (id: string, res: Response) => {
+  console.log("id: ", id);
   try {
     const deletedBook = await productsModel.findByIdAndDelete(id);
+    console.log("deletedBook: ", deletedBook);
     if (!deletedBook) return errorResponseHandler("Book not found", httpStatusCode.NOT_FOUND, res);
     if (deletedBook?.image) {
       await deleteFileFromS3(deletedBook.image);
+    }
+    if (deletedBook?.type === "course") {
+      const courseLessons = await courseLessonsModel.find({ productId: deletedBook._id });
+      const fileKeys = courseLessons.flatMap((lesson) => Object.values(lesson.file || {}));
+      for (const values of fileKeys as string[]) {
+        await deleteFileFromS3(values);
+      }
+      await courseLessonsModel.deleteMany({ productId: deletedBook._id });
     }
     if (deletedBook?.file && deletedBook.file instanceof Map) {
       for (const key of deletedBook.file.keys()) {
@@ -286,7 +308,7 @@ export const getNewbookForUserService = async (user: any, payload: any, res: Res
   const page = parseInt(payload.page as string) || 1;
   const limit = parseInt(payload.limit as string) || 0;
   const offset = (page - 1) * 20;
-  const totalDataCount = await productsModel.countDocuments({ type: "e-book" }) ;
+  const totalDataCount = await productsModel.countDocuments({ type: "e-book" });
 
   const newBooks = await productsModel
     .find({ type: "e-book" })
@@ -329,7 +351,7 @@ export const getAllAudioBookForUserService = async (payload: any, user: any, res
       { path: "authorId", select: "name" },
       { path: "categoryId", select: "name" },
     ]);
-    const totalDataCount = await productsModel.countDocuments({ type: "audiobook" });
+  const totalDataCount = await productsModel.countDocuments({ type: "audiobook" });
 
   const favoriteBooks = await favoritesModel.find({ userId: user.id }).populate("productId");
   const favoriteIds = favoriteBooks

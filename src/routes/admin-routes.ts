@@ -21,6 +21,7 @@ import { createBookUniversity, deleteBookUniversity, getAllBookUniversities, get
 import { createBookLive, deleteBookLive, getAllBookLives, getBookLive, updateBookLive } from "src/controllers/book-lives/book-lives-controller";
 import { createBlog, deleteBlog, getAllBlogs, getBlogById, updateBlog } from "src/controllers/blogs/blogs-controller";
 import { sendNotificationToUser, sendNotificationToUsers } from "src/controllers/notifications/notifications-controller";
+import { createCourseLesson, deleteCourseLesson, getCourseLesson, updateCourseLesson } from "src/controllers/course-lessons/course-lessons-controller";
 
 const router = Router();
 
@@ -65,6 +66,13 @@ router.get("/books", getAllBooks);
 router.get("/books/:id", getBook);
 router.put("/books/:id", updateBook);
 router.delete("/books/:id", deleteBook);
+ 
+// course-lessons routes
+router.post("/course-lessons", createCourseLesson);
+router.get("/course-lessons", getAllBooks);
+router.get("/course-lessons/:id", getCourseLesson);
+router.put("/course-lessons", updateCourseLesson);
+router.delete("/course-lessons/:id", deleteCourseLesson);
  
 // discounted-books route
 router.get("/discounted-books", getAllDiscountedBooks);

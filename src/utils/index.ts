@@ -56,6 +56,35 @@ export const nestedQueryBuilder = (payload: Payload, querySearchKeyInBackend = [
     return { query, sort };
 };
 
+export const sortByLanguagePriority = <T>(
+    items: T[],
+    languageKey: keyof T,
+    preferredLanguages: string[]
+  ): T[] => {
+    if (!Array.isArray(items) || !preferredLanguages?.length) return items;
+  
+    const getFileLanguagePriority = (item: T): number => {
+      const fileMap = item[languageKey];
+  
+      if (!fileMap || !(fileMap instanceof Map)) return 0;
+  
+      const availableLanguages = Array.from(fileMap.keys());
+  
+      return preferredLanguages.reduce(
+        (count, lang) => count + (availableLanguages.includes(lang) ? 1 : 0),
+        0
+      );
+    };
+  
+    return items.sort((a, b) => {
+      const priorityA = getFileLanguagePriority(a);
+      const priorityB = getFileLanguagePriority(b);
+  
+      return priorityB - priorityA; // Higher priority first
+    });
+  };
+  
+
 export const applyFilters = (
     data: any[],
     query: any,

@@ -4,9 +4,10 @@ import { httpStatusCode } from "../../lib/constant";
 import { categoriesModel } from "../../models/categories/categroies-schema";
 import { subCategoriesModel } from "src/models/sub-categories/sub-categories-schema";
 import { productsModel } from "src/models/products/products-schema";
-import { applyFilters, nestedQueryBuilder, queryBuilder } from "src/utils";
+import { applyFilters, nestedQueryBuilder, queryBuilder, sortByLanguagePriority } from "src/utils";
 import { deleteFileFromS3 } from "src/config/s3";
 import { favoritesModel } from "src/models/product-favorites/product-favorites-schema";
+import { usersModel } from "src/models/user/user-schema";
 
 export const createCategoryService = async (payload: any, res: Response) => {
   const newCategory = new categoriesModel(payload);
@@ -52,26 +53,24 @@ export const getCategoryService = async (id: string, res: Response) => {
 
 export const getBooksByCategoryIdService = async (id: string, user: any,query: any, res: Response, ) => {
   const { language = 'eng' } = query;
-
+  const userData = await usersModel.findById(user.id);
   const category = await categoriesModel.findById(id);
   if (!category) return errorResponseHandler("Category not found", httpStatusCode.NOT_FOUND, res);
 
-  // Get the user's favorite books and their IDs
   const favoriteBooks = await favoritesModel.find({ userId: user.id }).populate("productId");
   const favoriteIds = favoriteBooks.map((book) => book.productId?._id.toString());
 
-  // Fetch books by category and populate necessary fields
   const categoryBooks = await productsModel.find({ categoryId: id }).populate([
     { path: "authorId", select: "name" },
     { path: "categoryId", select: "name" },
     { path: "publisherId", select: "name" },
   ]);
 
-  // Map the books and add the 'isFavorite' status
   const categoryBooksWithFavoriteStatus = categoryBooks.map((book) => ({
     ...book.toObject(),
     isFavorite: favoriteIds.includes(book._id.toString()), // Check if the book is in the user's favorites
   }));
+  sortByLanguagePriority(categoryBooksWithFavoriteStatus, "file", userData?.productsLanguage || []);
   
   // const filteredBooks = applyFilters(categoryBooksWithFavoriteStatus, query, language);
   // console.log('filteredBooks: ', filteredBooks);

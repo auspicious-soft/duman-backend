@@ -38,6 +38,7 @@ const productsSchema = new mongoose.Schema({
     file: {
       type: Map,
       of: { type: String },
+      default: null,
     },
     type: {
       type: String,
