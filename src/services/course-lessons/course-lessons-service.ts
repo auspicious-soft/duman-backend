@@ -70,42 +70,55 @@ export const getCourseLessonByIdService = async (payload: any, productId: string
   }
 };
 
-// export const updateCourseLesson = async (courseLessonId: string, courseLessonData: any) => {
-//   return await courseLessonsModel.findByIdAndUpdate(courseLessonId, courseLessonData, { new: true });
-// };
 
 export const updateCourseLessons = async (lessons: any | any[]) => {
-  // Ensure lessons is an array
+  console.log('lessons: ', lessons);
   const lessonsArray = Array.isArray(lessons) ? lessons : [lessons];
 
   if (!lessonsArray.length) {
-    throw new Error("No lessons provided for update.");
+    throw new Error("No lessons provided for update or creation.");
   }
 
-  const bulkOperations = lessonsArray.map((lesson) => ({
+  const lessonsToUpdate = lessonsArray.filter((lesson) => lesson._id);
+  const lessonsToCreate = lessonsArray.filter((lesson) => !lesson._id);
+
+  const bulkOperations = lessonsToUpdate.map((lesson) => ({
     updateOne: {
       filter: { _id: lesson._id },
       update: { $set: lesson },
     },
   }));
 
-  const result = await courseLessonsModel.bulkWrite(bulkOperations);
+  let updateResult = { modifiedCount: 0 };
+  if (bulkOperations.length > 0) {
+    updateResult = await courseLessonsModel.bulkWrite(bulkOperations);
+  }
+
+  let createdLessons:any = [];
+  if (lessonsToCreate.length > 0) {
+    createdLessons = await courseLessonsModel.insertMany(lessonsToCreate);
+  }
 
   return {
     success: true,
-    message: `${result.modifiedCount} course lesson(s) updated successfully`,
-    data: result,
+    message: `${updateResult.modifiedCount} course lesson(s) updated, ${createdLessons.length} new lesson(s) created successfully`,
+    updatedCount: updateResult.modifiedCount,
+    createdCount: createdLessons.length,
+    createdLessons,
   };
 };
+
 
 export const deleteCourseLessonService = async (courseLessonId: string, res: Response) => {
   const deletedCourseLesson: any = await courseLessonsModel.findByIdAndDelete(courseLessonId);
   if (!deletedCourseLesson) return errorResponseHandler("Course lesson not found", httpStatusCode.NOT_FOUND, res);
-  const fileKeys = Object.values(deletedCourseLesson.file);
 
-  // Pass the keys to deleteFileFromS3
-  for (const values of fileKeys as string[]) {
-    await deleteFileFromS3(values);
+  const fileKeys = deletedCourseLesson.sections?.map((section: any) => section.file) || [];
+
+  for (const filePath of fileKeys) {
+    if (filePath) {
+      await deleteFileFromS3(filePath);
+    }
   }
   return {
     success: true,
@@ -142,15 +155,3 @@ export const getAllCourseLessons = async (payload: any) => {
     };
   }
 };
-
-// export const updateCourseLessonService = async (payload: any, data: any, res: Response) => {
-//   try {
-//     const courseLessonId: any = payload.id;
-//     const courseLessonData = data;
-//     const updatedCourseLesson = await updateCourseLessons( courseLessonData);
-//     if (!updatedCourseLesson) return errorResponseHandler("Course lesson not found", httpStatusCode.NOT_FOUND, res);
-//     return res.status(httpStatusCode.OK).json({ success: true, message: "Course lesson updated successfully", data: updatedCourseLesson });
-//   } catch (error) {
-//     return errorResponseHandler("Error updating course lesson", httpStatusCode.INTERNAL_SERVER_ERROR, res);
-//   }
-// };

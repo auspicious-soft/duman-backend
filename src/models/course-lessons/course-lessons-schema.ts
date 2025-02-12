@@ -18,10 +18,13 @@ const courseLessonsSchema = new mongoose.Schema({
       type: Number,
       required: true,
     },
-    file: {
-      type: Object,
-      required: true,
-    },
+    sections:[{
+      name:{type:String},
+      order:{type:Number},
+      file:{type:String},
+      additionalMaterials:{type:Object},
+      additionalLinks:{type:Object}
+    }],
   
   },
   { timestamps: true }

@@ -244,12 +244,19 @@ export const deleteBookService = async (id: string, res: Response) => {
     }
     if (deletedBook?.type === "course") {
       const courseLessons = await courseLessonsModel.find({ productId: deletedBook._id });
-      const fileKeys = courseLessons.flatMap((lesson) => Object.values(lesson.file || {}));
-      for (const values of fileKeys as string[]) {
-        await deleteFileFromS3(values);
-      }
+    
+      // Extract all section files from each lesson
+      const fileKeys = courseLessons.flatMap((lesson:any) =>
+        lesson.sections.flatMap((section:any) => section.file)
+    );
+    
+      // Delete each file from S3
+      await Promise.all(fileKeys.filter(Boolean).map(filePath => {
+        deleteFileFromS3(filePath)}));
+    
       await courseLessonsModel.deleteMany({ productId: deletedBook._id });
     }
+    
     if (deletedBook?.file && deletedBook.file instanceof Map) {
       for (const key of deletedBook.file.keys()) {
         const fileValue = deletedBook.file.get(key);
