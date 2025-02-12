@@ -3,7 +3,7 @@ import { errorResponseHandler } from "../../lib/errors/error-response-handler";
 import { httpStatusCode } from "../../lib/constant";
 import { subCategoriesModel } from "../../models/sub-categories/sub-categories-schema";
 import { productsModel } from "src/models/products/products-schema";
-import { nestedQueryBuilder, queryBuilder, sortByLanguagePriority } from "src/utils";
+import { filterBooksByLanguage, nestedQueryBuilder, queryBuilder, sortBooks, sortByLanguagePriority, toArray } from "src/utils";
 import { categoriesModel } from "src/models/categories/categroies-schema";
 import { deleteFileFromS3 } from "src/config/s3";
 import { favoritesModel } from "src/models/product-favorites/product-favorites-schema";
@@ -64,7 +64,7 @@ export const getSubCategoriesService = async (payload: any, id: string, res: Res
 // export const getSubCategoriesForUserService = async (user: any, payload: any, id: string, res: Response) => {
 //   try {
 //     const userData = await usersModel.findById(user.id);
-    
+
 //     const subCategories = await subCategoriesModel.findById(id);
 //     if (!subCategories) {
 //       return errorResponseHandler("No sub-categories", httpStatusCode.NO_CONTENT, res);
@@ -112,7 +112,7 @@ export const getSubCategoriesService = async (payload: any, id: string, res: Res
 //     // subCategoryBooksWithFavoriteStatus.sort((a, b) => {
 //     //   const priorityA = getFileLanguagePriority(a, userData?.productsLanguage || []);
 //     //   const priorityB = getFileLanguagePriority(b, userData?.productsLanguage || []);
-//     //   return priorityB - priorityA; 
+//     //   return priorityB - priorityA;
 //     // });
 //     const sortedBooks = sortByLanguagePriority(subCategoryBooksWithFavoriteStatus, "file", userData?.productsLanguage || []);
 
@@ -134,26 +134,138 @@ export const getSubCategoriesService = async (payload: any, id: string, res: Res
 //   }
 // };
 
+// export const getSubCategoriesForUserService = async (user:any, payload: any, id: string, res: Response) => {
+//   try {
+//     const userData = await usersModel.findById(user.id);
+//     console.log('userData: ', userData?.productsLanguage);
+//     const subCategories = await subCategoriesModel.findById(id);
+//     if (!subCategories) {
+//       return errorResponseHandler("No sub-categories", httpStatusCode.NO_CONTENT, res);
+//     }
+//     const page = parseInt(payload.page as string) || 1;
+//     const limit = parseInt(payload.limit as string) || 0;
+//     const offset = (page - 1) * limit;
+//     const { query, sort } = nestedQueryBuilder(payload, ["name"]);
 
-export const getSubCategoriesForUserService = async (user:any, payload: any, id: string, res: Response) => {
+//     const totalDataCount = Object.keys(query).length < 1 ? await productsModel.countDocuments({ subCategoryId: id }) : await productsModel.countDocuments({ ...query, subCategoryId: id });
+
+//     const subCategoryBooks = await productsModel
+//       .find({ ...query, subCategoryId: id })
+//       .sort(sort)
+//       .skip(offset)
+//       .limit(limit)
+//       .select("-__v")
+//       .populate([
+//         { path: "authorId", select: "name" },
+//         { path: "categoryId", select: "name" },
+//         { path: "publisherId", select: "name" },
+//       ]);
+
+//     const favoriteBooks = await favoritesModel.find({ userId: user.id }).populate("productId");
+//     const favoriteIds = favoriteBooks.map((book) => book.productId._id.toString());
+
+//     const subCategoryBooksWithFavoriteStatus = subCategoryBooks.map((book) => ({
+//       ...book.toObject(),
+//       isFavorite: favoriteIds.includes(book._id.toString()), // Check if the book is in the user's favorites
+//     }));
+
+//     await sortByLanguagePriority(subCategoryBooksWithFavoriteStatus, "file", userData?.productsLanguage || []);
+
+//     if (!subCategoryBooks || subCategoryBooks.length === 0) {
+//       return errorResponseHandler("No blog found for this category", httpStatusCode.NO_CONTENT, res);
+//     }
+//     return {
+//       success: true,
+//       message: "Sub categories retrieved successfully",
+//       page,
+//       limit,
+//       total: totalDataCount,
+//       data: { subCategories, books: subCategoryBooksWithFavoriteStatus },
+//     };
+//   } catch (error) {
+//     return errorResponseHandler("Failed to fetch sub-categories", httpStatusCode.INTERNAL_SERVER_ERROR, res);
+//   }
+// };
+
+// export const getSubCategoriesForUserService = async (user: any, payload: any, id: string, res: Response) => {
+//   try {
+//     const userData = await usersModel.findById(user.id);
+
+//     const subCategories = await subCategoriesModel.findById(id);
+//     if (!subCategories) {
+//       return errorResponseHandler("No sub-categories", httpStatusCode.NO_CONTENT, res);
+//     }
+
+//     const page = parseInt(payload.page as string) || 1;
+//     const limit = parseInt(payload.limit as string) || 0;
+//     const offset = (page - 1) * limit;
+//     const { query, sort } = nestedQueryBuilder(payload, ["name"]);
+
+//     const totalDataCount = await productsModel.countDocuments({ ...query, subCategoryId: id });
+
+//     let subCategoryBooks = await productsModel
+//       .find({ ...query, subCategoryId: id })
+//       .sort(sort)
+//       .skip(offset)
+//       .limit(limit)
+//       .select("-__v")
+//       .populate([
+//         { path: "authorId", select: "name" },
+//         { path: "categoryId", select: "name" },
+//         { path: "publisherId", select: "name" },
+//       ]);
+
+
+//     const languages = toArray(payload.language);
+
+//     subCategoryBooks = filterBooksByLanguage(subCategoryBooks, languages);
+
+//     if (!subCategoryBooks.length) {
+//       return errorResponseHandler("No books found for the selected languages", httpStatusCode.NO_CONTENT, res);
+//     }
+
+//     const favoriteBooks = await favoritesModel.find({ userId: user.id }).populate("productId");
+//     const favoriteIds = favoriteBooks.map((book) => book.productId._id.toString());
+
+//     const subCategoryBooksWithFavoriteStatus = subCategoryBooks.map((book) => ({
+//       ...book.toObject(),
+//       isFavorite: favoriteIds.includes(book._id.toString()),
+//     }));
+
+//     await sortByLanguagePriority(subCategoryBooksWithFavoriteStatus, "file", userData?.productsLanguage || []);
+
+//     return {
+//       success: true,
+//       message: "Sub categories retrieved successfully",
+//       page,
+//       limit,
+//       total: totalDataCount,
+//       data: { subCategories, books: subCategoryBooksWithFavoriteStatus },
+//     };
+//   } catch (error) {
+//     console.error("Error in getSubCategoriesForUserService:", error);
+//     return errorResponseHandler("Failed to fetch sub-categories", httpStatusCode.INTERNAL_SERVER_ERROR, res);
+//   }
+// };
+
+export const getSubCategoriesForUserService = async (user: any, payload: any, id: string, res: Response) => {
   try {
     const userData = await usersModel.findById(user.id);
-    console.log('userData: ', userData?.productsLanguage);
     const subCategories = await subCategoriesModel.findById(id);
+
     if (!subCategories) {
       return errorResponseHandler("No sub-categories", httpStatusCode.NO_CONTENT, res);
     }
+
     const page = parseInt(payload.page as string) || 1;
     const limit = parseInt(payload.limit as string) || 0;
     const offset = (page - 1) * limit;
-    const { query, sort } = nestedQueryBuilder(payload, ["name"]);
-    console.log('sort: ', sort);
- 
-    const totalDataCount = Object.keys(query).length < 1 ? await productsModel.countDocuments({ subCategoryId: id }) : await productsModel.countDocuments({ ...query, subCategoryId: id });
+    const { query } = nestedQueryBuilder(payload, ["name"]);
 
-    const subCategoryBooks = await productsModel
+    const totalDataCount = await productsModel.countDocuments({ ...query, subCategoryId: id });
+
+    let subCategoryBooks = await productsModel
       .find({ ...query, subCategoryId: id })
-      .sort(sort)
       .skip(offset)
       .limit(limit)
       .select("-__v")
@@ -162,25 +274,27 @@ export const getSubCategoriesForUserService = async (user:any, payload: any, id:
         { path: "categoryId", select: "name" },
         { path: "publisherId", select: "name" },
       ]);
-  
+
+    // ✅ Filter Books Based on Language
+    const languages = toArray(payload.language);
+    subCategoryBooks = filterBooksByLanguage(subCategoryBooks, languages);
+
+    if (!subCategoryBooks.length) {
+      return errorResponseHandler("No books found for the selected languages", httpStatusCode.NO_CONTENT, res);
+    }
+
+    // ✅ Apply Sorting Based on Payload.sorting
+    // subCategoryBooks = sortBooks(subCategoryBooks, payload.sorting, userData?.productsLanguage,language[0]);
+    subCategoryBooks = sortBooks(subCategoryBooks, payload.sorting, userData?.productsLanguage, languages[0]);
+    // ✅ Fetch Favorite Books & Mark Favorites
     const favoriteBooks = await favoritesModel.find({ userId: user.id }).populate("productId");
     const favoriteIds = favoriteBooks.map((book) => book.productId._id.toString());
-  
-// Function to calculate how many preferred languages exist in the file object
 
-
-    // Map the books and add the 'isFavorite' status
     const subCategoryBooksWithFavoriteStatus = subCategoryBooks.map((book) => ({
       ...book.toObject(),
-      isFavorite: favoriteIds.includes(book._id.toString()), // Check if the book is in the user's favorites
+      isFavorite: favoriteIds.includes(book._id.toString()),
     }));
-   
-    await sortByLanguagePriority(subCategoryBooksWithFavoriteStatus, "file", userData?.productsLanguage || []);
 
-   
-    if (!subCategoryBooks || subCategoryBooks.length === 0) {
-      return errorResponseHandler("No blog found for this category", httpStatusCode.NO_CONTENT, res);
-    }
     return {
       success: true,
       message: "Sub categories retrieved successfully",
@@ -190,6 +304,7 @@ export const getSubCategoriesForUserService = async (user:any, payload: any, id:
       data: { subCategories, books: subCategoryBooksWithFavoriteStatus },
     };
   } catch (error) {
+    console.error("Error in getSubCategoriesForUserService:", error);
     return errorResponseHandler("Failed to fetch sub-categories", httpStatusCode.INTERNAL_SERVER_ERROR, res);
   }
 };
