@@ -16,6 +16,11 @@ const readProgressSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    readSections: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "courseLessons.sections",
+      required: false, 
+    }],
     certificate: {
       type: String,
       default: null,

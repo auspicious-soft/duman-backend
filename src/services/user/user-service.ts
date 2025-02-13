@@ -46,9 +46,7 @@ export const loginUserService = async (userData: UserDocument, authType: string,
     if (validationResponse) return validationResponse;
 
     if (authType === "Email") {
-      console.log('authType Check: ', authType);
       let passwordValidationResponse = await validatePassword(userData, user.password, res);
-      console.log('passwordValidationResponse: ', passwordValidationResponse);
       if (passwordValidationResponse) return passwordValidationResponse;
     }
 
@@ -68,9 +66,9 @@ export const signUpService = async (userData: UserDocument, authType: string, re
       return errorResponseHandler("Auth type is required", httpStatusCode.BAD_REQUEST, res);
     }
 
-    if (authType === "Email" && (!userData.password || !userData.email)) {
-      return errorResponseHandler("Both email and password is required for Email authentication", httpStatusCode.BAD_REQUEST, res);
-    }
+    // if (authType === "Email" && (!userData.password || !userData.email)) {
+    //   return errorResponseHandler("Both email and password is required for Email authentication", httpStatusCode.BAD_REQUEST, res);
+    // }
 
     const query = getSignUpQueryByAuthType(userData, authType);
     const existingUser = await usersModel.findOne(query);
@@ -99,6 +97,50 @@ export const signUpService = async (userData: UserDocument, authType: string, re
     }
   }
 };
+export const WhatsappLoginService = async (userData: UserDocument, authType: string, res: Response) => {
+  try {
+    if (!authType) {
+      return errorResponseHandler("Auth type is required", httpStatusCode.BAD_REQUEST, res);
+    }
+
+    const existingUser = await usersModel.findOne({ phoneNumber: userData.phoneNumber });
+
+    // If user already exists, send OTP for verification
+    if (existingUser) {
+      await sendOTPIfNeeded(userData, authType);  // Send OTP for verification if needed
+      return { success: true, message: "OTP sent successfully", data: sanitizeUser(existingUser) };
+    }
+
+    // If user doesn't exist, create a new user
+    const newUserData = { ...userData, authType };
+    newUserData.password = await hashPasswordIfEmailAuth(userData, authType);
+    const identifier = customAlphabet("0123456789", 5);
+    (newUserData as any).identifier = identifier();
+
+    // Create new user
+    const user = await usersModel.create(newUserData);
+    
+    // Send OTP if needed for new user
+    await sendOTPIfNeeded(userData, authType);
+
+    if (!process.env.AUTH_SECRET) {
+      return errorResponseHandler("AUTH_SECRET is not defined", httpStatusCode.INTERNAL_SERVER_ERROR, res);
+    }
+
+    // Generate token and save user
+    user.token = generateUserToken(user as any);
+    await user.save();
+    
+    return { success: true, message: "OTP sent successfully", data: sanitizeUser(user) };
+  } catch (error) {
+    if (error instanceof Error) {
+      return errorResponseHandler(error.message, httpStatusCode.INTERNAL_SERVER_ERROR, res);
+    } else {
+      return errorResponseHandler("An unknown error occurred", httpStatusCode.INTERNAL_SERVER_ERROR, res);
+    }
+  }
+};
+
 
 export const forgotPasswordUserService = async (payload: any, res: Response) => {
   const { email } = payload;
