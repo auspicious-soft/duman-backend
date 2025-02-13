@@ -1,4 +1,4 @@
-import { readProgressModel } from "../../models/read-progress/read-progress-schema";
+import { readProgressModel } from "../../models/user-reads/read-progress-schema";
 import { queryBuilder } from "src/utils";
 import { errorResponseHandler } from "src/lib/errors/error-response-handler";
 import { badges, httpStatusCode } from "src/lib/constant";

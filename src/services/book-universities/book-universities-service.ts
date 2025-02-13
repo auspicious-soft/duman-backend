@@ -4,7 +4,7 @@ import { httpStatusCode } from "../../lib/constant";
 import { bookUniversitiesModel } from "../../models/book-universities/book-universities-schema";
 import { productsModel } from "src/models/products/products-schema";
 import { favoritesModel } from "src/models/product-favorites/product-favorites-schema";
-import { readProgressModel } from "src/models/read-progress/read-progress-schema";
+import { readProgressModel } from "src/models/user-reads/read-progress-schema";
 
 
 

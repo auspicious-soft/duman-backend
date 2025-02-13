@@ -1,4 +1,4 @@
-import { readProgressModel } from "src/models/read-progress/read-progress-schema";
+import { readProgressModel } from "src/models/user-reads/read-progress-schema";
 import { favoritesModel } from "src/models/product-favorites/product-favorites-schema";
 import { query } from "express";
 

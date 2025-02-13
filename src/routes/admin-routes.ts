@@ -69,7 +69,6 @@ router.delete("/books/:id", deleteBook);
  
 // course-lessons routes
 router.post("/course-lessons", createCourseLesson);
-router.get("/course-lessons", getAllBooks);
 router.get("/course-lessons/:id", getCourseLesson);
 router.put("/course-lessons", updateCourseLesson);
 router.delete("/course-lessons/:id", deleteCourseLesson);

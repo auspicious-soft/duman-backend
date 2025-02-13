@@ -8,7 +8,7 @@ import {  verifyDiscountVoucher } from "src/controllers/discount-vouchers/discou
 import { getAllEventsHandler, getEventByIdHandler } from "src/controllers/events/events-controller";
 import {  getAllFavorites, getFavorite, updateFavorite } from "src/controllers/product-favorites/product-favorites-controller";
 import { getAllNotificationsOfUser, markAllNotificationsAsRead } from "src/controllers/notifications/notifications-controller";
-import { getAllAudioBookForUser, getAllBooks, getBook, getBookforUser, getBookMarketForUser, getNewbookForUser } from "src/controllers/products/products-controller";
+import { getAllAudioBookForUser, getAllBooks, getBook, getBookforUser, getBookMarketForUser, getCourseforUser, getNewbookForUser } from "src/controllers/products/products-controller";
 import { getAllPublishers, getPublisherForUser, getPublisherWorkForUser } from "src/controllers/publisher/publishers-controller";
 import { AddBookRating, getRating } from "src/controllers/rating/rating-controller";
 import { getAllReadProgressHandler, getReadProgressByIdHandler, updateReadProgressHandler } from "src/controllers/read-progess/read-progress-controller";
@@ -23,6 +23,7 @@ import { getBookMasterCategories, getBookMasterForUser, getBookMasterTeachers, g
 import { getBookUniversityCategories, getBookUniversityForUser, getBookUniversityNewbooks, getBookUniversityReadProgress, getBookUniversityTeachers, getPopularCoursesBookUniversity } from "src/controllers/book-universities/book-universities-controller";
 import { getAllFaviouriteBooks, getAllFinishedBooks, getAllReadingBooks, getCoursesForBookRoom } from "src/controllers/book-room/book-room-controller";
 import { getAward } from "src/controllers/awards/awards-controller";
+import { getCourseLesson, getCourseLessonForUser, updateCourseLesson } from "src/controllers/course-lessons/course-lessons-controller";
 
 
 const router = Router();
@@ -148,4 +149,11 @@ router.put("/change-password", changePasswordUser);
 //user-details route
 router.get("/user-details", getCurrentUserDetails);
 router.put("/user-details", updateCurrentUserDetails);
+
+// course-lessons routes
+router.get("/course-lessons", getAllBooks);
+router.get("/course-lessons/:id", getCourseLessonForUser);
+router.get("/course/:id", getCourseforUser);
+
+
 export { router }

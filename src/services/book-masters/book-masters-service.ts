@@ -6,7 +6,7 @@ import { bookMastersModel } from "../../models/book-masters/book-masters-schema"
 import { productsModel } from "../../models/products/products-schema"; // Import productsModel
 import { PipelineStage } from "mongoose";
 import { favoritesModel } from "src/models/product-favorites/product-favorites-schema";
-import { readProgressModel } from "src/models/read-progress/read-progress-schema";
+import { readProgressModel } from "src/models/user-reads/read-progress-schema";
 import { getBookStudyCategoryService } from "../book-studies/book-studies-service";
 
 export const addBooksToBookMaster = async (payload: any, res: Response) => {

@@ -10,7 +10,7 @@ import { ordersModel } from "src/models/orders/orders-schema";
 import { favoritesModel } from "src/models/product-favorites/product-favorites-schema";
 import { collectionsModel } from "src/models/collections/collections-schema";
 import { categoriesModel } from "src/models/categories/categroies-schema";
-import { readProgressModel } from "src/models/read-progress/read-progress-schema";
+import { readProgressModel } from "src/models/user-reads/read-progress-schema";
 import { publishersModel } from "src/models/publishers/publishers-schema";
 import { authorsModel } from "src/models/authors/authors-schema";
 import { courseLessonsModel } from "src/models/course-lessons/course-lessons-schema";
@@ -296,6 +296,7 @@ export const getBookForUserService = async (id: string, user: any, res: Response
   }
   const isFavorite = await favoritesModel.exists({ userId: user.id, productId: id });
   const relatedBooks = await productsModel.find({ categoryId: { $in: book?.categoryId } }).populate([{ path: "authorId" }]);
+  const isPurchased = await ordersModel.find({ productIds: id , userId: user.id });
 
   return {
     success: true,
@@ -303,10 +304,12 @@ export const getBookForUserService = async (id: string, user: any, res: Response
     data: {
       book: {
         ...book.toObject(),
-        favorite: isFavorite ? true : false,
+        // favorite: isFavorite ? true : false,
         readers: readers > 0 ? readers : 0,
       },
       relatedBooks: relatedBooks,
+      isPurchased: isPurchased.length > 0 ? true : false,
+      favorite: isFavorite ? true : false,
     },
   };
 };
@@ -328,11 +331,11 @@ export const getNewbookForUserService = async (user: any, payload: any, res: Res
     ]);
   const favoriteBooks = await favoritesModel.find({ userId: user.id }).populate("productId");
   const favoriteIds = favoriteBooks
-    .filter((book) => book.productId && book.productId._id) // Ensure valid productId and _id
+    .filter((book) => book.productId && book.productId._id) 
     .map((book) => book.productId._id.toString());
   const newBooksWithFavoriteStatus = newBooks.map((book) => ({
     ...book.toObject(),
-    isFavorite: favoriteIds.includes(book._id.toString()), // Check if the book is in the user's favorites
+    isFavorite: favoriteIds.includes(book._id.toString()), 
   }));
   return {
     success: true,
@@ -362,12 +365,12 @@ export const getAllAudioBookForUserService = async (payload: any, user: any, res
 
   const favoriteBooks = await favoritesModel.find({ userId: user.id }).populate("productId");
   const favoriteIds = favoriteBooks
-    .filter((book) => book.productId && book.productId._id) // Ensure valid productId and _id
+    .filter((book) => book.productId && book.productId._id) 
     .map((book) => book.productId._id.toString());
 
   const audiobooksWithFavoriteStatus = audiobooks.map((book) => ({
     ...book.toObject(),
-    isFavorite: favoriteIds.includes(book._id.toString()), // Check if the book is in the user's favorites
+    isFavorite: favoriteIds.includes(book._id.toString()),
   }));
   return {
     success: true,
@@ -472,6 +475,33 @@ export const getBookMarketForUserService = async (user: any, res: Response) => {
       author: author,
       newBooks: newBooks,
       bestSellers: bestSellers,
+    },
+  };
+};
+
+export const getCourseForUserService = async (id: string, user: any, res: Response) => {
+  const course = await productsModel.findById(id).populate([{ path: "authorId"}, { path: "categoryId", select: "name" }, { path: "subCategoryId" ,select: "name"}, { path: "publisherId" ,select: "name"}]);
+
+  const lessonCount = await courseLessonsModel.countDocuments({ productId: id,lang:"eng" });
+  if (!course) {
+    return errorResponseHandler("Book not found", httpStatusCode.NOT_FOUND, res);
+  }
+  const relatedCourses = await productsModel.find({ categoryId: { $in: course?.categoryId },type:"course" }).populate([{ path: "authorId",select: "name" }]);
+  const reviewCount = await productRatingsModel.countDocuments({ productId: id });
+  const isFavorite = await favoritesModel.exists({ userId: user.id, productId: id });
+  const isPurchased = await ordersModel.find({ productIds: id , userId: user.id });
+  return {
+    success: true,
+    message: "Course retrieved successfully",
+    data: {
+      course: {
+        ...course.toObject(),
+        lessons: lessonCount > 0 ? lessonCount : 0,
+      },
+      reviewCount: reviewCount > 0 ? reviewCount : 0,
+      relatedCourses: relatedCourses,
+      isPurchased: isPurchased.length > 0 ? true : false,
+      favorite: isFavorite ? true : false,
     },
   };
 };

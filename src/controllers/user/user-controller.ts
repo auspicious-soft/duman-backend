@@ -36,8 +36,6 @@ export const userSignup = async (req: Request, res: Response) => {
 export const loginUser = async (req: Request, res: Response) => {
   try {
     const loginResponse = await loginUserService(req.body, req.body.authType, res);
-    console.log('loginResponse: ', loginResponse);
-
     return res.status(httpStatusCode.OK).json(loginResponse);
   } catch (error) {
     res.status(401).json({
@@ -46,6 +44,7 @@ export const loginUser = async (req: Request, res: Response) => {
     });
   }
 };
+
 export const forgotPasswordUser = async (req: Request, res: Response) => {
   try {
     const response = await forgotPasswordUserService(req.body, res);

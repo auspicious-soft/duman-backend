@@ -15,7 +15,7 @@ import { generateOtpWithTwilio } from "src/utils/sms/sms";
 import { generateUserToken, getSignUpQueryByAuthType, handleExistingUser, hashPasswordIfEmailAuth, sendOTPIfNeeded, validatePassword, validateUserForLogin } from "src/utils/userAuth/signUpAuth";
 import { customAlphabet } from "nanoid";
 import { awardsModel } from "src/models/awards/awards-schema";
-import { readProgressModel } from "src/models/read-progress/read-progress-schema";
+import { readProgressModel } from "src/models/user-reads/read-progress-schema";
 
 configDotenv();
 

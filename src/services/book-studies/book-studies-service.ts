@@ -4,7 +4,7 @@ import { httpStatusCode } from "../../lib/constant";
 import { bookStudiesModel } from "../../models/book-studies/book-studies-schema"; // Import bookStudiesModel
 import { productsModel } from "src/models/products/products-schema";
 import { favoritesModel } from "src/models/product-favorites/product-favorites-schema";
-import { readProgressModel } from "src/models/read-progress/read-progress-schema";
+import { readProgressModel } from "src/models/user-reads/read-progress-schema";
 
 
 export const addBooksToBookStudy = async (payload: any, res: Response) => {

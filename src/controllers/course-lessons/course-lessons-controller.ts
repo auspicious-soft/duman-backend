@@ -1,7 +1,13 @@
 import { Request, Response } from "express";
 import { httpStatusCode } from "src/lib/constant";
 import { errorParser } from "src/lib/errors/error-response-handler";
-import { createCourseLessonService, deleteCourseLessonService, getCourseLessonByIdService, updateCourseLessons } from "src/services/course-lessons/course-lessons-service";
+import {
+  createCourseLessonService,
+  deleteCourseLessonService,
+  getCourseLessonByIdForUserService,
+  getCourseLessonByIdService,
+  updateCourseLessons,
+} from "src/services/course-lessons/course-lessons-service";
 
 export const createCourseLesson = async (req: Request, res: Response) => {
   try {
@@ -23,11 +29,19 @@ export const getCourseLesson = async (req: Request, res: Response) => {
     return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
   }
 };
+export const getCourseLessonForUser = async (req: Request, res: Response) => {
+  try {
+    const courseLesson = await getCourseLessonByIdForUserService(req.user, req.query, req.params.id);
+    return res.status(httpStatusCode.OK).json(courseLesson);
+  } catch (error: any) {
+    const { code, message } = errorParser(error);
+    return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
+  }
+};
 
 export const updateCourseLesson = async (req: Request, res: Response) => {
   try {
-  
-    const updatedCourseLesson = await updateCourseLessons( req.body);
+    const updatedCourseLesson = await updateCourseLessons(req.body);
     return res.status(httpStatusCode.OK).json(updatedCourseLesson);
   } catch (error: any) {
     const { code, message } = errorParser(error);
