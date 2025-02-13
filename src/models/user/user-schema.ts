@@ -1,7 +1,7 @@
 import mongoose, { Schema } from "mongoose";
 
 export interface UserDocument extends Document {
-  _id?:string;
+  _id?: string;
   email?: string;
   password?: string;
   fullName?: string;
@@ -11,12 +11,12 @@ export interface UserDocument extends Document {
     expiresAt: Date;
   };
   emailVerified: boolean;
-  role?:string;
-  countryCode?:string;
-  level?:string;
-  profilePic?:string;
-  authType?:string;
-  schoolVoucher?:string;
+  role?: string;
+  countryCode?: string;
+  level?: string;
+  profilePic?: string;
+  authType?: string;
+  schoolVoucher?: string;
 }
 const usersSchema = new mongoose.Schema(
   {
@@ -50,62 +50,62 @@ const usersSchema = new mongoose.Schema(
     authType: {
       type: String,
       enum: ["Email", "Whatsapp", "Facebook", "Apple", "Google"],
-      default: "Email"
+      default: "Email",
     },
     countryCode: {
       type: String,
     },
     phoneNumber: {
       type: String,
-      default: null,  
+      default: null,
     },
     profilePic: {
       type: String,
       default: null,
     },
-    emailVerified: { 
+    emailVerified: {
       type: Boolean,
       default: false,
     },
-    whatsappNumberVerified: { 
+    whatsappNumberVerified: {
       type: Boolean,
       default: false,
     },
     otp: {
-      code: { type: String, default: null, },
-      expiresAt: { type: Date,default: null, }
+      code: { type: String, default: null },
+      expiresAt: { type: Date, default: null },
     },
-    language:{
-      type:String,
-      enum:["kaz","eng","rus"],
-      default:"eng"
+    language: {
+      type: String,
+      enum: ["kaz", "eng", "rus"],
+      default: "eng",
     },
-    token:{
-      type:String,
+    token: {
+      type: String,
     },
-    schoolVoucher:{
+    schoolVoucher: {
       voucherId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "bookSchools",
       },
-      createdAt: { type: Date, default: Date.now, },
+      createdAt: { type: Date, default: Date.now },
       expiredAt: { type: Date, default: () => new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) },
     },
     fcmToken: {
       type: String,
-      default: null
+      default: null,
     },
     productsLanguage: {
       type: [String],
       enum: ["kaz", "eng", "rus"],
-      default: "eng"
+      default: "eng",
     },
     dob: {
       type: Date,
     },
     country: {
       type: String,
-    }                                            
+    },
   },
   { timestamps: true }
 );

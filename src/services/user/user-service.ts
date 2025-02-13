@@ -89,7 +89,7 @@ export const signUpService = async (userData: UserDocument, authType: string, re
     user.token = generateUserToken(user as any);
     }
     await user.save();
-    return { success: true, message: "User created successfully", data: sanitizeUser(user) };
+    return { success: true, message: authType==="Email" ? "OTP sent for verification" : "Sign-up successfully", data: sanitizeUser(user) };
   } catch (error) {
     if (error instanceof Error) {
       return errorResponseHandler(error.message, httpStatusCode.INTERNAL_SERVER_ERROR, res);
@@ -106,9 +106,8 @@ export const WhatsappLoginService = async (userData: UserDocument, authType: str
 
     const existingUser = await usersModel.findOne({ phoneNumber: userData.phoneNumber });
 
-    // If user already exists, send OTP for verification
     if (existingUser) {
-      await sendOTPIfNeeded(userData, authType);  // Send OTP for verification if needed
+      await sendOTPIfNeeded(userData, authType);  
       return { success: true, message: "OTP sent successfully", data: sanitizeUser(existingUser) };
     }
 
@@ -390,34 +389,104 @@ export const getAllUserService = async (payload: any, res: Response) => {
   };
 };
 
+// export const generateAndSendOTP = async (payload: { email?: string; phoneNumber?: string }) => {
+//   try{const { email, phoneNumber } = payload;
+//   console.log('email: ', email);
+//   const otp = Math.floor(100000 + Math.random() * 900000).toString();
+//   console.log('otp: ', otp);
+//   const expiresAt = new Date(Date.now() + 20 * 60 * 1000); // 20 minutes
+
+//   const user = await usersModel.findOneAndUpdate(
+//     {
+//      email 
+//     },
+//     {
+//       $set: {
+//         "otp.code": otp,
+//         "otp.expiresAt": expiresAt,
+//       },
+//     },
+//     { upsert: true, new: true }
+//   );
+//   console.log('user otp generate: ', user);
+//   // if (user) {
+//   //   await user.save();
+//   //   console.log('inside user condition ', user);
+//   // }
+
+//   if (phoneNumber) {
+//     await generateOtpWithTwilio(phoneNumber, otp);
+//   }
+//   if (email) {
+//     await sendEmailVerificationMail(email, otp, user?.language || "en");
+//   }
+  
+//   return { sucess: true, message: "OTP sent successfully" };
+// }catch (error:any) {
+//   console.error("Error generating OTP: ", error);
+//   return { success: false, message: "Error generating OTP" };
+// }
+// };
+
+
 export const generateAndSendOTP = async (payload: { email?: string; phoneNumber?: string }) => {
-  const { email, phoneNumber } = payload;
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  const expiresAt = new Date(Date.now() + 20 * 60 * 1000); // 20 minutes
+  try {
+    const { email, phoneNumber } = payload;
 
-  const user = await usersModel.findOneAndUpdate(
-    {
-      $or: [{ email }, { phoneNumber }],
-    },
-    {
-      $set: {
-        "otp.code": otp,
-        "otp.expiresAt": expiresAt,
-      },
-    },
-    { upsert: true }
-  );
+    console.log('email: ', email);
+    console.log('phoneNumber: ', phoneNumber);
 
-  if (phoneNumber) {
-    await generateOtpWithTwilio(phoneNumber, otp);
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    console.log('otp: ', otp);
+
+    const expiresAt = new Date(Date.now() + 20 * 60 * 1000); // OTP expires in 20 minutes
+
+    // Determine the condition for finding the user
+    let user;
+    if (email) {
+      user = await usersModel.findOneAndUpdate(
+        { email },
+        {
+          $set: {
+            "otp.code": otp,
+            "otp.expiresAt": expiresAt,
+          },
+        },
+        { upsert: true, new: true }
+      );
+    } else if (phoneNumber) {
+      user = await usersModel.findOneAndUpdate(
+        { phoneNumber },
+        {
+          $set: {
+            "otp.code": otp,
+            "otp.expiresAt": expiresAt,
+          },
+        },
+        { upsert: true, new: true }
+      );
+    }
+
+    console.log('User after OTP generation and update: ', user);
+
+    if (user) {
+      // No need to call save if findOneAndUpdate handles the commit
+      console.log('OTP successfully generated and saved for user: ', user);
+    }
+
+    // Send OTP via the respective method
+    if (phoneNumber) {
+      await generateOtpWithTwilio(phoneNumber, otp);
+    }
+    if (email) {
+      await sendEmailVerificationMail(email, otp, user?.language || "en");
+    }
+
+    return { success: true, message: "OTP sent successfully" };
+  } catch (error: any) {
+    console.error("Error generating OTP: ", error);
+    return { success: false, message: "Error generating OTP" };
   }
-  if (email) {
-    await sendEmailVerificationMail(email, otp, user?.language || "en");
-  }
-  if (user) {
-    await user.save();
-  }
-  return { sucess: true, message: "OTP sent successfully" };
 };
 
 export const verifyOTPService = async (payload: any) => {
@@ -429,6 +498,7 @@ export const verifyOTPService = async (payload: any) => {
     "otp.expiresAt": { $gt: new Date() },
   });
 
+  console.log('user: ', user);
   if (!user) {
     throw new Error("Invalid or expired OTP");
   }
@@ -442,8 +512,9 @@ export const verifyOTPService = async (payload: any) => {
   }
   if (phoneNumber) {
     user.whatsappNumberVerified = true;
-    user.token = generateUserToken(user as any);
   }
+  console.log('user: ', user);
+  user.token = generateUserToken(user as any);
   await user.save();
 
   return { user: sanitizeUser(user), message: "OTP verified successfully" };
