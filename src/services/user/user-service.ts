@@ -85,8 +85,9 @@ export const signUpService = async (userData: UserDocument, authType: string, re
     if (!process.env.AUTH_SECRET) {
       return errorResponseHandler("AUTH_SECRET is not defined", httpStatusCode.INTERNAL_SERVER_ERROR, res);
     }
-
+    if((authType !== "Email") ) {
     user.token = generateUserToken(user as any);
+    }
     await user.save();
     return { success: true, message: "User created successfully", data: sanitizeUser(user) };
   } catch (error) {
@@ -128,7 +129,7 @@ export const WhatsappLoginService = async (userData: UserDocument, authType: str
     }
 
     // Generate token and save user
-    user.token = generateUserToken(user as any);
+    // user.token = generateUserToken(user as any);
     await user.save();
     
     return { success: true, message: "OTP sent successfully", data: sanitizeUser(user) };
@@ -421,7 +422,7 @@ export const generateAndSendOTP = async (payload: { email?: string; phoneNumber?
 
 export const verifyOTPService = async (payload: any) => {
   const { email, phoneNumber, otp } = payload;
-
+ 
   const user = await usersModel.findOne({
     $or: [{ email }, { phoneNumber }],
     "otp.code": otp,
@@ -441,6 +442,7 @@ export const verifyOTPService = async (payload: any) => {
   }
   if (phoneNumber) {
     user.whatsappNumberVerified = true;
+    user.token = generateUserToken(user as any);
   }
   await user.save();
 
