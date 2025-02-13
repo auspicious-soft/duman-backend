@@ -285,7 +285,7 @@ export const getSubCategoriesForUserService = async (user: any, payload: any, id
 
     // ✅ Apply Sorting Based on Payload.sorting
     // subCategoryBooks = sortBooks(subCategoryBooks, payload.sorting, userData?.productsLanguage,language[0]);
-    subCategoryBooks = sortBooks(subCategoryBooks, payload.sorting, userData?.productsLanguage, languages[0]);
+    subCategoryBooks = sortBooks(subCategoryBooks, payload.sorting, userData?.productsLanguage,userData?.language);
     // ✅ Fetch Favorite Books & Mark Favorites
     const favoriteBooks = await favoritesModel.find({ userId: user.id }).populate("productId");
     const favoriteIds = favoriteBooks.map((book) => book.productId._id.toString());

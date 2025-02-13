@@ -75,17 +75,15 @@ export const filterBooksByLanguage = (books: any[], languages: string[]): any[] 
   });
 };
 
-export const sortBooks = (books: any[], sorting: string, languagePriority: string[] = [], language: any = "eng"): any[] => {
+export const sortBooks = (books: any[], sorting: string, languagePriority: string[] = [], appInterface: any): any[] => {
   switch (sorting?.toLowerCase()) {
     case "rating":
       return books.sort((a, b) => (b.averageRating || 0) - (a.averageRating || 0));
 
-    //   case "alphabetically":
-    //     return books.sort((a, b) => a.name.eng.localeCompare(b.name.eng));
     case "alphabetically":
       return books.sort((a, b) => {
-        const nameA = getPrimaryLanguageName(a.name, languagePriority);
-        const nameB = getPrimaryLanguageName(b.name, languagePriority);
+        const nameA = getPrimaryLanguageName(a.name, languagePriority, appInterface);
+        const nameB = getPrimaryLanguageName(b.name, languagePriority, appInterface);
         return nameA.localeCompare(nameB);
       });
 
@@ -98,16 +96,14 @@ export const sortBooks = (books: any[], sorting: string, languagePriority: strin
   }
 };
 
-
-const getPrimaryLanguageName = (nameObject: Record<string, string>, languagePriority: string[]): string => {
-  // Try to get name based on language priority
+const getPrimaryLanguageName = (nameObject: Record<string, string>, languagePriority: string[], appInterface: any): string => {
   for (const lang of languagePriority) {
     if (nameObject[lang]) {
       return nameObject[lang];
     }
   }
   // Fallback: Return the first available name if priority languages are missing
-  return Object.values(nameObject)[0] || "Unknown";
+  return Object.values(nameObject)[0] || appInterface;
 };
 
 export const sortByLanguagePriority = <T>(items: T[], languageKey: keyof T, preferredLanguages: string[]): T[] => {
@@ -127,7 +123,7 @@ export const sortByLanguagePriority = <T>(items: T[], languageKey: keyof T, pref
     const priorityA = getFileLanguagePriority(a);
     const priorityB = getFileLanguagePriority(b);
 
-    return priorityB - priorityA; // Higher priority first
+    return priorityB - priorityA;
   });
 };
 

@@ -31,29 +31,36 @@ export interface UserPayload {
 }
 
 const sanitizeUser = (user: any): UserDocument => {
+  console.log('user: ', user);
   const sanitized = user.toObject();
   delete sanitized.password;
   delete sanitized.otp;
   return sanitized;
 };
 export const loginUserService = async (userData: UserDocument, authType: string, res: Response) => {
-  try {
+  console.log('authType: ', authType);
+  console.log('userData: ', userData);
     let query = getSignUpQueryByAuthType(userData, authType);
     let user: any = await usersModel.findOne(query);
-    let validationResponse = validateUserForLogin(user, authType, userData, res);
+    let validationResponse = await validateUserForLogin(user, authType, userData, res);
+    console.log('validationResponse: ', validationResponse);
     if (validationResponse) return validationResponse;
 
     if (authType === "Email") {
+      console.log('authType Check: ', authType);
       let passwordValidationResponse = await validatePassword(userData, user.password, res);
+      console.log('passwordValidationResponse: ', passwordValidationResponse);
       if (passwordValidationResponse) return passwordValidationResponse;
     }
 
     user.token = generateUserToken(user as any);
     await user.save();
-    return { success: true, message: "User logged in successfully", data: sanitizeUser(user) };
-  } catch (error: any) {
-    return errorResponseHandler(error.message, httpStatusCode.INTERNAL_SERVER_ERROR, res);
-  }
+    return {
+      success: true,
+      message: "logged in successfully",
+      data: sanitizeUser(user),
+    };
+    
 };
 
 export const signUpService = async (userData: UserDocument, authType: string, res: Response) => {

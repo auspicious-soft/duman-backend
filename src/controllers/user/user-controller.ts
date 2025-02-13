@@ -40,12 +40,9 @@ export const userSignup = async (req: Request, res: Response) => {
 export const loginUser = async (req: Request, res: Response) => {
   try {
     const loginResponse = await loginUserService(req.body, req.body.authType, res);
+    console.log('loginResponse: ', loginResponse);
 
-    res.status(200).json({
-      success: true,
-      message: "Login successful",
-      data: loginResponse,
-    });
+    return res.status(httpStatusCode.OK).json(loginResponse);
   } catch (error) {
     res.status(401).json({
       success: false,
