@@ -38,8 +38,7 @@ const sanitizeUser = (user: any): UserDocument => {
   return sanitized;
 };
 export const loginUserService = async (userData: UserDocument, authType: string, res: Response) => {
-  console.log('authType: ', authType);
-  console.log('userData: ', userData);
+
     let query = getSignUpQueryByAuthType(userData, authType);
     let user: any = await usersModel.findOne(query);
     let validationResponse = await validateUserForLogin(user, authType, userData, res);

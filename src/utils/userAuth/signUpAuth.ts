@@ -77,12 +77,10 @@ export const validateUserForLogin = async (user: any, authType: string, userData
 
 
 export const validatePassword = async (user: UserDocument, userPassword: string, res: Response) => {
-  console.log('user validatePassword: ', user);
   if (!user.password) {
     return errorResponseHandler("User password is missing", httpStatusCode.BAD_REQUEST, res);
   }
   const isPasswordValid = await bcrypt.compare(user.password, userPassword);
-  console.log('isPasswordValid: ', isPasswordValid);
   if (!isPasswordValid) {
     return errorResponseHandler("Invalid email or password", httpStatusCode.BAD_REQUEST, res);
   }
