@@ -24,11 +24,7 @@ export const userSignup = async (req: Request, res: Response) => {
   try {
     const user = await signUpService(req.body, req.body.authType, res);
 
-    res.status(200).json({
-      success: true,
-      message: "Sign-up successful",
-      data: user,
-    });
+    return res.status(httpStatusCode.OK).json(user);
   } catch (error) {
     res.status(400).json({
       success: false,
