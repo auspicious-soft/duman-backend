@@ -10,10 +10,11 @@ export interface ReadProgress {
   userId: string;
   bookId: string;
   progress: number;
+  readSections: any;
 }
 
 export const getReadProgressById = async (readProgressId: string, userId: string) => {
-  return await readProgressModel.findOne({ userId, bookId: readProgressId }).populate([{ path: "bookId" }]);
+  return await readProgressModel.findOne({ userId, bookId: readProgressId }).populate([{ path: "bookId" }, { path: "readSections.sectionId" }]);
 };
 
 export const updateReadProgress = async (readProgressId: string, readProgressData: ReadProgress, user: any, res: Response) => {
@@ -22,7 +23,7 @@ export const updateReadProgress = async (readProgressId: string, readProgressDat
   }
   const userId = user.id;
   let updatedBadge = null;
-  const ReadProgress = await readProgressModel.findOneAndUpdate({ userId, bookId: readProgressId }, { progress: readProgressData.progress }, { new: true, upsert: true }).populate("bookId");
+  const ReadProgress = await readProgressModel.findOneAndUpdate({ userId, bookId: readProgressId }, { progress: readProgressData.progress, readSections: readProgressData?.readSections }, { new: true, upsert: true }).populate("bookId");
 
   if (!ReadProgress) {
     return errorResponseHandler("Read Progress not found", httpStatusCode.NOT_FOUND, res);
@@ -44,37 +45,6 @@ export const updateReadProgress = async (readProgressId: string, readProgressDat
   };
 };
 
-// export const getAllReadProgress = async (payload: any,user:any) => {
-//   const page = parseInt(payload.page as string) || 1;
-//   const limit = parseInt(payload.limit as string) || 0;
-//   const offset = (page - 1) * limit;
-//   const { query, sort } = queryBuilder(payload, ["userId", "bookId"]);
-
-//   const totalDataCount = Object.keys(query).length < 1 ? await readProgressModel.countDocuments() : await readProgressModel.countDocuments(query);
-//   const results = await readProgressModel
-//     .find({userId: user.id, ...query })
-//     .sort(sort)
-//     .skip(offset)
-//     .limit(limit)
-//     .select("-__v");
-//   if (results.length)
-//     return {
-//       page,
-//       limit,
-//       success: true,
-//       total: totalDataCount,
-//       data: results,
-//     };
-//   else {
-//     return {
-//       data: [],
-//       page,
-//       limit,
-//       success: false,
-//       total: 0,
-//     };
-//   }
-// };
 
 export const getAllReadProgress = async (payload: any, user: any) => {
   const page = parseInt(payload.page as string) || 1;

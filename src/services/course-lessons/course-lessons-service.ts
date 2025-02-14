@@ -12,6 +12,8 @@ import { lang } from "moment";
 import { productRatingsModel } from "src/models/ratings/ratings-schema";
 import { favoritesModel } from "src/models/product-favorites/product-favorites-schema";
 import { ordersModel } from "src/models/orders/orders-schema";
+import { read } from "fs";
+import { readProgressModel } from "src/models/user-reads/read-progress-schema";
 
 export const createCourseLessonService = async (bookDetails: any, lessons: any, res: Response) => {
   const session = await mongoose.startSession();
@@ -57,6 +59,7 @@ export const getCourseLessonByIdService = async (payload: any, productId: string
   const courseData = await productsModel.findById(productId);
   const totalDataCount = Object.keys({ productId: productId }).length < 1 ? await courseLessonsModel.countDocuments() : await courseLessonsModel.countDocuments({ productId: productId });
   const lessons = await courseLessonsModel.find({ productId: productId }).skip(offset).limit(limit).select("-__v");
+  
   if (lessons.length > 0) {
     return {
       success: true,
@@ -82,24 +85,20 @@ export const getCourseLessonByIdForUserService = async (user: any, payload: any,
   const offset = (page - 1) * limit;
 
   // Fetch user data and course
-  const userData = await usersModel.findById(user.id);
-  const course = await productsModel.findById(productId);
+  const userData = await usersModel.findById(user.id).lean();
+  const course = await productsModel.findById(productId).lean();
 
   const availableLanguages = ["eng", "kaz", "rus"];
   let courseLessons;
 
-  // Try fetching lessons for the user's language first
-  courseLessons = await courseLessonsModel.find({ productId: productId, lang: userData?.language });
+  courseLessons = await courseLessonsModel.find({ productId: productId, lang: userData?.language }).lean();
+  const courseReadProgress = await readProgressModel.findOne({ bookId: productId, userId: user.id }).lean();
 
-  // If no lessons found in user's language, try the fallback languages one by one
   if (courseLessons.length === 0 && course?.name) {
     const languagesToCheck = [userData?.language, "eng", ...availableLanguages].filter((lang, index, self) => self.indexOf(lang) === index);
     for (let lang of languagesToCheck) {
-      courseLessons = await courseLessonsModel.find({ productId: productId, lang: lang });
-
-      if (courseLessons.length > 0) {
-        break;
-      }
+      courseLessons = await courseLessonsModel.find({ productId: productId, lang: lang }).lean();
+      if (courseLessons.length > 0) break;
     }
   }
 
@@ -111,12 +110,24 @@ export const getCourseLessonByIdForUserService = async (user: any, payload: any,
     };
   }
 
-  // Pagination and counting data
+  // Convert read section IDs into a Set for quick lookup
+  const readSectionIds = new Set(courseReadProgress?.readSections.map((section: any) => section.sectionId.toString()) || []);
+
+  // Add isDone property to sections
+  courseLessons = courseLessons.map(lesson => ({
+    ...lesson,
+    sections: lesson.sections.map(section => ({
+      ...section,
+      isDone: readSectionIds.has(section._id.toString()), // Check if section is read
+    })),
+  }));
+
+  // Pagination and other data
   const totalDataCount = await courseLessonsModel.countDocuments({ productId: productId });
-  const lessons = await courseLessonsModel.find({ productId: productId }).skip(offset).limit(limit).select("-__v");
+  const lessons = await courseLessonsModel.find({ productId: productId }).skip(offset).limit(limit).select("-__v").lean();
   const reviewCount = await productRatingsModel.countDocuments({ productId: productId });
   const isFavorite = await favoritesModel.exists({ userId: user.id, productId: productId });
-  const isPurchased = await ordersModel.find({ productIds: productId, userId: user.id });
+  const isPurchased = await ordersModel.find({ productIds: productId, userId: user.id }).lean();
 
   return {
     success: true,
@@ -128,11 +139,12 @@ export const getCourseLessonByIdForUserService = async (user: any, payload: any,
       courseLessons,
       lessons,
       reviewCount,
-      isFavorite: isFavorite ? true : false,
-      isPurchased: isPurchased.length > 0 ? true : false,
+      isFavorite: !!isFavorite,
+      isPurchased: isPurchased.length > 0,
     },
   };
 };
+
 
 export const updateCourseLessons = async (lessons: any | any[]) => {
   const lessonsArray = Array.isArray(lessons) ? lessons : [lessons];

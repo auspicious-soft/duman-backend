@@ -16,11 +16,24 @@ const readProgressSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-    readSections: [{
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "courseLessons.sections",
-      required: false, 
-    }],
+    // readSections: [{
+    //   type: mongoose.Schema.Types.ObjectId,
+    //   ref: "courseLessons.sections",
+    //   required: false, 
+    // }],
+    readSections: [
+      {
+        courseLessonId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "courseLessons", // Reference the courseLesson model
+          required: true,
+        },
+        sectionId: {
+          type: mongoose.Schema.Types.ObjectId, // Store the section’s _id
+          required: true,
+        },
+      },
+    ],
     certificate: {
       type: String,
       default: null,

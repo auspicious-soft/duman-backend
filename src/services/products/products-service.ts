@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 import { errorResponseHandler } from "../../lib/errors/error-response-handler";
 import { httpStatusCode } from "../../lib/constant";
 import { productsModel } from "../../models/products/products-schema";
-import { nestedQueryBuilder, queryBuilder } from "src/utils";
+import { filterBooksByLanguage, nestedQueryBuilder, queryBuilder, sortBooks, toArray } from "src/utils";
 import { deleteFileFromS3 } from "src/config/s3";
 import { productRatingsModel } from "src/models/ratings/ratings-schema";
 import { ordersModel } from "src/models/orders/orders-schema";
@@ -14,6 +14,7 @@ import { readProgressModel } from "src/models/user-reads/read-progress-schema";
 import { publishersModel } from "src/models/publishers/publishers-schema";
 import { authorsModel } from "src/models/authors/authors-schema";
 import { courseLessonsModel } from "src/models/course-lessons/course-lessons-schema";
+import { usersModel } from "src/models/user/user-schema";
 
 export const createBookService = async (payload: any, res: Response) => {
   const newBook = new productsModel(payload);
@@ -244,19 +245,20 @@ export const deleteBookService = async (id: string, res: Response) => {
     }
     if (deletedBook?.type === "course") {
       const courseLessons = await courseLessonsModel.find({ productId: deletedBook._id });
-    
+
       // Extract all section files from each lesson
-      const fileKeys = courseLessons.flatMap((lesson:any) =>
-        lesson.sections.flatMap((section:any) => section.file)
-    );
-    
+      const fileKeys = courseLessons.flatMap((lesson: any) => lesson.sections.flatMap((section: any) => section.file));
+
       // Delete each file from S3
-      await Promise.all(fileKeys.filter(Boolean).map(filePath => {
-        deleteFileFromS3(filePath)}));
-    
+      await Promise.all(
+        fileKeys.filter(Boolean).map((filePath) => {
+          deleteFileFromS3(filePath);
+        })
+      );
+
       await courseLessonsModel.deleteMany({ productId: deletedBook._id });
     }
-    
+
     if (deletedBook?.file && deletedBook.file instanceof Map) {
       for (const key of deletedBook.file.keys()) {
         const fileValue = deletedBook.file.get(key);
@@ -296,7 +298,7 @@ export const getBookForUserService = async (id: string, user: any, res: Response
   }
   const isFavorite = await favoritesModel.exists({ userId: user.id, productId: id });
   const relatedBooks = await productsModel.find({ categoryId: { $in: book?.categoryId } }).populate([{ path: "authorId" }]);
-  const isPurchased = await ordersModel.find({ productIds: id , userId: user.id });
+  const isPurchased = await ordersModel.find({ productIds: id, userId: user.id });
 
   return {
     success: true,
@@ -319,8 +321,8 @@ export const getNewbookForUserService = async (user: any, payload: any, res: Res
   const limit = parseInt(payload.limit as string) || 0;
   const offset = (page - 1) * 20;
   const totalDataCount = await productsModel.countDocuments({ type: "e-book" });
-
-  const newBooks = await productsModel
+  const userData = await usersModel.findById(user.id);
+  let newBooks = await productsModel
     .find({ type: "e-book" })
     .sort({ createdAt: -1 })
     .skip(offset)
@@ -330,12 +332,14 @@ export const getNewbookForUserService = async (user: any, payload: any, res: Res
       { path: "categoryId", select: "name" },
     ]);
   const favoriteBooks = await favoritesModel.find({ userId: user.id }).populate("productId");
-  const favoriteIds = favoriteBooks
-    .filter((book) => book.productId && book.productId._id) 
-    .map((book) => book.productId._id.toString());
+  const favoriteIds = favoriteBooks.filter((book) => book.productId && book.productId._id).map((book) => book.productId._id.toString());
+  const languages = toArray(payload.language);
+  newBooks = filterBooksByLanguage(newBooks, languages);
+  newBooks = sortBooks(newBooks, payload.sorting, userData?.productsLanguage, userData?.language);
+
   const newBooksWithFavoriteStatus = newBooks.map((book) => ({
     ...book.toObject(),
-    isFavorite: favoriteIds.includes(book._id.toString()), 
+    isFavorite: favoriteIds.includes(book._id.toString()),
   }));
   return {
     success: true,
@@ -352,7 +356,8 @@ export const getAllAudioBookForUserService = async (payload: any, user: any, res
   const page = parseInt(payload.page as string) || 1;
   const limit = parseInt(payload.limit as string) || 0;
   const offset = (page - 1) * limit;
-  const audiobooks = await productsModel
+  const userData = await usersModel.findById(user.id);
+  let audiobooks = await productsModel
     .find({ type: "audiobook" })
     .sort({ createdAt: -1 })
     .skip(offset)
@@ -364,10 +369,11 @@ export const getAllAudioBookForUserService = async (payload: any, user: any, res
   const totalDataCount = await productsModel.countDocuments({ type: "audiobook" });
 
   const favoriteBooks = await favoritesModel.find({ userId: user.id }).populate("productId");
-  const favoriteIds = favoriteBooks
-    .filter((book) => book.productId && book.productId._id) 
-    .map((book) => book.productId._id.toString());
+  const favoriteIds = favoriteBooks.filter((book) => book.productId && book.productId._id).map((book) => book.productId._id.toString());
 
+  const languages = toArray(payload.language);
+  audiobooks = filterBooksByLanguage(audiobooks, languages);
+  audiobooks = sortBooks(audiobooks, payload.sorting, userData?.productsLanguage, userData?.language);
   const audiobooksWithFavoriteStatus = audiobooks.map((book) => ({
     ...book.toObject(),
     isFavorite: favoriteIds.includes(book._id.toString()),
@@ -480,16 +486,18 @@ export const getBookMarketForUserService = async (user: any, res: Response) => {
 };
 
 export const getCourseForUserService = async (id: string, user: any, res: Response) => {
-  const course = await productsModel.findById(id).populate([{ path: "authorId"}, { path: "categoryId", select: "name" }, { path: "subCategoryId" ,select: "name"}, { path: "publisherId" ,select: "name"}]);
+  const course = await productsModel
+    .findById(id)
+    .populate([{ path: "authorId" }, { path: "categoryId", select: "name" }, { path: "subCategoryId", select: "name" }, { path: "publisherId", select: "name" }]);
 
-  const lessonCount = await courseLessonsModel.countDocuments({ productId: id,lang:"eng" });
+  const lessonCount = await courseLessonsModel.countDocuments({ productId: id, lang: "eng" });
   if (!course) {
     return errorResponseHandler("Book not found", httpStatusCode.NOT_FOUND, res);
   }
-  const relatedCourses = await productsModel.find({ categoryId: { $in: course?.categoryId },type:"course" }).populate([{ path: "authorId",select: "name" }]);
+  const relatedCourses = await productsModel.find({ categoryId: { $in: course?.categoryId }, type: "course" }).populate([{ path: "authorId", select: "name" }]);
   const reviewCount = await productRatingsModel.countDocuments({ productId: id });
   const isFavorite = await favoritesModel.exists({ userId: user.id, productId: id });
-  const isPurchased = await ordersModel.find({ productIds: id , userId: user.id });
+  const isPurchased = await ordersModel.find({ productIds: id, userId: user.id });
   return {
     success: true,
     message: "Course retrieved successfully",

@@ -283,10 +283,8 @@ export const getSubCategoriesForUserService = async (user: any, payload: any, id
       return errorResponseHandler("No books found for the selected languages", httpStatusCode.NO_CONTENT, res);
     }
 
-    // ✅ Apply Sorting Based on Payload.sorting
-    // subCategoryBooks = sortBooks(subCategoryBooks, payload.sorting, userData?.productsLanguage,language[0]);
     subCategoryBooks = sortBooks(subCategoryBooks, payload.sorting, userData?.productsLanguage,userData?.language);
-    // ✅ Fetch Favorite Books & Mark Favorites
+
     const favoriteBooks = await favoritesModel.find({ userId: user.id }).populate("productId");
     const favoriteIds = favoriteBooks.map((book) => book.productId._id.toString());
 
