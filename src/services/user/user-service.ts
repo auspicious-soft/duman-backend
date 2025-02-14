@@ -430,18 +430,11 @@ export const getAllUserService = async (payload: any, res: Response) => {
 
 
 export const generateAndSendOTP = async (payload: { email?: string; phoneNumber?: string }) => {
-  try {
     const { email, phoneNumber } = payload;
 
-    console.log('email: ', email);
-    console.log('phoneNumber: ', phoneNumber);
-
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    console.log('otp: ', otp);
-
     const expiresAt = new Date(Date.now() + 20 * 60 * 1000); // OTP expires in 20 minutes
 
-    // Determine the condition for finding the user
     let user;
     if (email) {
       user = await usersModel.findOneAndUpdate(
@@ -483,11 +476,8 @@ export const generateAndSendOTP = async (payload: { email?: string; phoneNumber?
     }
 
     return { success: true, message: "OTP sent successfully" };
-  } catch (error: any) {
-    console.error("Error generating OTP: ", error);
-    return { success: false, message: "Error generating OTP" };
-  }
-};
+  } 
+// };
 
 export const verifyOTPService = async (payload: any) => {
   const { email, phoneNumber, otp } = payload;
