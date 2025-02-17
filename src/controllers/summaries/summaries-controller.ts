@@ -25,7 +25,7 @@ export const getSummary = async (req: Request, res: Response) => {
 };
 export const getSummaryForUser = async (req: Request, res: Response) => {
     try {
-        const response = await getSummaryForUserService(req.user,req.params.id, res);
+        const response = await getSummaryForUserService(req.query,req.user,req.params.id, res);
         return res.status(httpStatusCode.OK).json(response);
     } catch (error: any) {
         const { code, message } = errorParser(error);

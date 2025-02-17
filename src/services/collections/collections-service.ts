@@ -1,7 +1,7 @@
 import { Response } from "express";
 import { errorResponseHandler } from "../../lib/errors/error-response-handler";
 import { httpStatusCode } from "../../lib/constant";
-import { nestedQueryBuilder, queryBuilder, sortByLanguagePriority } from "src/utils";
+import { filterBooksByLanguage, nestedQueryBuilder, queryBuilder, sortBooks, sortByLanguagePriority, toArray } from "src/utils";
 import { deleteFileFromS3 } from "src/config/s3";
 import { collectionsModel } from "../../models/collections/collections-schema";
 import { favoritesModel } from "src/models/product-favorites/product-favorites-schema";
@@ -38,7 +38,7 @@ export const getCollectionService = async (id: string, res: Response) => {
   };
 };
 
-export const getCollectionForUserService = async (user: any, id: string, res: Response) => {
+export const getCollectionForUserService = async (payload:any, user: any, id: string, res: Response) => {
   const userData = await usersModel.findById(user.id);
   const collection = await collectionsModel.findById(id).populate({
     path: "booksId",
@@ -67,7 +67,7 @@ export const getCollectionForUserService = async (user: any, id: string, res: Re
   }
 
   // Map through the books in the collection and add the isFavorite field
-  const updatedBooks = collection.booksId.map((book: any) => {
+  let updatedBooks = collection.booksId.map((book: any) => {
     if (!book || !book._id) {
       return null; // Skip invalid or incomplete book objects
     }
@@ -78,7 +78,16 @@ export const getCollectionForUserService = async (user: any, id: string, res: Re
     };
   }).filter((book) => book !== null); // Remove any null values from the mapped array
   console.log('updatedBooks: ', updatedBooks);
-  sortByLanguagePriority(updatedBooks, "file", userData?.productsLanguage || []);
+    const languages = toArray(payload.language);
+    updatedBooks = filterBooksByLanguage(updatedBooks, languages);
+    updatedBooks = sortBooks(updatedBooks, payload.sorting, userData?.productsLanguage, userData?.language);
+    console.log('updatedBooks after sorting: ', updatedBooks);
+
+    // const audiobooksWithFavoriteStatus = updatedBooks.map((book) => ({
+    //   ...book.toObject(),
+    //   isFavorite: favoriteIds.includes(book._id.toString()),
+    // }));
+  // sortByLanguagePriority(updatedBooks, "file", userData?.productsLanguage || []);
 
   // Return the updated collection data with the favorite status added to each book
   return {

@@ -2,9 +2,6 @@ import axios from "axios";
 import { configDotenv } from "dotenv";
 import { Request, Response } from "express";
 import mongoose, { SortOrder } from "mongoose";
-import { generateSignedUrlToUploadOn } from "src/config/s3";
-import { httpStatusCode } from "src/lib/constant";
-import { errorResponseHandler } from "src/lib/errors/error-response-handler";
 import { usersModel } from "src/models/user/user-schema";
 configDotenv();
 
@@ -60,7 +57,7 @@ export const toArray = (input: string | string[] | undefined, delimiter: string 
   if (!input) return []; // Handle undefined or null input safely
   if (Array.isArray(input)) return input; // If already an array, return as is
   if (typeof input === "string") return input.split(delimiter).map((item) => item.trim()); // Convert comma-separated string to array
-  return []; // Fallback case (shouldn't be hit)
+  return []; 
 };
 
 export const filterBooksByLanguage = (books: any[], languages: string[]): any[] => {
@@ -129,9 +126,6 @@ export const sortByLanguagePriority = <T>(items: T[], languageKey: keyof T, pref
 
 export const applyFilters = (data: any[], query: any, language: string = "eng") => {
   const { minRating = 5, sortBy = "createdAt", sortOrder = "desc" } = query;
-  console.log("sortOrder: ", sortOrder);
-  console.log("sortBy: ", sortBy);
-  console.log("minRating: ", minRating);
 
   // Filter by minimum average rating
   let filteredData = data.filter((item) => item.averageRating >= parseFloat(minRating));
