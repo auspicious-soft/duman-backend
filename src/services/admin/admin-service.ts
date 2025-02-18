@@ -13,6 +13,7 @@ import { eventsModel } from "../../models/events/events-schema";
 import { productsModel } from "src/models/products/products-schema";
 import { ordersModel } from "src/models/orders/orders-schema";
 import { publishersModel } from "src/models/publishers/publishers-schema";
+import { awardsModel } from "src/models/awards/awards-schema";
 
 export const loginService = async (payload: any, res: Response) => {
   const { username, password } = payload;
@@ -192,11 +193,25 @@ export const getDashboardStatsService = async (payload: any, res: Response) => {
       usersDate = null;
     }
 
-    const newestUsers = await usersModel
-      .find(usersDate ? { createdAt: { $gte: usersDate } } : {})
-      .sort({ createdAt: -1 })
-      .limit(10)
-      .select("-__v");
+    // const newestUsers = await usersModel
+      // .find(usersDate ? { createdAt: { $gte: usersDate } } : {})
+      // .sort({ createdAt: -1 })
+      // .limit(10)
+    //   .select("-__v");
+    const users = await usersModel   .find(usersDate ? { createdAt: { $gte: usersDate } } : {})
+    .sort({ createdAt: -1 })
+    .limit(10).select("-__v -password -otp -token -fcmToken -whatsappNumberVerified -emailVerified");
+    
+      const userIds = users.map((user) => user._id);
+      const awards = await awardsModel.find({ userId: { $in: userIds } }).select("userId level badge");
+    
+      const awardsMap = new Map(awards.map((award) => [award.userId.toString(), award]));
+    
+      const newestUsers = users.map((user) => ({
+        ...user.toObject(),
+        award: awardsMap.get(user._id.toString()) || null,
+      }));
+    
     const newestEvents = await eventsModel
       .find(usersDate ? { createdAt: { $gte: usersDate } } : {})
       .sort({ createdAt: -1 })

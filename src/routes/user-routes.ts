@@ -24,6 +24,7 @@ import { getBookUniversityCategories, getBookUniversityForUser, getBookUniversit
 import { getAllFaviouriteBooks, getAllFinishedBooks, getAllReadingBooks, getCoursesForBookRoom } from "src/controllers/book-room/book-room-controller";
 import { getAward } from "src/controllers/awards/awards-controller";
 import { getCourseLesson, getCourseLessonForUser, updateCourseLesson } from "src/controllers/course-lessons/course-lessons-controller";
+import { createOrder, deleteOrder, getAllOrders, getOrder, updateOrder } from "src/controllers/orders/orders-controller";
 
 
 const router = Router();
@@ -155,5 +156,10 @@ router.get("/course-lessons", getAllBooks);
 router.get("/course-lessons/:id", getCourseLessonForUser);
 router.get("/course/:id", getCourseforUser);
 
+// order route
+router.post("/order", createOrder);
+router.get("/order", getAllOrders);
+router.get("/order/:id", getOrder);
+router.put("/order/:id", updateOrder);
 
 export { router }
