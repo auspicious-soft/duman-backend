@@ -109,7 +109,7 @@ export const getSummaryForUserService = async (payload: any, user: any, id: stri
   const favoriteBooks = await favoritesModel.find({ userId: user.id }).populate("productId");
 
   const favoriteIds = favoriteBooks
-    .filter((book) => book.productId && book.productId._id) // Ensure valid productId and _id
+    .filter((book) => book.productId && book.productId._id)
     .map((book) => book.productId._id.toString());
 
   if (!summary.booksId || !Array.isArray(summary.booksId)) {
