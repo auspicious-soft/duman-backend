@@ -26,11 +26,9 @@ export const userSignup = async (req: Request, res: Response) => {
     const user = await signUpService(req.body, req.body.authType, res);
 
     return res.status(httpStatusCode.OK).json(user);
-  } catch (error) {
-    res.status(400).json({
-      success: false,
-      message: error instanceof Error ? error.message : "An error occurred",
-    });
+  }  catch (error: any) {
+    const { code, message } = errorParser(error);
+    return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
   }
 };
 
@@ -38,22 +36,18 @@ export const loginUser = async (req: Request, res: Response) => {
   try {
     const loginResponse = await loginUserService(req.body, req.body.authType, res);
     return res.status(httpStatusCode.OK).json(loginResponse);
-  } catch (error) {
-    res.status(401).json({
-      success: false,
-      message: error instanceof Error ? error.message : "An error occurred",
-    });
+  } catch (error: any) {
+    const { code, message } = errorParser(error);
+    return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
   }
 };
 export const WhatsapploginUser = async (req: Request, res: Response) => {
   try {
     const whatsappLoginResponse = await WhatsappLoginService(req.body, req.body.authType, res);
     return res.status(httpStatusCode.OK).json(whatsappLoginResponse);
-  } catch (error) {
-    res.status(401).json({
-      success: false,
-      message: error instanceof Error ? error.message : "An error occurred",
-    });
+  } catch (error: any) {
+    const { code, message } = errorParser(error);
+    return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
   }
 };
 

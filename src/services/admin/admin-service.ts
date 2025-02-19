@@ -2,7 +2,6 @@ import { adminModel } from "../../models/admin/admin-schema";
 import bcrypt from "bcryptjs";
 import { Response } from "express";
 import { errorResponseHandler } from "../../lib/errors/error-response-handler";
-import jwt from "jsonwebtoken";
 import { httpStatusCode } from "../../lib/constant";
 import { queryBuilder } from "../../utils";
 import { sendPasswordResetEmail } from "src/utils/mails/mail";
@@ -193,11 +192,6 @@ export const getDashboardStatsService = async (payload: any, res: Response) => {
       usersDate = null;
     }
 
-    // const newestUsers = await usersModel
-      // .find(usersDate ? { createdAt: { $gte: usersDate } } : {})
-      // .sort({ createdAt: -1 })
-      // .limit(10)
-    //   .select("-__v");
     const users = await usersModel   .find(usersDate ? { createdAt: { $gte: usersDate } } : {})
     .sort({ createdAt: -1 })
     .limit(10).select("-__v -password -otp -token -fcmToken -whatsappNumberVerified -emailVerified");
