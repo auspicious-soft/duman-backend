@@ -61,7 +61,7 @@ export const loginUserService = async (userData: UserDocument, authType: string,
 };
 
 export const signUpService = async (userData: UserDocument, authType: string, res: Response) => {
-  try {
+
     if (!authType) {
       return errorResponseHandler("Auth type is required", httpStatusCode.BAD_REQUEST, res);
     }
@@ -90,16 +90,10 @@ export const signUpService = async (userData: UserDocument, authType: string, re
     }
     await user.save();
     return { success: true, message: authType==="Email" ? "OTP sent for verification" : "Sign-up successfully", data: sanitizeUser(user) };
-  } catch (error) {
-    if (error instanceof Error) {
-      return errorResponseHandler(error.message, httpStatusCode.INTERNAL_SERVER_ERROR, res);
-    } else {
-      return errorResponseHandler("An unknown error occurred", httpStatusCode.INTERNAL_SERVER_ERROR, res);
-    }
-  }
+
 };
 export const WhatsappLoginService = async (userData: UserDocument, authType: string, res: Response) => {
-  try {
+
     if (!authType) {
       return errorResponseHandler("Auth type is required", httpStatusCode.BAD_REQUEST, res);
     }
@@ -132,13 +126,7 @@ export const WhatsappLoginService = async (userData: UserDocument, authType: str
     await user.save();
     
     return { success: true, message: "OTP sent successfully", data: sanitizeUser(user) };
-  } catch (error) {
-    if (error instanceof Error) {
-      return errorResponseHandler(error.message, httpStatusCode.INTERNAL_SERVER_ERROR, res);
-    } else {
-      return errorResponseHandler("An unknown error occurred", httpStatusCode.INTERNAL_SERVER_ERROR, res);
-    }
-  }
+  
 };
 
 

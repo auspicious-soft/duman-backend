@@ -24,6 +24,7 @@ import { verifyOtpPasswordResetService, newPassswordAfterOTPVerifiedUserService 
 export const userSignup = async (req: Request, res: Response) => {
   try {
     const user = await signUpService(req.body, req.body.authType, res);
+    console.log('user: ', user);
 
     return res.status(httpStatusCode.OK).json(user);
   }  catch (error: any) {
