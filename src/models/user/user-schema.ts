@@ -35,6 +35,16 @@ const usersSchema = new mongoose.Schema(
       // requried: true,
       trim: true,
     },
+    firstName: {
+      type: Object,
+      // requried: true,
+      trim: true,
+    },
+    lastName: {
+      type: Object,
+      // requried: true,
+      trim: true,
+    },
     email: {
       type: String,
       // required: true,
