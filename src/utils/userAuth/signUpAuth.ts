@@ -53,7 +53,7 @@ export const sendOTPIfNeeded = async (userData: UserDocument, authType: string) 
 
 export const validateUserForLogin = async (user: any, authType: string, userData: UserDocument, res: Response) => {
   if (!user) {
-    return errorResponseHandler(authType === "Email" ? "User not found" : "Number is not registered", httpStatusCode.BAD_REQUEST, res);
+    return errorResponseHandler(authType !== "Whatsapp" ? "User not found" : "Number is not registered", httpStatusCode.BAD_REQUEST, res);
   }
   if (authType !== user.authType) {
     return errorResponseHandler(`Wrong Login method!!, Try login from ${user.authType}`, httpStatusCode.BAD_REQUEST, res);

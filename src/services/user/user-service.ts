@@ -31,33 +31,56 @@ export interface UserPayload {
 }
 
 const sanitizeUser = (user: any): UserDocument => {
-  console.log('user: ', user);
   const sanitized = user.toObject();
   delete sanitized.password;
   delete sanitized.otp;
   return sanitized;
 };
+
+
 export const loginUserService = async (userData: UserDocument, authType: string, res: Response) => {
 
-    let query = getSignUpQueryByAuthType(userData, authType);
-    let user: any = await usersModel.findOne(query);
-    let validationResponse = await validateUserForLogin(user, authType, userData, res);
-    console.log('validationResponse: ', validationResponse);
-    if (validationResponse) return validationResponse;
+  let query = getSignUpQueryByAuthType(userData, authType);
+  
+  let user: any = await usersModel.findOne(query);
 
-    if (authType === "Email") {
+  if (!user && (authType === 'Google' || authType === 'Apple' || authType === 'Facebook')) {
+      user = await createNewUser(userData, authType); // You should implement the createNewUser function as per your needs
+  }
+
+  let validationResponse = await validateUserForLogin(user, authType, userData, res);
+  if (validationResponse) return validationResponse;
+
+  if (authType === "Email") {
       let passwordValidationResponse = await validatePassword(userData, user.password, res);
       if (passwordValidationResponse) return passwordValidationResponse;
-    }
+  }
 
-    user.token = generateUserToken(user as any);
-    await user.save();
-    return {
+  user.token = generateUserToken(user as any);
+  
+  await user.save();
+  return {
       success: true,
-      message: "logged in successfully",
+      message: "Logged in successfully",
       data: sanitizeUser(user),
-    };
-    
+  };
+};
+
+const createNewUser = async (userData: any, authType: string) => {
+  let newUser = new usersModel({
+      email: userData.email, 
+      lastName: userData.lastName,   
+      firstName: userData.firstName,   
+      authType: authType,    
+      fcmToken: userData.fcmToken,   
+      profilePic: userData.profilePic,   
+      password: null,        
+      token: generateUserToken(userData), 
+  });
+
+  await newUser.save();
+  
+  return newUser;
 };
 
 export const signUpService = async (userData: UserDocument, authType: string, res: Response) => {
@@ -92,6 +115,7 @@ export const signUpService = async (userData: UserDocument, authType: string, re
     return { success: true, message: authType==="Email" ? "OTP sent for verification" : "Sign-up successfully", data: sanitizeUser(user) };
 
 };
+
 export const WhatsappLoginService = async (userData: UserDocument, authType: string, res: Response) => {
 
     if (!authType) {
@@ -476,7 +500,6 @@ export const verifyOTPService = async (payload: any) => {
     "otp.expiresAt": { $gt: new Date() },
   });
 
-  console.log('user: ', user);
   if (!user) {
     throw new Error("Invalid or expired OTP");
   }
@@ -491,7 +514,6 @@ export const verifyOTPService = async (payload: any) => {
   if (phoneNumber) {
     user.whatsappNumberVerified = true;
   }
-  console.log('user: ', user);
   user.token = generateUserToken(user as any);
   await user.save();
 

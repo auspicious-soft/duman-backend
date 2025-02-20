@@ -24,7 +24,6 @@ import { verifyOtpPasswordResetService, newPassswordAfterOTPVerifiedUserService 
 export const userSignup = async (req: Request, res: Response) => {
   try {
     const user = await signUpService(req.body, req.body.authType, res);
-    console.log('user: ', user);
 
     return res.status(httpStatusCode.OK).json(user);
   }  catch (error: any) {
@@ -34,6 +33,16 @@ export const userSignup = async (req: Request, res: Response) => {
 };
 
 export const loginUser = async (req: Request, res: Response) => {
+  try {
+    console.log('req.body: ', req.body);
+    const loginResponse = await loginUserService(req.body, req.body.authType, res);
+    return res.status(httpStatusCode.OK).json(loginResponse);
+  } catch (error: any) {
+    const { code, message } = errorParser(error);
+    return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
+  }
+};
+export const socialLoginUser = async (req: Request, res: Response) => {
   try {
     const loginResponse = await loginUserService(req.body, req.body.authType, res);
     return res.status(httpStatusCode.OK).json(loginResponse);
