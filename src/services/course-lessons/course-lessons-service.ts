@@ -111,14 +111,14 @@ export const getCourseLessonByIdForUserService = async (user: any, payload: any,
   }
 
   // Convert read section IDs into a Set for quick lookup
-  const readSectionIds = new Set(courseReadProgress?.readSections.map((section: any) => section.sectionId.toString()) || []);
+  const readSectionIds = new Set(courseReadProgress?.readSections.map((subLessons: any) => subLessons.sectionId.toString()) || []);
 
-  // Add isDone property to sections
+  // Add isDone property to subLessons
   courseLessons = courseLessons.map(lesson => ({
     ...lesson,
-    sections: lesson.sections.map(section => ({
-      ...section,
-      isDone: readSectionIds.has(section._id.toString()), // Check if section is read
+    subLessons: lesson.subLessons.map(subLessons => ({
+      ...subLessons,
+      isDone: readSectionIds.has(subLessons._id.toString()), // Check if section is read
     })),
   }));
 
@@ -186,7 +186,7 @@ export const deleteCourseLessonService = async (courseLessonId: string, res: Res
   const deletedCourseLesson: any = await courseLessonsModel.findByIdAndDelete(courseLessonId);
   if (!deletedCourseLesson) return errorResponseHandler("Course lesson not found", httpStatusCode.NOT_FOUND, res);
 
-  const fileKeys = deletedCourseLesson.sections?.map((section: any) => section.file) || [];
+  const fileKeys = deletedCourseLesson.subLessons?.map((section: any) => section.file) || [];
 
   for (const filePath of fileKeys) {
     if (filePath) {

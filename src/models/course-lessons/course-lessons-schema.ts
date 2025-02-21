@@ -14,16 +14,16 @@ const courseLessonsSchema = new mongoose.Schema({
       ref: "products",
       required: true,
     },
-    order: {
+    srNo: {
       type: Number,
       required: true,
     },
-    sections:[{
+    subLessons:[{
       name:{type:String},
-      order:{type:Number},
+      srNo:{type:Number},
       file:{type:String},
-      additionalMaterials:{type:Object},
-      additionalLinks:{type:Object}
+      additionalFiles:{type:[Object]},
+      links:{type:[Object]}
     }],
   
   },

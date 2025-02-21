@@ -12,6 +12,7 @@ import {
 export const createCourseLesson = async (req: Request, res: Response) => {
   try {
     const { bookDetails, lessons } = req.body;
+    console.log('req.body: ', req.body);
     const newCourseLesson = await createCourseLessonService(bookDetails, lessons, res);
     return res.status(httpStatusCode.CREATED).json(newCourseLesson);
   } catch (error: any) {
