@@ -401,45 +401,6 @@ export const getAllUserService = async (payload: any, res: Response) => {
   };
 };
 
-// export const generateAndSendOTP = async (payload: { email?: string; phoneNumber?: string }) => {
-//   try{const { email, phoneNumber } = payload;
-//   console.log('email: ', email);
-//   const otp = Math.floor(100000 + Math.random() * 900000).toString();
-//   console.log('otp: ', otp);
-//   const expiresAt = new Date(Date.now() + 20 * 60 * 1000); // 20 minutes
-
-//   const user = await usersModel.findOneAndUpdate(
-//     {
-//      email 
-//     },
-//     {
-//       $set: {
-//         "otp.code": otp,
-//         "otp.expiresAt": expiresAt,
-//       },
-//     },
-//     { upsert: true, new: true }
-//   );
-//   console.log('user otp generate: ', user);
-//   // if (user) {
-//   //   await user.save();
-//   //   console.log('inside user condition ', user);
-//   // }
-
-//   if (phoneNumber) {
-//     await generateOtpWithTwilio(phoneNumber, otp);
-//   }
-//   if (email) {
-//     await sendEmailVerificationMail(email, otp, user?.language || "en");
-//   }
-  
-//   return { sucess: true, message: "OTP sent successfully" };
-// }catch (error:any) {
-//   console.error("Error generating OTP: ", error);
-//   return { success: false, message: "Error generating OTP" };
-// }
-// };
-
 
 export const generateAndSendOTP = async (payload: { email?: string; phoneNumber?: string }) => {
     const { email, phoneNumber } = payload;
