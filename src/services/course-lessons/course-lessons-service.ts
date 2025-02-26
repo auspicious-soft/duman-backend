@@ -59,7 +59,7 @@ export const getCourseLessonByIdService = async (payload: any, productId: string
   const courseData = await productsModel.findById(productId);
   const totalDataCount = Object.keys({ productId: productId }).length < 1 ? await courseLessonsModel.countDocuments() : await courseLessonsModel.countDocuments({ productId: productId });
   const lessons = await courseLessonsModel.find({ productId: productId }).skip(offset).limit(limit).select("-__v");
-  
+
   if (lessons.length > 0) {
     return {
       success: true,
@@ -77,7 +77,6 @@ export const getCourseLessonByIdService = async (payload: any, productId: string
     };
   }
 };
-
 
 export const getCourseLessonByIdForUserService = async (user: any, payload: any, productId: string) => {
   const page = parseInt(payload.page as string) || 1;
@@ -114,9 +113,9 @@ export const getCourseLessonByIdForUserService = async (user: any, payload: any,
   const readSectionIds = new Set(courseReadProgress?.readSections.map((subLessons: any) => subLessons.sectionId.toString()) || []);
 
   // Add isDone property to subLessons
-  courseLessons = courseLessons.map(lesson => ({
+  courseLessons = courseLessons.map((lesson) => ({
     ...lesson,
-    subLessons: lesson.subLessons.map(subLessons => ({
+    subLessons: lesson.subLessons.map((subLessons) => ({
       ...subLessons,
       isDone: readSectionIds.has(subLessons._id.toString()), // Check if section is read
     })),
@@ -145,16 +144,18 @@ export const getCourseLessonByIdForUserService = async (user: any, payload: any,
   };
 };
 
-
 export const updateCourseLessons = async (lessons: any | any[]) => {
   const lessonsArray = Array.isArray(lessons) ? lessons : [lessons];
+  console.log("lessonsArray: ", lessonsArray);
 
   if (!lessonsArray.length) {
     throw new Error("No lessons provided for update or creation.");
   }
 
   const lessonsToUpdate = lessonsArray.filter((lesson) => lesson._id);
+  console.log("lessonsToUpdate: ", lessonsToUpdate);
   const lessonsToCreate = lessonsArray.filter((lesson) => !lesson._id);
+  console.log("lessonsToCreate: ", lessonsToCreate);
 
   const bulkOperations = lessonsToUpdate.map((lesson) => ({
     updateOne: {
@@ -167,11 +168,13 @@ export const updateCourseLessons = async (lessons: any | any[]) => {
   if (bulkOperations.length > 0) {
     updateResult = await courseLessonsModel.bulkWrite(bulkOperations);
   }
+  console.log("updateResult: ", updateResult);
 
   let createdLessons: any = [];
   if (lessonsToCreate.length > 0) {
     createdLessons = await courseLessonsModel.insertMany(lessonsToCreate);
   }
+  console.log("createdLessons: ", createdLessons);
 
   return {
     success: true,
@@ -187,8 +190,14 @@ export const deleteCourseLessonService = async (courseLessonId: string, res: Res
   if (!deletedCourseLesson) return errorResponseHandler("Course lesson not found", httpStatusCode.NOT_FOUND, res);
 
   const fileKeys = deletedCourseLesson.subLessons?.map((section: any) => section.file) || [];
+  const additionFileKeys = deletedCourseLesson.subLessons?.flatMap((section: any) => section?.additionalFiles?.map((file: any) => file.file) || []);
 
   for (const filePath of fileKeys) {
+    if (filePath) {
+      await deleteFileFromS3(filePath);
+    }
+  }
+  for (const filePath of additionFileKeys) {
     if (filePath) {
       await deleteFileFromS3(filePath);
     }
@@ -197,6 +206,30 @@ export const deleteCourseLessonService = async (courseLessonId: string, res: Res
     success: true,
     message: "Course lesson deleted successfully",
     data: deletedCourseLesson,
+  };
+};
+export const deleteSublessonsService = async (LessonId: string, subLessonId: string, res: Response) => {
+  const Lesson: any = await courseLessonsModel.findById(LessonId);
+  if (!Lesson) return errorResponseHandler("Course lesson not found", httpStatusCode.NOT_FOUND, res);
+  const subLessons = Lesson.subLessons;
+  const index = subLessons.findIndex((i: any) => {
+    return i._id.toString() === subLessonId;
+  });
+  if (index === -1) return errorResponseHandler("Sublesson not found", httpStatusCode.NOT_FOUND, res);
+
+  const deletedSubLesson = subLessons.splice(index, 1);
+  await Lesson.save();
+  const fileKeys = deletedSubLesson?.map((section: any) => section.file) || [];
+
+  for (const filePath of fileKeys) {
+    if (filePath) {
+      await deleteFileFromS3(filePath);
+    }
+  }
+  return {
+    success: true,
+    message: "Sub lesson deleted successfully",
+    data: deletedSubLesson,
   };
 };
 

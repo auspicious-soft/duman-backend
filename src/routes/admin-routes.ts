@@ -20,7 +20,7 @@ import { createBookUniversity, deleteBookUniversity, getAllBookUniversities, get
 import { createBookLive, deleteBookLive, getAllBookLives, getBookLive, updateBookLive } from "src/controllers/book-lives/book-lives-controller";
 import { createBlog, deleteBlog, getAllBlogs, getBlogById, updateBlog } from "src/controllers/blogs/blogs-controller";
 import { sendNotificationToUser, sendNotificationToUsers } from "src/controllers/notifications/notifications-controller";
-import { createCourseLesson, deleteCourseLesson, getCourseLesson, updateCourseLesson } from "src/controllers/course-lessons/course-lessons-controller";
+import { createCourseLesson, deleteCourseLesson, deleteSubLesson, getCourseLesson, updateCourseLesson } from "src/controllers/course-lessons/course-lessons-controller";
 
 const router = Router();
 
@@ -71,6 +71,7 @@ router.post("/course-lessons", createCourseLesson);
 router.get("/course-lessons/:id", getCourseLesson);
 router.put("/course-lessons", updateCourseLesson);
 router.delete("/course-lessons/:id", deleteCourseLesson);
+router.delete("/course-lessons/:id/sub-lesson", deleteSubLesson);
  
 // discounted-books route
 router.get("/discounted-books", getAllDiscountedBooks);

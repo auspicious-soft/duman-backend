@@ -4,6 +4,7 @@ import { errorParser } from "src/lib/errors/error-response-handler";
 import {
   createCourseLessonService,
   deleteCourseLessonService,
+  deleteSublessonsService,
   getCourseLessonByIdForUserService,
   getCourseLessonByIdService,
   updateCourseLessons,
@@ -12,7 +13,6 @@ import {
 export const createCourseLesson = async (req: Request, res: Response) => {
   try {
     const { bookDetails, lessons } = req.body;
-    console.log('req.body: ', req.body);
     const newCourseLesson = await createCourseLessonService(bookDetails, lessons, res);
     return res.status(httpStatusCode.CREATED).json(newCourseLesson);
   } catch (error: any) {
@@ -53,6 +53,15 @@ export const updateCourseLesson = async (req: Request, res: Response) => {
 export const deleteCourseLesson = async (req: Request, res: Response) => {
   try {
     const response = await deleteCourseLessonService(req.params.id, res);
+    return res.status(httpStatusCode.OK).json(response);
+  } catch (error: any) {
+    const { code, message } = errorParser(error);
+    return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
+  }
+};
+export const deleteSubLesson = async (req: Request, res: Response) => {
+  try {
+    const response = await deleteSublessonsService(req.params.id,req.body.subLessonId, res);
     return res.status(httpStatusCode.OK).json(response);
   } catch (error: any) {
     const { code, message } = errorParser(error);
