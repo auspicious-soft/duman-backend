@@ -46,7 +46,9 @@ export const updateCourseLesson = async (req: Request, res: Response) => {
     return res.status(httpStatusCode.OK).json(updatedCourseLesson);
   } catch (error: any) {
     const { code, message } = errorParser(error);
-    return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
+    const responses= res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
+    console.log('responses: ', responses);
+    return responses
   }
 };
 
@@ -61,7 +63,7 @@ export const deleteCourseLesson = async (req: Request, res: Response) => {
 };
 export const deleteSubLesson = async (req: Request, res: Response) => {
   try {
-    const response = await deleteSublessonsService(req.params.id,req.body.subLessonId, res);
+    const response = await deleteSublessonsService(req.params.id,req.params.subLessonId, res);
     return res.status(httpStatusCode.OK).json(response);
   } catch (error: any) {
     const { code, message } = errorParser(error);

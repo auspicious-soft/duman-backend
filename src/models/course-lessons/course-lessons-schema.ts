@@ -20,6 +20,7 @@ const courseLessonsSchema = new mongoose.Schema({
     },
     subLessons:[{
       name:{type:String},
+      description:{type:String},
       srNo:{type:Number},
       file:{type:String},
       additionalFiles:{type:[Object]},

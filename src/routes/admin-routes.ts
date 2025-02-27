@@ -71,7 +71,7 @@ router.post("/course-lessons", createCourseLesson);
 router.get("/course-lessons/:id", getCourseLesson);
 router.put("/course-lessons", updateCourseLesson);
 router.delete("/course-lessons/:id", deleteCourseLesson);
-router.delete("/course-lessons/:id/sub-lesson", deleteSubLesson);
+router.delete("/course-lessons/:id/sub-lesson/:subLessonId", deleteSubLesson);
  
 // discounted-books route
 router.get("/discounted-books", getAllDiscountedBooks);
