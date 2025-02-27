@@ -123,7 +123,6 @@ export const getAllAuthorsForUser = async (req: Request, res: Response) => {
 };
 export const getAuthorCountries = async (req: Request, res: Response) => {
     try {
-        console.log('getAuthorCountries');
         const response = await getAuthorCountriesService( res);
         return res.status(httpStatusCode.OK).json(response);
     } catch (error: any) {

@@ -34,7 +34,6 @@ export const userSignup = async (req: Request, res: Response) => {
 
 export const loginUser = async (req: Request, res: Response) => {
   try {
-    console.log('req.body: ', req.body);
     const loginResponse = await loginUserService(req.body, req.body.authType, res);
     return res.status(httpStatusCode.OK).json(loginResponse);
   } catch (error: any) {

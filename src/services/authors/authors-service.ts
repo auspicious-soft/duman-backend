@@ -94,7 +94,6 @@ export const getAllAuthorsForUserService = async (user: any, payload: any, res: 
       };
     }
   });
-  console.log("query",query);
   const totalDataCount = Object.keys(query).length < 1 ? await authorsModel.countDocuments() : await authorsModel.countDocuments(query);
   const authors = await authorsModel.find(query).sort(sort).skip(offset).limit(limit).select("-__v");
   const favoriteAuthors = await authorFavoritesModel.find({ userId: user.id}).populate("authorId");
@@ -150,11 +149,9 @@ export const deleteAuthorService = async (id: string, res: Response) => {
 export const getAuthorCountriesService = async (res: Response) => {
   try {
     const authors = await authorsModel.find();
-    console.log('authors: ', authors);
 
     // Create an array of countries and remove duplicates
     const countries = authors.map((author) => author.country).filter((value, index, self) => self.indexOf(value) === index);
-    console.log('countries: ', countries);
 
     return {
       success: true,

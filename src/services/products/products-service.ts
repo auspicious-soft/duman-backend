@@ -235,7 +235,6 @@ export const removeBookFromDiscountsService = async (payload: any, res: Response
   }
 };
 export const deleteBookService = async (id: string, res: Response) => {
-  console.log("id: ", id);
   try {
     const deletedBook = await productsModel.findByIdAndDelete(id);
     console.log("deletedBook: ", deletedBook);

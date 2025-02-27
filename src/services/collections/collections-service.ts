@@ -77,11 +77,9 @@ export const getCollectionForUserService = async (payload:any, user: any, id: st
       isFavorite: favoriteIds.includes(book._id.toString()),  // Check if the book is in the user's favorites
     };
   }).filter((book) => book !== null); // Remove any null values from the mapped array
-  console.log('updatedBooks: ', updatedBooks);
     const languages = toArray(payload.language);
     updatedBooks = filterBooksByLanguage(updatedBooks, languages);
     updatedBooks = sortBooks(updatedBooks, payload.sorting, userData?.productsLanguage, userData?.language);
-    console.log('updatedBooks after sorting: ', updatedBooks);
 
     // const audiobooksWithFavoriteStatus = updatedBooks.map((book) => ({
     //   ...book.toObject(),

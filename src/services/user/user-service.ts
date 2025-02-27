@@ -434,7 +434,6 @@ export const generateAndSendOTP = async (payload: { email?: string; phoneNumber?
       );
     }
 
-    console.log('User after OTP generation and update: ', user);
 
     if (user) {
       // No need to call save if findOneAndUpdate handles the commit

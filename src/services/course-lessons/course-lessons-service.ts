@@ -146,16 +146,13 @@ export const getCourseLessonByIdForUserService = async (user: any, payload: any,
 
 export const updateCourseLessons = async (lessons: any | any[]) => {
   const lessonsArray = Array.isArray(lessons) ? lessons : [lessons];
-  console.log("lessonsArray: ", lessonsArray);
 
   if (!lessonsArray.length) {
     throw new Error("No lessons provided for update or creation.");
   }
 
   const lessonsToUpdate = lessonsArray.filter((lesson) => lesson._id);
-  console.log("lessonsToUpdate: ", lessonsToUpdate);
   const lessonsToCreate = lessonsArray.filter((lesson) => !lesson._id);
-  console.log("lessonsToCreate: ", lessonsToCreate);
 
   const bulkOperations = lessonsToUpdate.map((lesson) => ({
     updateOne: {
@@ -168,13 +165,11 @@ export const updateCourseLessons = async (lessons: any | any[]) => {
   if (bulkOperations.length > 0) {
     updateResult = await courseLessonsModel.bulkWrite(bulkOperations);
   }
-  console.log("updateResult: ", updateResult);
 
   let createdLessons: any = [];
   if (lessonsToCreate.length > 0) {
     createdLessons = await courseLessonsModel.insertMany(lessonsToCreate);
   }
-  console.log("createdLessons: ", createdLessons);
 
   return {
     success: true,
@@ -221,7 +216,6 @@ export const deleteSublessonsService = async (LessonId: string, subLessonId: str
   await Lesson.save();
   const fileKeys = deletedSubLesson?.map((section: any) => section.file) || [];
   const additionFileKeys = deletedSubLesson?.flatMap((section: any) => section?.additionalFiles?.map((file: any) => file.file) || []);
-  console.log('additionFileKeys: ', additionFileKeys);
 
   for (const filePath of fileKeys) {
     if (filePath) {
@@ -256,7 +250,6 @@ export const deleteCourseLanguageService = async (productId: string, lang: any, 
   return {
     success: true,
     message: "Course language deleted successfully",
-    // data: deletedSubLesson,
   };
 };
 
