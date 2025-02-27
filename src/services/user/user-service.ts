@@ -158,6 +158,7 @@ export const forgotPasswordUserService = async (payload: any, res: Response) => 
   const { email } = payload;
   const user = await usersModel.findOne({ email }).select("+password");
   if (!user) return errorResponseHandler("Email not found", httpStatusCode.NOT_FOUND, res);
+  if(user.authType !== "Email") return errorResponseHandler(`Try login using ${user.authType}`, httpStatusCode.BAD_REQUEST, res);
   const passwordResetToken = await generatePasswordResetToken(email);
 
   if (passwordResetToken !== null) {
