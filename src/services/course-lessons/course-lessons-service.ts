@@ -220,6 +220,8 @@ export const deleteSublessonsService = async (LessonId: string, subLessonId: str
   const deletedSubLesson = subLessons.splice(index, 1);
   await Lesson.save();
   const fileKeys = deletedSubLesson?.map((section: any) => section.file) || [];
+  const additionFileKeys = deletedSubLesson?.flatMap((section: any) => section?.additionalFiles?.map((file: any) => file.file) || []);
+  console.log('additionFileKeys: ', additionFileKeys);
 
   for (const filePath of fileKeys) {
     if (filePath) {
@@ -230,6 +232,31 @@ export const deleteSublessonsService = async (LessonId: string, subLessonId: str
     success: true,
     message: "Sub lesson deleted successfully",
     data: deletedSubLesson,
+  };
+};
+export const deleteCourseLanguageService = async (productId: string, lang: any, res: Response) => {
+  
+  const Lessons: any = await courseLessonsModel.find({productId:productId,lang:lang}).lean();
+  if (!Lessons) return errorResponseHandler("Course lesson not found", httpStatusCode.NOT_FOUND, res);
+  const LessonIds = Lessons.map((i: any) => i._id.toString());
+  await courseLessonsModel.deleteMany({ _id: { $in: LessonIds } });
+  const fileKeys = Lessons.map((section: any) => section.subLessons?.map((section: any) => section.file) || []).flat();
+  const additionFileKeys = Lessons.map((section: any) => section.subLessons?.map((section: any) => section.additionalFiles?.map((file: any) => file.file) || [])).flat(Infinity);
+
+  for (const filePath of fileKeys) {
+    if (filePath) {
+      await deleteFileFromS3(filePath);
+    }
+  }
+  for (const filePath of additionFileKeys) {
+    if (filePath) {
+      await deleteFileFromS3(filePath);
+    }
+  }
+  return {
+    success: true,
+    message: "Course language deleted successfully",
+    // data: deletedSubLesson,
   };
 };
 

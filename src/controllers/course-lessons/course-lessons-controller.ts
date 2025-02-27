@@ -3,6 +3,7 @@ import { httpStatusCode } from "src/lib/constant";
 import { errorParser } from "src/lib/errors/error-response-handler";
 import {
   createCourseLessonService,
+  deleteCourseLanguageService,
   deleteCourseLessonService,
   deleteSublessonsService,
   getCourseLessonByIdForUserService,
@@ -64,6 +65,17 @@ export const deleteCourseLesson = async (req: Request, res: Response) => {
 export const deleteSubLesson = async (req: Request, res: Response) => {
   try {
     const response = await deleteSublessonsService(req.params.id,req.params.subLessonId, res);
+    return res.status(httpStatusCode.OK).json(response);
+  } catch (error: any) {
+    const { code, message } = errorParser(error);
+    return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
+  }
+};
+export const deleteCourseLanguage  = async (req: Request, res: Response) => {
+  try {
+    console.log('req.query.type: ', req.query);
+    console.log('eq.params.productId: ', req.params);
+    const response = await deleteCourseLanguageService(req.params.productId, req.query.lang, res);
     return res.status(httpStatusCode.OK).json(response);
   } catch (error: any) {
     const { code, message } = errorParser(error);
