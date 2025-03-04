@@ -5,25 +5,36 @@ import { badges, httpStatusCode } from "src/lib/constant";
 import { Response } from "express";
 import { awardsModel } from "src/models/awards/awards-schema";
 
-export interface ReadProgress {
-  _id?: string;
-  userId: string;
-  bookId: string;
-  progress: number;
-  readSections: any;
-}
+// export interface ReadProgress {
+//   _id?: string;
+//   userId: string;
+//   bookId: string;
+//   progress: number;
+//   readSections: any;
+// }
 
 export const getReadProgressById = async (readProgressId: string, userId: string) => {
   return await readProgressModel.findOne({ userId, bookId: readProgressId }).populate([{ path: "bookId" }, { path: "readSections.sectionId" }]);
 };
 
-export const updateReadProgress = async (readProgressId: string, readProgressData: ReadProgress, user: any, res: Response) => {
+export const updateReadProgress = async (readProgressId: string, readProgressData: any, user: any, res: Response) => {
+  console.log('readProgressData: ', readProgressData);
   if (readProgressData.progress < 0 || readProgressData.progress > 100) {
     return errorResponseHandler("Progress must be between 0 and 100", httpStatusCode.BAD_REQUEST, res);
   }
   const userId = user.id;
   let updatedBadge = null;
-  const ReadProgress = await readProgressModel.findOneAndUpdate({ userId, bookId: readProgressId }, { progress: readProgressData.progress, readSections: readProgressData?.readSections }, { new: true, upsert: true }).populate("bookId");
+
+  const updateData: any = { progress: readProgressData.progress };
+  if (readProgressData.courseLessonId && readProgressData.sectionId) {
+    updateData.$push = { readSections: { courseLessonId: readProgressData.courseLessonId, sectionId: readProgressData.sectionId } };
+  }
+
+  const ReadProgress = await readProgressModel.findOneAndUpdate(
+    { userId, bookId: readProgressId },
+    updateData,
+    { new: true, upsert: true }
+  ).populate("bookId");
 
   if (!ReadProgress) {
     return errorResponseHandler("Read Progress not found", httpStatusCode.NOT_FOUND, res);
@@ -44,7 +55,6 @@ export const updateReadProgress = async (readProgressId: string, readProgressDat
     data: { ReadProgress, updatedBadge },
   };
 };
-
 
 export const getAllReadProgress = async (payload: any, user: any) => {
   const page = parseInt(payload.page as string) || 1;

@@ -91,6 +91,7 @@ export const getCourseLessonByIdForUserService = async (user: any, payload: any,
   let courseLessons;
 
   courseLessons = await courseLessonsModel.find({ productId: productId, lang: userData?.language }).lean();
+  console.log('courseLessons: ', courseLessons);
   const courseReadProgress = await readProgressModel.findOne({ bookId: productId, userId: user.id }).lean();
 
   if (courseLessons.length === 0 && course?.name) {
@@ -136,7 +137,7 @@ export const getCourseLessonByIdForUserService = async (user: any, payload: any,
     total: totalDataCount,
     data: {
       courseLessons,
-      lessons,
+      // lessons,
       reviewCount,
       isFavorite: !!isFavorite,
       isPurchased: isPurchased.length > 0,
