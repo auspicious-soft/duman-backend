@@ -82,7 +82,7 @@ export const getAllBooksService = async (payload: any, res: Response) => {
   }
 
   const results = await productsModel
-    .find({type:"e-book"})
+    .find(query)
     .sort(sort)
     .skip(offset)
     .limit(limit)
@@ -104,8 +104,8 @@ export const getAllBooksService = async (payload: any, res: Response) => {
       const authorNames: string[] = (authors as any[]).flatMap((author) => (author && author.name ? Object.values(author.name).map((val: any) => val.toLowerCase()) : []));
       return productNames.some((name) => name.includes(searchQuery)) || authorNames.some((name) => name.includes(searchQuery));
     });
+    totalDataCount = filteredResults.length;
   }
-  totalDataCount = filteredResults.length;
   return {
     page,
     limit,
@@ -113,6 +113,49 @@ export const getAllBooksService = async (payload: any, res: Response) => {
     success: filteredResults.length > 0,
     total: filteredResults.length > 0 ? totalDataCount : 0,
     data: filteredResults,
+  };
+};
+export const getAllProductsForStocksTabService = async (payload: any, res: Response) => {
+  // const page = parseInt(payload.page as string) || 1;
+  // const limit = parseInt(payload.limit as string) || 0;
+  // const offset = (page - 1) * limit;
+
+  const query: any = payload.type ? { type: payload.type } : {};
+
+  const sort: any = {};
+  if (payload.orderColumn && payload.order) {
+    sort[payload.orderColumn] = payload.order === "asc" ? 1 : -1;
+  }
+
+  const Books = await productsModel
+    .find({type:"e-book"})
+    .sort(sort)
+    // .skip(offset)
+    .limit(15)
+    .select("-__v")
+    .populate([{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }])
+    .lean();
+  const Courses = await productsModel
+    .find({type:"course"})
+    .sort(sort)
+    // .skip(offset)
+    .limit(15)
+    .select("-__v")
+    .populate([{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }])
+    .lean();
+
+  // let filteredResults = results;
+  let totalDataCount;
+  totalDataCount = await productsModel.countDocuments(query);
+
+  return {
+    // page,
+    // limit,
+    message: "Stocks retrieved successfully",
+    data:{Books,Courses},
+    // success: filteredResults.length > 0,
+    // total: filteredResults.length > 0 ? totalDataCount : 0,
+    // data: filteredResults,
   };
 };
 export const getAllDiscountedBooksService = async (payload: any, res: Response) => {

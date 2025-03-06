@@ -5,7 +5,7 @@ import { getAllBannersService } from "../banners/banners-service";
 import { getAllStoriesService } from "../stories/stories-service";
 import { getAllCollectionsService } from "../collections/collections-service";
 import {  getAllBookLivesWithBlogsService } from "../book-lives/book-lives-service";
-import { getAllBooksService } from "../products/products-service";
+import { getAllBooksService, getAllProductsForStocksTabService } from "../products/products-service";
 
 export const getHomePageService = async (payload: any, res: Response) => {
   try {
@@ -43,11 +43,11 @@ export const getproductsTabService = async (payload: any, res: Response) => {
   try {
     switch (payload.type) {
       case "stock":
-        const stocks = await getAllBooksService(payload,res);
+        const stocks = await getAllProductsForStocksTabService(payload,res);
         return {
           success: true,
           message: "Books retrieved successfully",
-          data: stocks.data.length > 0 ? stocks : [],
+          data: stocks.data.Books.length || stocks.data.Courses.length > 0 ? stocks : [],
         };
       case "collections":
         const collections = await getAllCollectionsService(payload, res);
@@ -64,11 +64,11 @@ export const getproductsTabService = async (payload: any, res: Response) => {
           data: blogs.data.length > 0 ? blogs : [],
         };
       default: {
-        const stocks = await getAllBooksService(payload,res);
+        const stocks = await getAllProductsForStocksTabService(payload,res);
         return {
           success: true,
           message: "Books retrieved successfully",
-          data: stocks.data.length > 0 ? stocks : [],
+          data: stocks.data.Books.length || stocks.data.Courses.length   > 0 ? stocks : [],
         };
       }
     }
