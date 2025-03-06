@@ -43,7 +43,7 @@ export const getproductsTabService = async (payload: any, res: Response) => {
   try {
     switch (payload.type) {
       case "stock":
-        const stocks = await getAllBooksService(payload);
+        const stocks = await getAllBooksService(payload,res);
         return {
           success: true,
           message: "Books retrieved successfully",
@@ -64,7 +64,7 @@ export const getproductsTabService = async (payload: any, res: Response) => {
           data: blogs.data.length > 0 ? blogs : [],
         };
       default: {
-        const stocks = await getAllBooksService(payload);
+        const stocks = await getAllBooksService(payload,res);
         return {
           success: true,
           message: "Books retrieved successfully",

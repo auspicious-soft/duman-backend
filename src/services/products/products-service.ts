@@ -74,6 +74,7 @@ export const getAllBooksService = async (payload: any, res: Response) => {
   const offset = (page - 1) * limit;
 
   const query: any = payload.type ? { type: payload.type } : {};
+  console.log('query: ', query);
 
   const sort: any = {};
   if (payload.orderColumn && payload.order) {
@@ -81,7 +82,7 @@ export const getAllBooksService = async (payload: any, res: Response) => {
   }
 
   const results = await productsModel
-    .find(query)
+    .find({type:"e-book"})
     .sort(sort)
     .skip(offset)
     .limit(limit)
@@ -103,8 +104,8 @@ export const getAllBooksService = async (payload: any, res: Response) => {
       const authorNames: string[] = (authors as any[]).flatMap((author) => (author && author.name ? Object.values(author.name).map((val: any) => val.toLowerCase()) : []));
       return productNames.some((name) => name.includes(searchQuery)) || authorNames.some((name) => name.includes(searchQuery));
     });
-    totalDataCount = filteredResults.length;
   }
+  totalDataCount = filteredResults.length;
   return {
     page,
     limit,
