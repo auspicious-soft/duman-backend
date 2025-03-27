@@ -74,7 +74,6 @@ export const getAllBooksService = async (payload: any, res: Response) => {
   const offset = (page - 1) * limit;
 
   const query: any = payload.type ? { type: payload.type } : {};
-  console.log('query: ', query);
 
   const sort: any = {};
   if (payload.orderColumn && payload.order) {
@@ -83,7 +82,9 @@ export const getAllBooksService = async (payload: any, res: Response) => {
 
   const results = await productsModel
     .find(query)
-    .sort(sort)
+    .sort({
+      createdAt: -1,
+    })
     .skip(offset)
     .limit(limit)
     .select("-__v")
@@ -128,7 +129,7 @@ export const getAllProductsForStocksTabService = async (payload: any, res: Respo
   }
 
   const Books = await productsModel
-    .find({type:"e-book"})
+    .find({ type: "e-book" })
     .sort(sort)
     // .skip(offset)
     .limit(1)
@@ -136,7 +137,7 @@ export const getAllProductsForStocksTabService = async (payload: any, res: Respo
     .populate([{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }])
     .lean();
   const Courses = await productsModel
-    .find({type:"course"})
+    .find({ type: "course" })
     .sort(sort)
     // .skip(offset)
     .limit(1)
@@ -152,7 +153,7 @@ export const getAllProductsForStocksTabService = async (payload: any, res: Respo
     // page,
     // limit,
     message: "Stocks retrieved successfully",
-    data:{Books,Courses},
+    data: { Books, Courses },
     // success: filteredResults.length > 0,
     // total: filteredResults.length > 0 ? totalDataCount : 0,
     // data: filteredResults,
