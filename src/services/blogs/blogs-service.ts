@@ -44,7 +44,9 @@ export const getAllBlogsService = async (payload: any, res: Response) => {
       : await blogsModel.countDocuments(query);
   const results = await blogsModel
     .find(query)
-    .sort(sort)
+    .sort({
+      createdAt: -1,  
+    })
     .skip(offset)
     .limit(limit)
     .select("-__v");

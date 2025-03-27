@@ -80,7 +80,9 @@ export const getAllBookMastersService = async (payload: any) => {
 
   const results = await bookMastersModel
     .find(query)
-    .sort(sort)
+    .sort({
+      createdAt: -1,  
+    })
     .skip(offset)
     .limit(limit)
     .select("-__v")

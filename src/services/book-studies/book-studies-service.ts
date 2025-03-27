@@ -85,7 +85,9 @@ export const getAllBookStudiesService = async (payload: any) => {
 
   const results = await bookStudiesModel
     .find(query)
-    .sort(sort)
+    .sort({
+      createdAt: -1,  
+    })
     .skip(offset)
     .limit(limit)
     .select("-__v")

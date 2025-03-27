@@ -64,7 +64,9 @@ export const getAllBookSchoolsService = async (payload: any, res: Response) => {
   const totalDataCount = Object.keys(query).length < 1 ? await bookSchoolsModel.countDocuments() : await bookSchoolsModel.countDocuments(query);
   const results = await bookSchoolsModel
     .find(query)
-    .sort(sort)
+    .sort({
+      createdAt: -1,  
+    })
     .skip(offset)
     .limit(limit)
     .select("-__v")
