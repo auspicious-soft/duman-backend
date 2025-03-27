@@ -75,7 +75,7 @@ export const deleteBannerService = async (id: string, res: Response) => {
   }
   return {
     success: true,
-    message: "Banner deleted successfully",
+    message: "Banner Deleted successfully",
     data: deletedBanner,
   };
 };

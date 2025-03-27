@@ -78,7 +78,7 @@ export const deleteStoryService = async (id: string, res: Response) => {
   }
   return {
     success: true,
-    message: "Story deleted successfully",
+    message: "Story Deleted successfully",
     data: deletedStory,
   };
 };

@@ -7,7 +7,7 @@ export const deleteFile = (filePath: string) => {
             console.error('Error deleting file:', err);
         }
         else {
-            // console.log('File deleted successfully');
+            // console.log('File Deleted successfully');
         }
     });
 };

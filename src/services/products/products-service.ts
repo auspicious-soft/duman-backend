@@ -313,7 +313,7 @@ export const deleteBookService = async (id: string, res: Response) => {
     }
     return {
       success: true,
-      message: "Book deleted successfully",
+      message: "Book Deleted successfully",
       data: deletedBook,
     };
   } catch (error) {

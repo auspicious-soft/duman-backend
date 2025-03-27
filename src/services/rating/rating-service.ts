@@ -91,7 +91,7 @@ export const deleteRatingService = async (id: string, res: Response) => {
   if (!deletedRating) return errorResponseHandler("Rating not found", httpStatusCode.NOT_FOUND, res);
   return {
     success: true,
-    message: "Rating deleted successfully",
+    message: "Rating Deleted successfully",
     data: deletedRating,
   };
 };

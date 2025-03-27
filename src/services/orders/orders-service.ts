@@ -119,7 +119,7 @@ export const deleteOrderService = async (id: string, res: Response) => {
 
   return {
     success: true,
-    message: "Order deleted successfully",
+    message: "Order Deleted successfully",
     data: deletedOrder,
   };
 };

@@ -442,7 +442,7 @@ export const deleteSubCategoryService = async (id: string, res: Response) => {
   }
   return {
     success: true,
-    message: "Sub-category deleted successfully",
+    message: "Sub-category Deleted successfully",
     data: deletedSubCategory,
   };
 };

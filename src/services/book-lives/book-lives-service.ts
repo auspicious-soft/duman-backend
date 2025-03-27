@@ -131,7 +131,7 @@ export const deleteBookLiveService = async (id: string, res: Response) => {
   }
   return {
     success: true,
-    message: "Book live deleted successfully",
+    message: "Book live Deleted successfully",
     data: deletedBookLive,
   };
 };

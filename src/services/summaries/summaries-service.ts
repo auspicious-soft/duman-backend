@@ -91,7 +91,7 @@ export const deleteSummaryService = async (id: string, res: Response) => {
   }
   return {
     success: true,
-    message: "Summary deleted successfully",
+    message: "Summary Deleted successfully",
     data: deletedSummary,
   };
 };

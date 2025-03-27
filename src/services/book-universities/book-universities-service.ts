@@ -153,7 +153,7 @@ export const deleteBookUniversityService = async (id: string, res: Response) => 
   
   return {
     success: true,
-    message: "Book university deleted successfully",
+    message: "Book university Deleted successfully",
     data: deletedBookUniversity,
   };
 };

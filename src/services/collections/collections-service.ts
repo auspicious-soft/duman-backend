@@ -171,7 +171,7 @@ export const deleteCollectionService = async (id: string, res: Response) => {
   }
   return {
     success: true,
-    message: "Collection deleted successfully",
+    message: "Collection Deleted successfully",
     data: deletedCollection,
   };
 };

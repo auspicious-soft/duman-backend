@@ -290,7 +290,7 @@ export const deleteUserService = async (id: string, res: Response) => {
   }
   return {
     success: true,
-    message: "User deleted successfully",
+    message: "User Deleted successfully",
     data: deletedUser,
   };
 };

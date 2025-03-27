@@ -133,7 +133,7 @@ export const deleteDiscountVoucherService = async (id: string, res: Response) =>
   
   return {
     success: true,
-    message: "Discount voucher deleted successfully",
+    message: "Discount voucher Deleted successfully",
     data: deletedVoucher,
   };
 };

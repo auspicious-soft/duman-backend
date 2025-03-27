@@ -248,7 +248,7 @@ export const deletePublisherService = async (id: string, res: Response) => {
 
   return {
     success: true,
-    message: "Publisher deleted successfully",
+    message: "Publisher Deleted successfully",
     data: deletedPublisher,
   };
 };

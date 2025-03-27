@@ -152,7 +152,7 @@ export const deleteBookStudyService = async (id: string, res: Response) => {
   
   return {
     success: true,
-    message: "Book study deleted successfully",
+    message: "Book study Deleted successfully",
     data: deletedBookStudy,
   };
 };

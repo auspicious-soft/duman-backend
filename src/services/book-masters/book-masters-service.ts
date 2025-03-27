@@ -135,7 +135,7 @@ export const deleteBookMasterService = async (id: string, res: Response) => {
 
   return {
     success: true,
-    message: "Book master deleted successfully",
+    message: "Book master Deleted successfully",
     data: deletedBookMaster,
   };
 };

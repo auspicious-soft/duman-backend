@@ -141,7 +141,7 @@ export const deleteAuthorService = async (id: string, res: Response) => {
   await deleteFileFromS3(deletedAuthor?.image);
   return {
     success: true,
-    message: "Author deleted successfully",
+    message: "Author Deleted successfully",
     data: deletedAuthor,
   };
 };

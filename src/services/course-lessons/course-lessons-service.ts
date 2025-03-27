@@ -200,7 +200,7 @@ export const deleteCourseLessonService = async (courseLessonId: string, res: Res
   }
   return {
     success: true,
-    message: "Course lesson deleted successfully",
+    message: "Course lesson Deleted successfully",
     data: deletedCourseLesson,
   };
 };
@@ -225,7 +225,7 @@ export const deleteSublessonsService = async (LessonId: string, subLessonId: str
   }
   return {
     success: true,
-    message: "Sub lesson deleted successfully",
+    message: "Sub lesson Deleted successfully",
     data: deletedSubLesson,
   };
 };
@@ -250,7 +250,7 @@ export const deleteCourseLanguageService = async (productId: string, lang: any, 
   }
   return {
     success: true,
-    message: "Course language deleted successfully",
+    message: "Course language Deleted successfully",
   };
 };
 

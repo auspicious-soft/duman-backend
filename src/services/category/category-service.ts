@@ -179,7 +179,7 @@ export const deleteCategoryService = async (id: string, res: Response) => {
   }
   return {
     success: true,
-    message: "Category deleted successfully",
+    message: "Category Deleted successfully",
     data: deletedCategory,
   };
 };

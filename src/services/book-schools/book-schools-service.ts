@@ -194,7 +194,7 @@ export const deleteBookSchoolService = async (id: string, res: Response) => {
 
   return {
     success: true,
-    message: "Book school deleted successfully",
+    message: "Book school Deleted successfully",
     data: deletedBookSchool,
   };
 };

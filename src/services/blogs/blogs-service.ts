@@ -102,7 +102,7 @@ export const deleteBlogService = async (id: string, res: Response) => {
   }
   return {
     success: true,
-    message: "Blog deleted successfully",
+    message: "Blog Deleted successfully",
     data: deletedBlog,
   };
 };

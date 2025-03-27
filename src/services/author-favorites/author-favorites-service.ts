@@ -109,7 +109,7 @@ export const updateAuthorFavoriteService = async (user: any, payload: any, res: 
 
       return {
         success: true,
-        message: "Favorite deleted successfully",
+        message: "Favorite Deleted successfully",
         data: deletedFavorite,
       };
     }
@@ -123,7 +123,7 @@ export const deleteAuthorFavoriteService = async (user: any, id: string, res: Re
     }
     return {
       success: true,
-      message: "Favorite deleted successfully",
+      message: "Favorite Deleted successfully",
       data: deletedFavorite ? deletedFavorite : {},
     };
   

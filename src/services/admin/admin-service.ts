@@ -164,7 +164,7 @@ export const deleteAUserService = async (id: string, res: Response) => {
   // await usersModel.findByIdAndDelete(id)
   // return {
   //     success: true,
-  //     message: "User deleted successfully",
+  //     message: "User Deleted successfully",
   //     data: {
   //         user,
   //         projects: userProjects

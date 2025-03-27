@@ -40,7 +40,7 @@ export const deleteEvent = async (eventId: string, res :Response ) => {
     }
     return {
       success: true,
-      message: "Book Event deleted successfully",
+      message: "Book Event Deleted successfully",
       data: deletedEvent,
     };
 };
