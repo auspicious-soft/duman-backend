@@ -51,7 +51,7 @@ export const generateOtpWithTwilio = async (phoneNumber: string, otp: string) =>
   try {
      const res= await twilioClient.messages.create({
        body: `Your OTP is: ${otp}`,
-       from: `whatsapp:+14155238886`,
+       from: `whatsapp:${process.env.FROMPHONENUMBER}`,
        to: `whatsapp:${phoneNumber}`,
       });
     return {
