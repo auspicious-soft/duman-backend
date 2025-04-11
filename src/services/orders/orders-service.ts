@@ -62,7 +62,10 @@ export const getAllOrdersService = async (payload: any, res: Response) => {
       : await ordersModel.countDocuments(query);
   const results = await ordersModel
     .find(query)
-    .sort(sort)
+    .sort({
+      createdAt: -1,  
+      ...sort,
+    })
     .skip(offset)
     .limit(limit)
     .select("-__v");

@@ -33,7 +33,10 @@ export const getAllStoriesService = async (payload: any, res: Response) => {
   const { query, sort } = nestedQueryBuilder(payload, ["name"]);
 
   const totalDataCount = Object.keys(query).length < 1 ? await storiesModel.countDocuments() : await storiesModel.countDocuments(query);
-  const results = await storiesModel.find(query).sort(sort).skip(offset).limit(limit).select("-__v");
+  const results = await storiesModel.find(query).sort({
+    createdAt: -1,  
+    ...sort,
+  }).skip(offset).limit(limit).select("-__v");
   if (results.length)
     return {
       page,

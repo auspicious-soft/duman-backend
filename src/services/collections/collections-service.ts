@@ -20,17 +20,82 @@ export const createCollectionService = async (payload: any, res: Response) => {
 };
 
 
-export const getCollectionService = async (id: string, res: Response) => {
+export const getCollectionService = async (id: string, payload: any, res: Response) => {
+  const { query, sort } = nestedQueryBuilder(payload, ["name"]);
+  console.log('query: ', query);
+
+  // First, get the collection with all its books
   const collection = await collectionsModel.findById(id).populate({
     path: "booksId",
     populate: [
-      { path: "authorId" }, 
-      { path: "categoryId" }, 
-      { path: "subCategoryId" }, 
-      { path: "publisherId" }, 
+      { path: "authorId" },
+      { path: "categoryId" },
+      { path: "subCategoryId" },
+      { path: "publisherId" },
     ],
-  });;
+  });
+
   if (!collection) return errorResponseHandler("Collection not found", httpStatusCode.NOT_FOUND, res);
+
+  // If there's a search query and the collection has books
+  if (Object.keys(query).length > 0 && collection.booksId && Array.isArray(collection.booksId)) {
+    // Filter the books based on the search query
+    const filteredBooks = collection.booksId.filter((book: any) => {
+      // Check if book name matches the query in any language
+      if (book.name) {
+        // Check direct name match
+        if (typeof book.name === 'string' && book.name.match(new RegExp(payload.description, 'i'))) {
+          return true;
+        }
+
+        // Check multilingual name object
+        if (typeof book.name === 'object') {
+          for (const lang of ['eng', 'kaz', 'rus']) {
+            if (book.name[lang] && book.name[lang].match(new RegExp(payload.description, 'i'))) {
+              return true;
+            }
+          }
+        }
+      }
+
+      // Check if any author name matches the query
+      if (book.authorId && Array.isArray(book.authorId)) {
+        for (const author of book.authorId) {
+          if (author.name) {
+            // Check direct author name match
+            if (typeof author.name === 'string' && author.name.match(new RegExp(payload.description, 'i'))) {
+              return true;
+            }
+
+            // Check multilingual author name object
+            if (typeof author.name === 'object') {
+              for (const lang of ['eng', 'kaz', 'rus']) {
+                if (author.name[lang] && author.name[lang].match(new RegExp(payload.description, 'i'))) {
+                  return true;
+                }
+              }
+            }
+          }
+        }
+      }
+
+      return false;
+    });
+
+    // Create a new collection object with filtered books
+    const collectionWithFilteredBooks = {
+      ...collection.toObject(),
+      booksId: filteredBooks
+    };
+
+    return {
+      success: true,
+      message: "Collection retrieved successfully",
+      data: collectionWithFilteredBooks,
+    };
+  }
+
+  // If no search query or no books to filter, return the original collection
   return {
     success: true,
     message: "Collection retrieved successfully",
@@ -43,10 +108,10 @@ export const getCollectionForUserService = async (payload:any, user: any, id: st
   const collection = await collectionsModel.findById(id).populate({
     path: "booksId",
     populate: [
-      { path: "authorId" }, 
-      { path: "categoryId" }, 
-      { path: "subCategoryId" }, 
-      { path: "publisherId" }, 
+      { path: "authorId" },
+      { path: "categoryId" },
+      { path: "subCategoryId" },
+      { path: "publisherId" },
     ],
   });
 
@@ -71,7 +136,7 @@ export const getCollectionForUserService = async (payload:any, user: any, id: st
     if (!book || !book._id) {
       return null; // Skip invalid or incomplete book objects
     }
-    
+
     return {
       ...book.toObject(),  // Convert mongoose object to plain JS object
       isFavorite: favoriteIds.includes(book._id.toString()),  // Check if the book is in the user's favorites
@@ -107,13 +172,16 @@ export const getAllCollectionsService = async (payload: any, res: Response) => {
   const { query, sort } = nestedQueryBuilder(payload, ["name"]);
 
   const totalDataCount = Object.keys(query).length < 1 ? await collectionsModel.countDocuments() : await collectionsModel.countDocuments(query);
-  const results = await collectionsModel.find(query).sort(sort).skip(offset).limit(limit).select("-__v").populate({
+  const results = await collectionsModel.find(query).sort({
+    createdAt: -1,
+    ...sort,
+  }).skip(offset).limit(limit).select("-__v").populate({
     path: "booksId",
     populate: [
-      { path: "authorId",select: "name" }, 
-      { path: "categoryId",select: "name" }, 
-      { path: "subCategoryId",select: "name" }, 
-      { path: "publisherId",select: "name" }, 
+      { path: "authorId",select: "name" },
+      { path: "categoryId",select: "name" },
+      { path: "subCategoryId",select: "name" },
+      { path: "publisherId",select: "name" },
     ],
   });
   if (results.length)
@@ -141,8 +209,8 @@ export const updateCollectionService = async (id: string, payload: any, res: Res
     new: true,
   });
   if (!updatedCollection) return errorResponseHandler("Collection not found", httpStatusCode.NOT_FOUND, res);
-  
-  return {    
+
+  return {
     success: true,
     message: "Collection updated successfully",
     data: updatedCollection,
@@ -155,8 +223,8 @@ export const addBooksToCollectionService = async (id: string, payload: any, res:
     { new: true }
   );
   if (!updatedCollection) return errorResponseHandler("Collection not found", httpStatusCode.NOT_FOUND, res);
-  
-  return {    
+
+  return {
     success: true,
     message: "Collection updated successfully",
     data: updatedCollection,

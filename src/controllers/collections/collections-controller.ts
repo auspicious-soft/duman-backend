@@ -16,7 +16,7 @@ export const createCollection = async (req: Request, res: Response) => {
 
 export const getCollection = async (req: Request, res: Response) => {
     try {
-        const response = await getCollectionService(req.params.id, res);
+        const response = await getCollectionService(req.params.id,req.query, res);
         return res.status(httpStatusCode.OK).json(response);
     } catch (error: any) {
         const { code, message } = errorParser(error);

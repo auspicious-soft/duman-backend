@@ -314,7 +314,10 @@ export const getAllSubCategoriesService = async (payload: any, res: Response) =>
   const { query, sort } = nestedQueryBuilder(payload, ["name"]);
 
   const totalDataCount = Object.keys(query).length < 1 ? await subCategoriesModel.countDocuments() : await subCategoriesModel.countDocuments(query);
-  const results = await subCategoriesModel.find(query).sort(sort).skip(offset).limit(limit).populate("categoryId");
+  const results = await subCategoriesModel.find(query).sort({
+    createdAt: -1,  
+    ...sort,
+  }).skip(offset).limit(limit).populate("categoryId");
   if (results.length)
     return {
       page,

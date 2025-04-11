@@ -369,7 +369,7 @@ export const getAllUserService = async (payload: any, res: Response) => {
 
   const totalDataCount = Object.keys(query).length < 1 ? await usersModel.countDocuments() : await usersModel.countDocuments(query);
 
-  const users = await usersModel.find(query).sort(sort).skip(offset).limit(limit).select("-__v -password -otp -token -fcmToken -whatsappNumberVerified -emailVerified");
+  const users = await usersModel.find(query).sort({ createdAt: -1 ,...sort }).skip(offset).limit(limit).select("-__v -password -otp -token -fcmToken -whatsappNumberVerified -emailVerified");
 
   if (!users.length) {
     return {

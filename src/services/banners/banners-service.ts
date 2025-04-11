@@ -32,7 +32,10 @@ export const getAllBannersService = async (payload: any, res: Response) => {
   const { query, sort } = nestedQueryBuilder(payload, ["name"]);
 
   const totalDataCount = Object.keys(query).length < 1 ? await bannersModel.countDocuments() : await bannersModel.countDocuments(query);
-  const results = await bannersModel.find(query).sort(sort).skip(offset).limit(limit).select("-__v");
+  const results = await bannersModel.find(query).sort({
+    createdAt: -1,  
+    ...sort,
+  }).skip(offset).limit(limit).select("-__v");
   if (results.length)
     return {
       page,

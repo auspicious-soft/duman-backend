@@ -129,7 +129,9 @@ export const getAllCategoriesService = async (payload: any, res: Response) => {
   const { query, sort } = nestedQueryBuilder(payload, ["name"]);
 
   const totalDataCount = Object.keys(query).length < 1 ? await categoriesModel.countDocuments() : await categoriesModel.countDocuments(query);
-  const results = await categoriesModel.find(query).sort(sort).skip(offset).limit(limit).select("-__v");
+  const results = await categoriesModel.find(query).sort({
+    createdAt: -1,  
+  }).skip(offset).limit(limit).select("-__v");
   if (results.length)
     return {
       page,

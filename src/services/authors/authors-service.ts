@@ -57,7 +57,10 @@ export const getAllAuthorsService = async (payload: any, res: Response) => {
   const { query, sort } = nestedQueryBuilder(payload, ["name"]);
 
   const totalDataCount = Object.keys(query).length < 1 ? await authorsModel.countDocuments() : await authorsModel.countDocuments(query);
-  const results = await authorsModel.find(query).sort(sort).skip(offset).limit(limit).select("-__v");
+  const results = await authorsModel.find(query).sort({
+    createdAt: -1,  
+    ...sort,
+  }).skip(offset).limit(limit).select("-__v");
   if (results.length)
     return {
       success: true,
