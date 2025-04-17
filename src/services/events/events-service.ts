@@ -52,7 +52,7 @@ export const getAllEvents = async (payload: any) => {
   const { query, sort } = queryBuilder(payload, ['name'])
  
   const totalDataCount = Object.keys(query).length < 1 ? await eventsModel.countDocuments() : await eventsModel.countDocuments(query)
-  const results = await eventsModel.find(query).sort(sort).skip(offset).limit(limit).select("-__v")
+  const results = await eventsModel.find(query).sort({createdAt: -1, ...sort}).skip(offset).limit(limit).select("-__v")
   if (results.length) return {
       page,
       limit,
