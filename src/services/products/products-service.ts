@@ -192,7 +192,7 @@ export const getAllProductsForStocksTabService = async (payload: any, res: Respo
     .find({ type: "e-book" })
     .sort(sort)
     // .skip(offset)
-    .limit(3)
+    .limit(4)
     .select("-__v")
     .populate([{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }])
     .lean();
@@ -200,7 +200,7 @@ export const getAllProductsForStocksTabService = async (payload: any, res: Respo
     .find({ type: "course" })
     .sort(sort)
     // .skip(offset)
-    .limit(1)
+    .limit(4)
     .select("-__v")
     .populate([{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }])
     .lean();
