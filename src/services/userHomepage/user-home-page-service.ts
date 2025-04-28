@@ -3,7 +3,7 @@ import { errorResponseHandler } from "src/lib/errors/error-response-handler";
 import { Response } from "express";
 import { getAllBannersService } from "../banners/banners-service";
 import { getAllStoriesService } from "../stories/stories-service";
-import { getAllCollectionsService } from "../collections/collections-service";
+import { getAllCollectionsService, getAllCollectionsWithBooksService } from "../collections/collections-service";
 import {  getAllBookLivesWithBlogsService } from "../book-lives/book-lives-service";
 import { getAllBooksService, getAllProductsForStocksTabService } from "../products/products-service";
 
@@ -46,29 +46,29 @@ export const getproductsTabService = async (payload: any, res: Response) => {
         const stocks = await getAllProductsForStocksTabService(payload,res);
         return {
           success: true,
-          message: "Books retrieved successfully",
-          data: stocks.data.Books.length || stocks.data.Courses.length > 0 ? stocks : [],
+          message: "Collections retrieved successfully",
+          data: stocks.success ? stocks : [],
         };
       case "collections":
-        const collections = await getAllCollectionsService(payload, res);
+        const collections = await getAllCollectionsWithBooksService(payload, res);
         return {
           success: true,
           message: "Collections retrieved successfully",
-          data: collections.data.length > 0 ? collections : [],
+          data: collections.success ? collections : [],
         };
       case "blog":
         const blogs = await getAllBookLivesWithBlogsService(payload, res);
         return {
           success: true,
-          message: "BookLives retrieved successfully",
-          data: blogs.data.length > 0 ? blogs : [],
+          message: "Blogs retrieved successfully",
+          data: blogs.success ? blogs : [],
         };
       default: {
         const stocks = await getAllProductsForStocksTabService(payload,res);
         return {
           success: true,
-          message: "Books retrieved successfully",
-          data: stocks.data.Books.length || stocks.data.Courses.length   > 0 ? stocks : [],
+          message: "Collections retrieved successfully",
+          data: stocks.success ? stocks : [],
         };
       }
     }

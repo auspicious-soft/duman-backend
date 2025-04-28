@@ -203,7 +203,80 @@ export const getAllCollectionsService = async (payload: any, res: Response) => {
     };
   }
 };
+export const getAllCollectionsWithBooksService = async (payload: any, res: Response) => {
+  const page = parseInt(payload.page as string) || 1;
+  const limit = parseInt(payload.limit as string) || 0;
+  const offset = (page - 1) * limit;
+  const { query, sort } = nestedQueryBuilder(payload, ["name"]);
 
+  // Add condition to only get collections with non-empty booksId arrays
+  const nonEmptyBooksQuery = {
+    ...query,
+    displayOnMobile: true,
+    booksId: { $exists: true, $ne: [] }
+  };
+
+  const totalDataCount = await collectionsModel.countDocuments(nonEmptyBooksQuery);
+
+  // Get collections with books and limit categories to 3
+  const results = await collectionsModel.find(nonEmptyBooksQuery).sort({
+    createdAt: -1,
+    ...sort,
+  }).skip(offset).limit(limit).select("-__v").populate({
+    path: "booksId",
+    populate: [
+      { path: "authorId", select: "name" },
+      {
+        path: "categoryId",
+        select: "name",
+        options: { limit: 3 } // Limit categories to 3
+      },
+      { path: "subCategoryId", select: "name" },
+      { path: "publisherId", select: "name" },
+    ],
+  });
+
+  if (results.length) {
+    // Transform the results into the desired format with exactly 3 static keys
+    const transformedData: Record<string, any[]> = {
+      "mind-blowing": [],
+      "popular_collections": [],
+      "new_collections": []
+    };
+
+    // Limit to 5 entries
+    const limitedResults = results.slice(0, 5);
+
+    // Distribute collections among the 3 fixed keys
+    limitedResults.forEach((collection, index) => {
+      // Determine which key to use based on index (round-robin distribution)
+      if (index % 3 === 0) {
+        transformedData["mind-blowing"].push(collection);
+      } else if (index % 3 === 1) {
+        transformedData["popular_collections"].push(collection);
+      } else {
+        transformedData["new_collections"].push(collection);
+      }
+    });
+
+    return {
+      page,
+      limit,
+      success: true,
+      message: "Collections with books retrieved successfully",
+      total: totalDataCount,
+      data: transformedData,
+    };
+  } else {
+    return {
+      data: {},
+      page,
+      limit,
+      success: false,
+      total: 0,
+    };
+  }
+};
 export const updateCollectionService = async (id: string, payload: any, res: Response) => {
   const updatedCollection = await collectionsModel.findByIdAndUpdate(id, payload, {
     new: true,

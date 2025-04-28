@@ -52,7 +52,7 @@ export const getAllBookLivesService = async (payload: any, res: Response) => {
 
   const totalDataCount = Object.keys(query).length < 1 ? await bookLivesModel.countDocuments() : await bookLivesModel.countDocuments(query);
   const results = await bookLivesModel.find(query).sort({
-    createdAt: -1,  
+    createdAt: -1,
   }).skip(offset).limit(limit).select("-__v");
   if (results.length)
     return {
@@ -87,7 +87,7 @@ export const getAllBookLivesWithBlogsService = async (payload: any, res: Respons
 
   if (!bookLivesResults.length) {
     return {
-      data: [],
+      data: {},
       message: "No book lives found",
       page,
       limit,
@@ -103,13 +103,37 @@ export const getAllBookLivesWithBlogsService = async (payload: any, res: Respons
     })
   );
 
+  // Transform the results into the desired format with exactly 3 static keys
+  const transformedData: Record<string, any> = {
+    "blog": null,
+    "news": null,
+    "articles": null
+  };
+
+  // Limit to 5 entries
+  const limitedBookLives = bookLivesWithBlogs.slice(0, 5);
+  console.log('limitedBookLives: ', limitedBookLives);
+
+  // Assign book lives to the 3 fixed keys
+  limitedBookLives.forEach((bookLive, index) => {
+    // Determine which key to use based on index
+    if (index === 0) {
+      transformedData["blog"] = bookLive;
+    } else if (index === 1) {
+      transformedData["news"] = bookLive;
+    } else if (index === 2) {
+      transformedData["articles"] = bookLive;
+    }
+    // Ignore any additional book lives beyond the first 3
+  });
+
   return {
     success: true,
     message: "Book lives retrieved successfully",
     page,
     limit,
     total: totalDataCount,
-    data: bookLivesWithBlogs,
+    data: transformedData,
   };
 };
 
