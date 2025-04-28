@@ -116,64 +116,107 @@ export const getAllBooksService = async (payload: any, res: Response) => {
     data: filteredResults,
   };
 };
-export const getAllProductsForStocksTabService = async (payload: any, _res: Response) => {
-  // We don't need pagination for this endpoint
+// export const getAllProductsForStocksTabService = async (payload: any, _res: Response) => {
 
-  // Create sort object if provided in payload
+
+//   // We don't need pagination for this endpoint
+
+//   // Create sort object if provided in payload
+//   const sort: any = {};
+//   if (payload.orderColumn && payload.order) {
+//     sort[payload.orderColumn] = payload.order === "asc" ? 1 : -1;
+//   }
+
+//   // Get collections with non-empty booksId arrays
+//   const collections = await collectionsModel.find({
+//     booksId: { $exists: true, $ne: [] }
+//   })
+//   .limit(5)
+//   .select("-__v")
+//   .populate({
+//     path: "booksId",
+//     populate: [
+//       { path: "authorId", select: "name" },
+//       {
+//         path: "categoryId",
+//         select: "name",
+//         options: { limit: 3 } // Limit categories to 3
+//       },
+//       { path: "subCategoryId", select: "name" },
+//       { path: "publisherId", select: "name" },
+//     ],
+//   });
+
+//   // Transform the results into the desired format
+//   // Each collection name becomes a key with its value being the collection details
+//   const transformedData: Record<string, any> = {};
+
+//   // Limit to 5 entries
+//   const limitedCollections = collections.slice(0, 5);
+
+//   limitedCollections.forEach(collection => {
+//     // Get the collection name (using English name as default)
+//     const collectionName = collection.name?.eng ||
+//                           collection.name?.kaz ||
+//                           collection.name?.rus ||
+//                           `Collection_${collection._id}`;
+
+//     // Add the collection to the transformed data
+//     transformedData[collectionName] = collection;
+//   });
+
+//   let totalDataCount = collections.length;
+
+//   return {
+//     success: collections.length > 0,
+//     message: "Collections with books retrieved successfully",
+//     total: totalDataCount,
+//     data: transformedData,
+//   };
+// };
+
+
+export const getAllProductsForStocksTabService = async (payload: any, res: Response) => {
+  // const page = parseInt(payload.page as string) || 1;
+  // const limit = parseInt(payload.limit as string) || 0;
+  // const offset = (page - 1) * limit;
+
+  const query: any = payload.type ? { type: payload.type } : {};
+
   const sort: any = {};
   if (payload.orderColumn && payload.order) {
     sort[payload.orderColumn] = payload.order === "asc" ? 1 : -1;
   }
 
-  // Get collections with non-empty booksId arrays
-  const collections = await collectionsModel.find({
-    booksId: { $exists: true, $ne: [] }
-  })
-  .limit(5)
-  .select("-__v")
-  .populate({
-    path: "booksId",
-    populate: [
-      { path: "authorId", select: "name" },
-      {
-        path: "categoryId",
-        select: "name",
-        options: { limit: 3 } // Limit categories to 3
-      },
-      { path: "subCategoryId", select: "name" },
-      { path: "publisherId", select: "name" },
-    ],
-  });
+  const Books = await productsModel
+    .find({ type: "e-book" })
+    .sort(sort)
+    // .skip(offset)
+    .limit(3)
+    .select("-__v")
+    .populate([{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }])
+    .lean();
+  const Courses = await productsModel
+    .find({ type: "course" })
+    .sort(sort)
+    // .skip(offset)
+    .limit(1)
+    .select("-__v")
+    .populate([{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }])
+    .lean();
 
-  // Transform the results into the desired format with exactly 3 static keys
-  const transformedData: Record<string, any[]> = {
-    "popular": [],
-    "recommended": [],
-    "trending": []
-  };
-
-  // Limit to 5 entries
-  const limitedCollections = collections.slice(0, 5);
-
-  // Distribute collections among the 3 fixed keys
-  limitedCollections.forEach((collection, index) => {
-    // Determine which key to use based on index (round-robin distribution)
-    if (index % 3 === 0) {
-      transformedData["popular"].push(collection);
-    } else if (index % 3 === 1) {
-      transformedData["recommended"].push(collection);
-    } else {
-      transformedData["trending"].push(collection);
-    }
-  });
-
-  let totalDataCount = collections.length;
+  // let filteredResults = results;
+  let totalDataCount;
+  totalDataCount = await productsModel.countDocuments(query);
 
   return {
-    success: collections.length > 0,
-    message: "Collections with books retrieved successfully",
-    total: totalDataCount,
-    data: transformedData,
+    // page,
+    // limit,
+    message: "Stocks retrieved successfully",
+    data: { Books, Courses },
+    success: true,
+    // total: filteredResults.length > 0 ? totalDataCount : 0,
+    // data: filteredResults,
   };
 };
 export const getAllDiscountedBooksService = async (payload: any, res: Response) => {

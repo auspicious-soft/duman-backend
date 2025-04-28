@@ -229,7 +229,7 @@ export const getAllCollectionsWithBooksService = async (payload: any, res: Respo
       {
         path: "categoryId",
         select: "name",
-        options: { limit: 3 } // Limit categories to 3
+        // options: { limit: 3 } // Limit categories to 3
       },
       { path: "subCategoryId", select: "name" },
       { path: "publisherId", select: "name" },
@@ -247,16 +247,45 @@ export const getAllCollectionsWithBooksService = async (payload: any, res: Respo
     // Limit to 5 entries
     const limitedResults = results.slice(0, 5);
 
-    // Distribute collections among the 3 fixed keys
-    limitedResults.forEach((collection, index) => {
-      // Determine which key to use based on index (round-robin distribution)
-      if (index % 3 === 0) {
-        transformedData["mind-blowing"].push(collection);
-      } else if (index % 3 === 1) {
-        transformedData["popular_collections"].push(collection);
-      } else {
-        transformedData["new_collections"].push(collection);
-      }
+    // Ensure a more balanced distribution regardless of collection count
+    const keys = ["mind-blowing", "popular_collections", "new_collections"];
+
+    // If we have fewer collections than keys, distribute them evenly
+    if (limitedResults.length < keys.length) {
+      // Calculate how many collections each key should get (at least 0)
+      const collectionsPerKey = Math.floor(limitedResults.length / keys.length) || 0;
+      // Calculate how many keys get an extra collection
+      const extraCollections = limitedResults.length % keys.length;
+
+      let collectionIndex = 0;
+
+      // Distribute collections evenly among all keys
+      keys.forEach((key, keyIndex) => {
+        // Each key gets the base number of collections
+        let collectionsForThisKey = collectionsPerKey;
+
+        // Some keys get an extra collection if there are remainders
+        if (keyIndex < extraCollections) {
+          collectionsForThisKey += 1;
+        }
+
+        // Add the calculated number of collections to this key
+        for (let i = 0; i < collectionsForThisKey && collectionIndex < limitedResults.length; i++) {
+          transformedData[key].push(limitedResults[collectionIndex]);
+          collectionIndex++;
+        }
+      });
+    } else {
+      // If we have enough collections, distribute them evenly
+      limitedResults.forEach((collection, index) => {
+        transformedData[keys[index % keys.length]].push(collection);
+      });
+    }
+
+    console.log('Distributed data:', {
+      "mind-blowing": transformedData["mind-blowing"].length,
+      "popular_collections": transformedData["popular_collections"].length,
+      "new_collections": transformedData["new_collections"].length
     });
 
     return {

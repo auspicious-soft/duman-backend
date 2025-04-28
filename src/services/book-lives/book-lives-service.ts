@@ -107,7 +107,7 @@ export const getAllBookLivesWithBlogsService = async (payload: any, res: Respons
   const transformedData: Record<string, any> = {
     "blog": null,
     "news": null,
-    "articles": null
+    
   };
 
   // Limit to 5 entries
@@ -121,9 +121,7 @@ export const getAllBookLivesWithBlogsService = async (payload: any, res: Respons
       transformedData["blog"] = bookLive;
     } else if (index === 1) {
       transformedData["news"] = bookLive;
-    } else if (index === 2) {
-      transformedData["articles"] = bookLive;
-    }
+    } 
     // Ignore any additional book lives beyond the first 3
   });
 
