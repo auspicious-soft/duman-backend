@@ -225,7 +225,7 @@ export const getAllCollectionsWithBooksService = async (payload: any, res: Respo
   }).skip(offset).limit(limit).select("-__v").populate({
     path: "booksId",
     populate: [
-      { path: "authorId" },
+      { path: "authorId", select: "name image" },
       {
         path: "categoryId",
         select: "name image",
