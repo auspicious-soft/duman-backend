@@ -55,7 +55,7 @@ const productsSchema = new mongoose.Schema({
     },
     discountPercentage: {
       type: Number,
-      default: null,
+      default: 0,
     },
     createdAt: { type: Date, default: Date.now },
     averageRating: { type: Number, default: 0 },
