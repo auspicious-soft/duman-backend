@@ -33,6 +33,7 @@ export const checkPublisherAuth = async (req: Request, res: Response, next: Next
 export const checkAuth = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const token = req.headers.authorization?.split(" ")[1]
+        console.log('token: ', token);
         if (!token) return res.status(httpStatusCode.UNAUTHORIZED).json({ success: false, message: "Unauthorized token missing" })
 
         const isMobileApp = req.headers['x-client-type'] === 'mobile'

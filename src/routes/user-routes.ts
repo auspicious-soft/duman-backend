@@ -24,7 +24,7 @@ import { getBookUniversityCategories, getBookUniversityForUser, getBookUniversit
 import { getAllFaviouriteBooks, getAllFinishedBooks, getAllReadingBooks, getCoursesForBookRoom } from "src/controllers/book-room/book-room-controller";
 import { getAward } from "src/controllers/awards/awards-controller";
 import { getCourseLesson, getCourseLessonForUser, updateCourseLesson } from "src/controllers/course-lessons/course-lessons-controller";
-import { createOrder, deleteOrder, getAllOrders, getOrder, updateOrder } from "src/controllers/orders/orders-controller";
+import { checkWalletBalance, createOrder, deleteOrder, getAllOrders, getOrder, initOrderPayment, updateOrder } from "src/controllers/orders/orders-controller";
 
 
 const router = Router();
@@ -111,7 +111,7 @@ router.get("/author-countries", getAuthorCountries);
 router.get("/summaries", getAllSummaries);
 router.get("/summaries/:id", getSummaryForUser);
 
-//books-studies route   
+//books-studies route
 router.get("/books-studies", getBookStudyForUser);
 router.get("/books-studies/categories", getBookStudyCategoriesStudy);
 router.get("/books-studies/teachers", getBookStudyTeachers);
@@ -119,7 +119,7 @@ router.get("/books-studies/popular-courses", getPopularCourses);
 router.get("/books-studies/new-books", getBookStudyNewbooks);
 router.get("/books-studies/read-progress", getBookStudyReadProgress);
 
-//books-masters route   
+//books-masters route
 router.get("/books-masters", getBookMasterForUser);
 router.get("/books-masters/categories", getBookMasterCategories);
 router.get("/books-masters/speakers", getBookMasterTeachers);
@@ -127,7 +127,7 @@ router.get("/books-masters/popular-courses", getPopularCoursesBookMaster);
 // router.get("/books-masters/new-books", getBookMasterNewbooks);
 // router.get("/books-masters/read-progress", getBookMasterReadProgress);
 
-//books-studies route   
+//books-studies route
 router.get("/books-universities", getBookUniversityForUser);
 router.get("/books-universities/categories", getBookUniversityCategories);
 router.get("/books-universities/speakers", getBookUniversityTeachers);
@@ -161,5 +161,7 @@ router.post("/order", createOrder);
 router.get("/order", getAllOrders);
 router.get("/order/:id", getOrder);
 router.put("/order/:id", updateOrder);
+router.post("/order/:id/payment", initOrderPayment);
+router.get("/order/:id/wallet-balance", checkWalletBalance);
 
 export { router }

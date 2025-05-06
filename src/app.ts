@@ -4,7 +4,7 @@ import cors from "cors"
 import path from "path"
 import { fileURLToPath } from 'url'
 import connectDB from "./config/db"
-import { admin, publisher, user } from "./routes"
+import { admin, publisher, user, payment, wallet } from "./routes"
 // import admin from "firebase-admin"
 import { checkValidAdminRole, checkValidPublisherRole } from "./utils"
 import bodyParser from 'body-parser'
@@ -61,6 +61,8 @@ app.get("/", (_, res: any) => {
 app.use("/api/admin",checkValidAdminRole, admin);
 app.use("/api/publisher",checkValidPublisherRole,checkPublisherAuth, publisher);
 app.use("/api/user",checkAuth, user);
+app.use("/api/payments", payment);
+app.use("/api/wallet", wallet);
 
 //adminAuth routes
 app.post("/api/login", login)
@@ -71,7 +73,7 @@ app.patch("/api/new-password-otp-verified", newPassswordAfterOTPVerified)
 //userAuth routes
 app.post("/api/user-login", loginUser)
 app.post("/api/whatsapp-login", WhatsapploginUser)
-app.post("/api/user-signup", userSignup)  
+app.post("/api/user-signup", userSignup)
 app.post("/api/user-verify-otp", verifyOTP)
 app.post("/api/resend-otp", resendOTP)
 app.post("/api/user-forgot-password", forgotPasswordUser)
