@@ -4,7 +4,7 @@ import { Response } from "express";
 import { getAllBannersService } from "../banners/banners-service";
 import { getAllStoriesService } from "../stories/stories-service";
 import { getAllCollectionsService, getAllCollectionsWithBooksService } from "../collections/collections-service";
-import {  getAllBookLivesWithBlogsService } from "../book-lives/book-lives-service";
+import {  getAllBookLivesWithBlogsForHomeService, getAllBookLivesWithBlogsService } from "../book-lives/book-lives-service";
 import { getAllBooksService, getAllProductsForStocksTabService } from "../products/products-service";
 
 export const getHomePageService = async (payload: any, res: Response) => {
@@ -57,7 +57,7 @@ export const getproductsTabService = async (payload: any, res: Response) => {
           data: collections.success ? collections : [],
         };
       case "blog":
-        const blogs = await getAllBookLivesWithBlogsService(payload, res);
+        const blogs = await getAllBookLivesWithBlogsForHomeService(payload, res);
         return {
           success: true,
           message: "Blogs retrieved successfully",

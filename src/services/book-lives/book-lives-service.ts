@@ -75,7 +75,7 @@ export const getAllBookLivesService = async (payload: any, res: Response) => {
   }
 };
 
-export const getAllBookLivesWithBlogsService = async (payload: any, res: Response) => {
+export const getAllBookLivesWithBlogsForHomeService = async (payload: any, res: Response) => {
   const page = parseInt(payload.page as string) || 1;
   const limit = parseInt(payload.limit as string) || 0;
   const offset = (page - 1) * limit;
@@ -107,7 +107,7 @@ export const getAllBookLivesWithBlogsService = async (payload: any, res: Respons
   const transformedData: Record<string, any> = {
     "blog": null,
     "news": null,
-    
+
   };
 
   // Limit to 5 entries
@@ -121,7 +121,7 @@ export const getAllBookLivesWithBlogsService = async (payload: any, res: Respons
       transformedData["blog"] = bookLive;
     } else if (index === 1) {
       transformedData["news"] = bookLive;
-    } 
+    }
     // Ignore any additional book lives beyond the first 3
   });
 
@@ -134,7 +134,44 @@ export const getAllBookLivesWithBlogsService = async (payload: any, res: Respons
     data: transformedData,
   };
 };
+export const getAllBookLivesWithBlogsService = async (payload: any, res: Response) => {
+  const page = parseInt(payload.page as string) || 1;
+  const limit = parseInt(payload.limit as string) || 0;
+  const offset = (page - 1) * limit;
+  const { query, sort } = nestedQueryBuilder(payload, ["name"]);
 
+  const totalDataCount = Object.keys(query).length < 1 ? await bookLivesModel.countDocuments() : await bookLivesModel.countDocuments(query);
+
+  const bookLivesResults = await bookLivesModel.find(query).sort(sort).skip(offset).limit(limit).select("-__v");
+
+  if (!bookLivesResults.length) {
+    return {
+      data: {},
+      message: "No book lives found",
+      page,
+      limit,
+      success: false,
+      total: 0,
+    };
+  }
+
+  const bookLivesWithBlogs = await Promise.all(
+    bookLivesResults.map(async (bookLife) => {
+      const blogs = await blogsModel.find({ categoryId: bookLife._id }).select("-__v");
+      return { ...bookLife.toObject(), blogs };
+    })
+  );
+
+  // Return all book lives without transformation
+  return {
+    success: true,
+    message: "Book lives retrieved successfully",
+    page,
+    limit,
+    total: totalDataCount,
+    data: bookLivesWithBlogs,
+  };
+};
 export const updateBookLiveService = async (id: string, payload: any, res: Response) => {
   const updatedBookLive = await bookLivesModel.findByIdAndUpdate(id, payload, {
     new: true,
