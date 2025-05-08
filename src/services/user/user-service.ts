@@ -47,6 +47,7 @@ export const loginUserService = async (userData: UserDocument, authType: string,
   if (!user && (authType === 'Google' || authType === 'Apple' || authType === 'Facebook')) {
       user = await createNewUser(userData, authType); // You should implement the createNewUser function as per your needs
   }
+  if (!user && authType === 'Email') return errorResponseHandler("User not found", httpStatusCode.NOT_FOUND, res);
 
   let validationResponse = await validateUserForLogin(user, authType, userData, res);
   if (validationResponse) return validationResponse;

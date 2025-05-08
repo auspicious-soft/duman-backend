@@ -1,4 +1,5 @@
 import mongoose, { Schema } from "mongoose";
+import { customAlphabet } from "nanoid";
 
 export interface UserDocument extends Document {
   _id?: string;
@@ -20,11 +21,12 @@ export interface UserDocument extends Document {
 }
 const usersSchema = new mongoose.Schema(
   {
-    identifier: {
-      type: String,
-      // required: true,
-      unique: true,
-    },
+     identifier: {
+        type: String,
+        required: true,
+        unique: true,
+        default: () => customAlphabet("0123456789", 5)()
+      },
     role: {
       type: String,
       required: true,
