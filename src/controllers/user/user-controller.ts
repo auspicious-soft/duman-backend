@@ -17,6 +17,7 @@ import {
   getCurrentUserDetailsService,
   updateCurrentUserDetailsService,
   WhatsappLoginService,
+  forgotPasswordResendOTPService,
 } from "src/services/user/user-service";
 import { newPassswordAfterOTPVerifiedService } from "src/services/admin/admin-service";
 import { verifyOtpPasswordResetService, newPassswordAfterOTPVerifiedUserService } from "../../services/user/user-service";
@@ -202,7 +203,8 @@ export const resendOTP = async (req: Request, res: Response) => {
 };
 export const forgotPasswordResendOTP = async (req: Request, res: Response) => {
   try {
-    const response = await generatePasswordResetToken(req.body.email);
+    
+    const response = await forgotPasswordResendOTPService(req.body,res);
 
     res.status(200).json({
        success: true, message: "Password reset email sent with otp" 

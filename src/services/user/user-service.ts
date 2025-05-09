@@ -401,7 +401,18 @@ export const getAllUserService = async (payload: any, res: Response) => {
     data: results,
   };
 };
+export const forgotPasswordResendOTPService = async (payload: any, res: Response) => {
+  const { email } = payload;
+  const user = await usersModel.findOne({ email }).select("+password");
+  if (!user) return errorResponseHandler("User not found", httpStatusCode.NOT_FOUND, res);
+  if(user.authType !== "Email") return errorResponseHandler(`Try login using ${user.authType}`, httpStatusCode.BAD_REQUEST, res);
+  const passwordResetToken = await generatePasswordResetToken(email);
 
+  if (passwordResetToken !== null) {
+    await sendPasswordResetEmail(email, passwordResetToken.token, user.language);
+    return { success: true, message: "Password reset email sent with otp" };
+  }
+};
 
 export const generateAndSendOTP = async (payload: { email?: string; phoneNumber?: string }) => {
     const { email, phoneNumber } = payload;
