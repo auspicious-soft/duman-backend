@@ -10,7 +10,7 @@ import { checkValidAdminRole, checkValidPublisherRole } from "./utils"
 import bodyParser from 'body-parser'
 import { login, newPassswordAfterOTPVerified } from "./controllers/admin/admin-controller"
 import { forgotPassword } from "./controllers/admin/admin-controller"
-import {  verifyOtpPasswordReset, forgotPasswordUser, newPassswordAfterOTPVerifiedUser,verifyOTP, resendOTP, loginUser, userSignup, WhatsapploginUser } from "./controllers/user/user-controller";
+import {  verifyOtpPasswordReset, forgotPasswordUser, newPassswordAfterOTPVerifiedUser,verifyOTP, resendOTP, loginUser, userSignup, WhatsapploginUser, forgotPasswordResendOTP } from "./controllers/user/user-controller";
 import { checkAuth,checkPublisherAuth } from "./middleware/check-auth"
 
 // Create __dirname equivalent for ES modules
@@ -74,6 +74,7 @@ app.post("/api/whatsapp-login", WhatsapploginUser)
 app.post("/api/user-signup", userSignup)  
 app.post("/api/user-verify-otp", verifyOTP)
 app.post("/api/resend-otp", resendOTP)
+app.post("/api/forgotpassword-resend-otp", forgotPasswordResendOTP)
 app.post("/api/user-forgot-password", forgotPasswordUser)
 app.patch("/api/user-new-password-otp-verified", newPassswordAfterOTPVerifiedUser)
 

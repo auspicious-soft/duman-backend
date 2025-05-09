@@ -8,7 +8,6 @@ import { nestedQueryBuilder } from "src/utils";
 import { ordersModel } from "../../models/orders/orders-schema";
 import { deleteFileFromS3 } from "src/config/s3";
 import { configDotenv } from "dotenv";
-
 import { addedUserCreds, sendEmailVerificationMail, sendLoginCredentialsEmail, sendPasswordResetEmail } from "src/utils/mails/mail";
 import { passwordResetTokenModel } from "src/models/password-token-schema";
 import { generateOtpWithTwilio } from "src/utils/sms/sms";
@@ -452,6 +451,7 @@ export const generateAndSendOTP = async (payload: { email?: string; phoneNumber?
     return { success: true, message: "OTP sent successfully" };
   } 
 // };
+
 
 export const verifyOTPService = async (payload: any) => {
   const { email, phoneNumber, otp } = payload;
