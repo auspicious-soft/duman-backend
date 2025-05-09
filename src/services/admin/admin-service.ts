@@ -5,7 +5,7 @@ import { errorResponseHandler } from "../../lib/errors/error-response-handler";
 import { httpStatusCode } from "../../lib/constant";
 import { queryBuilder } from "../../utils";
 import { sendPasswordResetEmail } from "src/utils/mails/mail";
-import { generatePasswordResetToken, getPasswordResetTokenByToken, generatePasswordResetTokenByPhone } from "src/utils/mails/token";
+import { getPasswordResetTokenByToken } from "src/utils/mails/token";
 import { passwordResetTokenModel } from "src/models/password-token-schema";
 import { usersModel } from "src/models/user/user-schema";
 import { eventsModel } from "../../models/events/events-schema";
@@ -13,6 +13,7 @@ import { productsModel } from "src/models/products/products-schema";
 import { ordersModel } from "src/models/orders/orders-schema";
 import { publishersModel } from "src/models/publishers/publishers-schema";
 import { awardsModel } from "src/models/awards/awards-schema";
+import { customAlphabet } from "nanoid";
 
 export const loginService = async (payload: any, res: Response) => {
   const { username, password } = payload;
@@ -49,11 +50,34 @@ export const loginService = async (payload: any, res: Response) => {
 export const forgotPasswordService = async (email: string, res: Response) => {
   const admin = await adminModel.findOne({ email: email }).select("+password");
   if (!admin) return errorResponseHandler("Email not found", httpStatusCode.NOT_FOUND, res);
-  const passwordResetToken = await generatePasswordResetToken(email);
 
-  if (passwordResetToken !== null) {
-    await sendPasswordResetEmail(email, passwordResetToken.token, "eng");
+  try {
+    // Generate token data but don't save to DB yet
+    const genId = customAlphabet('0123456789', 6);
+    const token = genId();
+    const expires = new Date(new Date().getTime() + 3600 * 1000);
+
+    // First try to send the email
+    await sendPasswordResetEmail(email, token, "eng");
+
+    // Only after email is sent successfully, update the database
+    const existingToken = await passwordResetTokenModel.findOne({ email });
+    if (existingToken) {
+      await passwordResetTokenModel.findByIdAndDelete(existingToken._id);
+    }
+
+    const newPasswordResetToken = new passwordResetTokenModel({
+      email,
+      token,
+      expires
+    });
+
+    await newPasswordResetToken.save();
+
     return { success: true, message: "Password reset email sent with otp" };
+  } catch (error) {
+    console.error("Error in admin password reset process:", error);
+    return errorResponseHandler("Failed to send password reset email. Please try again later.", httpStatusCode.INTERNAL_SERVER_ERROR, res);
   }
 };
 
@@ -195,17 +219,17 @@ export const getDashboardStatsService = async (payload: any, res: Response) => {
     const users = await usersModel   .find(usersDate ? { createdAt: { $gte: usersDate } } : {})
     .sort({ createdAt: -1 })
     .limit(10).select("-__v -password -otp -token -fcmToken -whatsappNumberVerified -emailVerified");
-    
+
       const userIds = users.map((user) => user._id);
       const awards = await awardsModel.find({ userId: { $in: userIds } }).select("userId level badge");
-    
+
       const awardsMap = new Map(awards.map((award) => [award.userId.toString(), award]));
-    
+
       const newestUsers = users.map((user) => ({
         ...user.toObject(),
         award: awardsMap.get(user._id.toString()) || null,
       }));
-    
+
     const newestEvents = await eventsModel
       .find(usersDate ? { createdAt: { $gte: usersDate } } : {})
       .sort({ createdAt: -1 })
