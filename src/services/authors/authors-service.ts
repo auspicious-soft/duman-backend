@@ -203,5 +203,6 @@ export const getAuthorCountriesService = async (res: Response) => {
     console.error('Error fetching authors:', error);
     throw error;  // Rethrow the error to be caught by the controller
   }
+  
 };
 
