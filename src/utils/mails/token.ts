@@ -3,6 +3,8 @@ import { passwordResetTokenModel } from "../../models/password-token-schema"
 
 
 
+// This function is kept for backward compatibility but is no longer used directly
+// The token generation and database update logic has been moved to the service layer
 export const generatePasswordResetToken = async (email: string) => {
   const genId = customAlphabet('0123456789', 6)
   const token = genId()
@@ -30,6 +32,8 @@ export const getPasswordResetTokenByToken = async (token: string) => {
   }
 }
 
+// This function is kept for backward compatibility but is no longer used directly
+// The token generation and database update logic has been moved to the service layer
 export const generatePasswordResetTokenByPhone = async(phoneNumber: string) => {
   const genId = customAlphabet('0123456789', 6)
   const token = genId()

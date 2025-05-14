@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { errorResponseHandler } from "../../lib/errors/error-response-handler";
 import { UserDocument, usersModel } from "../../models/user/user-schema";
 import bcrypt from "bcryptjs";
-import { generatePasswordResetToken, generatePasswordResetTokenByPhone, getPasswordResetTokenByToken } from "../../utils/mails/token";
+import { getPasswordResetTokenByToken } from "../../utils/mails/token";
 import { httpStatusCode } from "../../lib/constant";
 import { nestedQueryBuilder } from "src/utils";
 import { ordersModel } from "../../models/orders/orders-schema";
@@ -40,7 +40,7 @@ const sanitizeUser = (user: any): UserDocument => {
 export const loginUserService = async (userData: UserDocument, authType: string, res: Response) => {
 
   let query = getSignUpQueryByAuthType(userData, authType);
-  
+
   let user: any = await usersModel.findOne(query);
 
   if (!user && (authType === 'Google' || authType === 'Apple' || authType === 'Facebook')) {
@@ -57,7 +57,7 @@ export const loginUserService = async (userData: UserDocument, authType: string,
   }
 
   user.token = generateUserToken(user as any);
-  
+
   await user.save();
   return {
       success: true,
@@ -79,7 +79,7 @@ const createNewUser = async (userData: any, authType: string) => {
   });
 
   await newUser.save();
-  
+
   return newUser;
 };
 
@@ -137,7 +137,7 @@ export const WhatsappLoginService = async (userData: UserDocument, authType: str
 
     // Create new user
     const user = await usersModel.create(newUserData);
-    
+
     // Send OTP if needed for new user
     await sendOTPIfNeeded(userData, authType);
 
@@ -150,7 +150,7 @@ export const WhatsappLoginService = async (userData: UserDocument, authType: str
     await user.save();
     
     return { success: true, message: "OTP sent successfully", data: sanitizeUser(user) };
-  
+
 };
 
 
@@ -159,11 +159,34 @@ export const forgotPasswordUserService = async (payload: any, res: Response) => 
   const user = await usersModel.findOne({ email }).select("+password");
   if (!user) return errorResponseHandler("User not found", httpStatusCode.NOT_FOUND, res);
   if(user.authType !== "Email") return errorResponseHandler(`Try login using ${user.authType}`, httpStatusCode.BAD_REQUEST, res);
-  const passwordResetToken = await generatePasswordResetToken(email);
 
-  if (passwordResetToken !== null) {
-    await sendPasswordResetEmail(email, passwordResetToken.token, user.language);
+  try {
+    // Generate token data but don't save to DB yet
+    const genId = customAlphabet('0123456789', 6);
+    const token = genId();
+    const expires = new Date(new Date().getTime() + 3600 * 1000);
+
+    // First try to send the email
+    await sendPasswordResetEmail(email, token, user.language);
+
+    // Only after email is sent successfully, update the database
+    const existingToken = await passwordResetTokenModel.findOne({ email });
+    if (existingToken) {
+      await passwordResetTokenModel.findByIdAndDelete(existingToken._id);
+    }
+
+    const newPasswordResetToken = new passwordResetTokenModel({
+      email,
+      token,
+      expires
+    });
+
+    await newPasswordResetToken.save();
+
     return { success: true, message: "Password reset email sent with otp" };
+  } catch (error) {
+    console.error("Error in password reset process:", error);
+    return errorResponseHandler("Failed to send password reset email. Please try again later.", httpStatusCode.INTERNAL_SERVER_ERROR, res);
   }
 };
 
@@ -406,67 +429,101 @@ export const forgotPasswordResendOTPService = async (payload: any, res: Response
   const user = await usersModel.findOne({ email }).select("+password");
   if (!user) return errorResponseHandler("User not found", httpStatusCode.NOT_FOUND, res);
   if(user.authType !== "Email") return errorResponseHandler(`Try login using ${user.authType}`, httpStatusCode.BAD_REQUEST, res);
-  const passwordResetToken = await generatePasswordResetToken(email);
 
-  if (passwordResetToken !== null) {
-    await sendPasswordResetEmail(email, passwordResetToken.token, user.language);
+  try {
+    // Generate token data but don't save to DB yet
+    const genId = customAlphabet('0123456789', 6);
+    const token = genId();
+    const expires = new Date(new Date().getTime() + 3600 * 1000);
+
+    // First try to send the email
+    await sendPasswordResetEmail(email, token, user.language);
+
+    // Only after email is sent successfully, update the database
+    const existingToken = await passwordResetTokenModel.findOne({ email });
+    if (existingToken) {
+      await passwordResetTokenModel.findByIdAndDelete(existingToken._id);
+    }
+
+    const newPasswordResetToken = new passwordResetTokenModel({
+      email,
+      token,
+      expires
+    });
+
+    await newPasswordResetToken.save();
+
     return { success: true, message: "Password reset email sent with otp" };
+  } catch (error) {
+    console.error("Error in password reset process:", error);
+    return errorResponseHandler("Failed to send password reset email. Please try again later.", httpStatusCode.INTERNAL_SERVER_ERROR, res);
   }
 };
 
 export const generateAndSendOTP = async (payload: { email?: string; phoneNumber?: string }) => {
     const { email, phoneNumber } = payload;
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = new Date(Date.now() + 20 * 60 * 1000); // OTP expires in 20 minutes
+    try {
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const expiresAt = new Date(Date.now() + 20 * 60 * 1000); // OTP expires in 20 minutes
 
-    let user;
-    if (email) {
-      user = await usersModel.findOneAndUpdate(
-        { email },
-        {
-          $set: {
-            "otp.code": otp,
-            "otp.expiresAt": expiresAt,
-          },
-        },
-        { upsert: true, new: true }
-      );
-    } else if (phoneNumber) {
-      user = await usersModel.findOneAndUpdate(
-        { phoneNumber },
-        {
-          $set: {
-            "otp.code": otp,
-            "otp.expiresAt": expiresAt,
-          },
-        },
-        { upsert: true, new: true }
-      );
+        let user;
+        if (email) {
+            user = await usersModel.findOne({ email });
+        } else if (phoneNumber) {
+            user = await usersModel.findOne({ phoneNumber });
+        }
+
+        if (!user) {
+            throw new Error("User not found");
+        }
+
+        // First send the OTP via the respective method
+        if (phoneNumber) {
+            await generateOtpWithTwilio(phoneNumber, otp);
+        }
+        if (email) {
+            await sendEmailVerificationMail(email, otp, user?.language || "en");
+        }
+
+        // Only after sending is successful, update the database
+        if (email) {
+            user = await usersModel.findOneAndUpdate(
+                { email },
+                {
+                    $set: {
+                        "otp.code": otp,
+                        "otp.expiresAt": expiresAt,
+                    },
+                },
+                { new: true }
+            );
+        } else if (phoneNumber) {
+            user = await usersModel.findOneAndUpdate(
+                { phoneNumber },
+                {
+                    $set: {
+                        "otp.code": otp,
+                        "otp.expiresAt": expiresAt,
+                    },
+                },
+                { new: true }
+            );
+        }
+
+        console.log('OTP successfully generated and sent for user: ', user?._id);
+        return { success: true, message: "OTP sent successfully" };
+    } catch (error) {
+        console.error("Error in OTP generation and sending:", error);
+        throw error;
     }
-
-
-    if (user) {
-      // No need to call save if findOneAndUpdate handles the commit
-      console.log('OTP successfully generated and saved for user: ', user);
-    }
-
-    // Send OTP via the respective method
-    if (phoneNumber) {
-      await generateOtpWithTwilio(phoneNumber, otp);
-    }
-    if (email) {
-      await sendEmailVerificationMail(email, otp, user?.language || "en");
-    }
-
-    return { success: true, message: "OTP sent successfully" };
-  } 
+}
 // };
 
 
 export const verifyOTPService = async (payload: any) => {
   const { email, phoneNumber, otp } = payload;
- 
+
   const user = await usersModel.findOne({
     $or: [{ email }, { phoneNumber }],
     "otp.code": otp,

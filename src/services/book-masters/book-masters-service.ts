@@ -67,6 +67,7 @@ export const getBookMasterService = async (id: string, res: Response) => {
 };
 
 export const getAllBookMastersService = async (payload: any) => {
+  console.log('payload: ', payload);
   const page = parseInt(payload.page as string) || 1;
   const limit = parseInt(payload.limit as string) || 0;
   const offset = (page - 1) * limit;
@@ -78,10 +79,11 @@ export const getAllBookMastersService = async (payload: any) => {
     sort[payload.orderColumn] = payload.order === "asc" ? 1 : -1;
   }
 
+  console.log('query: ', query);
   const results = await bookMastersModel
-    .find(query)
+  .find(query)
     .sort({
-      createdAt: -1,  
+      createdAt: -1,
     })
     .skip(offset)
     .limit(limit)
@@ -96,15 +98,127 @@ export const getAllBookMastersService = async (payload: any) => {
   let totalDataCount;
   totalDataCount = await bookMastersModel.countDocuments();
   if (payload.description) {
-    const searchQuery = payload.description.toLowerCase();
+    const searchQuery = payload.description;
+    const searchLanguage = payload.language && ['eng', 'kaz', 'rus'].includes(payload.language) ? payload.language : null;
+    console.log('searchQuery: ', searchQuery);
+    console.log('searchLanguage: ', searchLanguage);
 
     filteredResults = results.filter((book) => {
-      const product = book.productsId as any;
-      const authors = product?.authorId;
-      const productNames = product?.name ? Object.values(product.name).map((val: any) => val.toLowerCase()) : [];
+      try {
+        const product = book.productsId as any;
 
-      const authorNames: string[] = (authors as any[]).flatMap((author) => (author && author.name ? Object.values(author.name).map((val: any) => val.toLowerCase()) : []));
-      return productNames.some((name) => name.includes(searchQuery)) || authorNames.some((name) => name.includes(searchQuery));
+        // Handle case when product is null or undefined
+        if (!product) {
+          return false;
+        }
+
+        // Handle case when product is an array
+        if (Array.isArray(product)) {
+          // If product is an array, check each product in the array
+          return product.some(prod => {
+            try {
+              // Extract product names based on language
+              let prodNames: string[] = [];
+              if (searchLanguage && prod?.name && typeof prod.name === 'object') {
+                // Search only in the specified language
+                const langValue = prod.name[searchLanguage];
+                prodNames = langValue ? [String(langValue)] : [];
+              } else if (prod?.name) {
+                // Search in all languages
+                prodNames = Object.values(prod.name).map(val => String(val || ''));
+              }
+
+              // Extract author names based on language
+              const authors = prod?.authorId || [];
+              let authNames: string[] = [];
+
+              if (Array.isArray(authors)) {
+                if (searchLanguage) {
+                  // Search only in the specified language for each author
+                  authNames = authors.flatMap(author => {
+                    if (author && author.name && typeof author.name === 'object') {
+                      const langValue = author.name[searchLanguage];
+                      return langValue ? [String(langValue)] : [];
+                    }
+                    return [];
+                  });
+                } else {
+                  // Search in all languages for each author
+                  authNames = authors.flatMap(author =>
+                    author && author.name ? Object.values(author.name).map(val => String(val || '')) : []
+                  );
+                }
+              }
+
+              // Check if any name includes the search query
+              return prodNames.some(name =>
+                  typeof name === 'string' &&
+                  typeof searchQuery === 'string' &&
+                  name.toLowerCase().includes(searchQuery.toLowerCase())
+                ) ||
+                authNames.some(name =>
+                  typeof name === 'string' &&
+                  typeof searchQuery === 'string' &&
+                  name.toLowerCase().includes(searchQuery.toLowerCase())
+                );
+            } catch (err) {
+              console.error('Error processing product in array:', err);
+              return false;
+            }
+          });
+        }
+
+        // Extract product names based on language
+        let productNames: string[] = [];
+        if (searchLanguage && product?.name && typeof product.name === 'object') {
+          // Search only in the specified language
+          const langValue = product.name[searchLanguage];
+          productNames = langValue ? [String(langValue)] : [];
+        } else if (product?.name) {
+          // Search in all languages
+          productNames = Object.values(product.name).map(val => String(val || ''));
+        }
+
+        // Extract author names based on language
+        const authors = product?.authorId || [];
+        let authorNames: string[] = [];
+
+        if (Array.isArray(authors)) {
+          if (searchLanguage) {
+            // Search only in the specified language for each author
+            authorNames = authors.flatMap(author => {
+              if (author && author.name && typeof author.name === 'object') {
+                const langValue = author.name[searchLanguage];
+                return langValue ? [String(langValue)] : [];
+              }
+              return [];
+            });
+          } else {
+            // Search in all languages for each author
+            authorNames = authors.flatMap(author =>
+              author && author.name ? Object.values(author.name).map(val => String(val || '')) : []
+            );
+          }
+        }
+
+        // Check if any name includes the search query
+        const result = productNames.some(name =>
+            typeof name === 'string' &&
+            typeof searchQuery === 'string' &&
+            name.toLowerCase().includes(searchQuery.toLowerCase())
+          ) ||
+          authorNames.some(name =>
+            typeof name === 'string' &&
+            typeof searchQuery === 'string' &&
+            name.toLowerCase().includes(searchQuery.toLowerCase())
+          );
+
+        console.log('result: ', result);
+        return result;
+      } catch (error) {
+        console.error('Error in search filter:', error, 'for book:', book);
+        return false;
+      }
     });
     totalDataCount = filteredResults.length;
   }
@@ -226,7 +340,7 @@ export const getBookMasterTeacherService = async (payload: any, user: any, res: 
   return {
     success: true,
     message: "Book Master Authors retrieved successfully",
-    data: { teachers: uniqueAuthors },  
+    data: { teachers: uniqueAuthors },
   };
 };
 
@@ -234,7 +348,7 @@ export const getPopularCoursesBookMasterService = async (payload: any, user: any
   const bookStudy = await bookMastersModel.find()
   .populate({
     path: "productsId",
-    match: { averageRating: { $gte: 4, $lte: 5 } }, 
+    match: { averageRating: { $gte: 4, $lte: 5 } },
     populate: [
       { path: "authorId" },
       { path: "categoryId" },
@@ -243,7 +357,7 @@ export const getPopularCoursesBookMasterService = async (payload: any, user: any
     ],
   })
   .sort({
-    "productsId.averageRating": 1, 
+    "productsId.averageRating": 1,
   });
   const filteredBookStudy = bookStudy.filter((study) => study.productsId !== null);
 
@@ -258,16 +372,16 @@ export const getBookMasterNewbookService = async (user: any, payload: any, res: 
   const page = parseInt(payload.page as string) || 1;
   const limit = parseInt(payload.limit as string) || 0;
   const offset = (page - 1) * 20;
-  
+
   const today = new Date();
-  
+
   const sixMonthsAgo = new Date(today.setMonth(today.getMonth() - 6));
   const totalDataCount = await bookMastersModel.countDocuments({
-    createdAt: { $gte: sixMonthsAgo } 
+    createdAt: { $gte: sixMonthsAgo }
   });
-  
+
   const newBooks = await bookMastersModel.find({
-    createdAt: { $gte: sixMonthsAgo } 
+    createdAt: { $gte: sixMonthsAgo }
   })
     .populate({
       path: "productsId",
@@ -278,18 +392,18 @@ export const getBookMasterNewbookService = async (user: any, payload: any, res: 
         { path: "publisherId" },
       ],
     })
-    .sort({ createdAt: -1 })  
+    .sort({ createdAt: -1 })
     .skip(offset)
     .limit(limit);
 
   const favoriteBooks = await favoritesModel.find({ userId: user.id }).populate("productId");
   const favoriteIds = favoriteBooks
-    .filter((book) => book.productId && book.productId._id) 
+    .filter((book) => book.productId && book.productId._id)
     .map((book) => book.productId._id.toString());
 
   const newBooksWithFavoriteStatus = newBooks.map((book) => ({
     ...book.toObject(),
-    isFavorite: favoriteIds.includes(book._id.toString()), 
+    isFavorite: favoriteIds.includes(book._id.toString()),
   }));
 
   return {
@@ -307,9 +421,9 @@ export const getBookMasterReadProgressService = async (user: any, payload: any, 
   const Books = await bookMastersModel.find({});
   const bookIds = Books.map(book => book.productsId);
 
-  const readProgress = await readProgressModel.find({ 
-    userId: user.id, 
-    bookId: { $in: bookIds } 
+  const readProgress = await readProgressModel.find({
+    userId: user.id,
+    bookId: { $in: bookIds }
   })
   .populate({
     path: "bookId",
@@ -349,4 +463,4 @@ export const getBookMastersForUserService = async (user: any, payload: any, res:
       popularCourses: popularCourses.data.popularCourses
     },
   };
-};  
+};
