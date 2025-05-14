@@ -149,7 +149,7 @@ router.delete("/vouchers/:id", deleteDiscountVoucher);
 // book-schools route
 router.post("/book-schools", createBookSchool);
 router.get("/book-schools", getAllBookSchools);
-router.get("/book-masters/books", getAvailableProductsMasters);
+router.get("/book-schools/books", getAvailableProductsMasters);
 router.get("/book-schools/:id", getBookSchool);
 router.put("/book-schools/:id", updateBookSchool);
 router.delete("/book-schools/:id", deleteBookSchool);

@@ -54,10 +54,10 @@ export const getBookStudyService = async (id: string, res: Response) => {
   const bookStudy = await bookStudiesModel.findById(id).populate({
     path: "productsId",
     populate: [
-      { path: "authorId" }, 
-      { path: "categoryId" }, 
-      { path: "subCategoryId" }, 
-      { path: "publisherId" }, 
+      { path: "authorId" },
+      { path: "categoryId" },
+      { path: "subCategoryId" },
+      { path: "publisherId" },
     ],
   });
   //nested populate
@@ -75,18 +75,18 @@ export const getAllBookStudiesService = async (payload: any) => {
   const limit = parseInt(payload.limit as string) || 0;
   const offset = (page - 1) * limit;
 
-  const query: any = {}; 
-  
+  const query: any = {};
+
   const sort: any = {};
   if (payload.orderColumn && payload.order) {
     sort[payload.orderColumn] = payload.order === "asc" ? 1 : -1;
   }
-  
+
 
   const results = await bookStudiesModel
     .find(query)
     .sort({
-      createdAt: -1,  
+      createdAt: -1,
     })
     .skip(offset)
     .limit(limit)
@@ -106,25 +106,122 @@ export const getAllBookStudiesService = async (payload: any) => {
     let totalDataCount
     totalDataCount = await bookStudiesModel.countDocuments()
   if (payload.description) {
-    const searchQuery = payload.description.toLowerCase();
-    // totalDataCount = await bookMastersModel.countDocuments(query);
+    const searchQuery = typeof payload.description === 'string' ? payload.description.toLowerCase() : '';
+    const searchLanguage = payload.language && ['eng', 'kaz', 'rus'].includes(payload.language) ? payload.language : null;
+    console.log('searchQuery: ', searchQuery);
+    console.log('searchLanguage: ', searchLanguage);
 
     filteredResults = results.filter((book) => {
-      const product = book.productsId as any;
-      const authors = product?.authorId;
-      const productNames = product?.name
-        ? Object.values(product.name).map((val: any) => val.toLowerCase())
-        : [];
+      try {
+        const product = book.productsId as any;
 
-      const authorNames: string[] = (authors as any[]).flatMap((author) =>
-        author && author.name ? Object.values(author.name).map((val: any) => val.toLowerCase()) : []
-      );
-      return (
-        productNames.some((name) => name.includes(searchQuery)) ||
-        authorNames.some((name) => name.includes(searchQuery))
-      );
-    })
-    totalDataCount = filteredResults.length
+        // Handle case when product is null or undefined
+        if (!product) {
+          return false;
+        }
+
+        // Handle case when product is an array
+        if (Array.isArray(product)) {
+          // If product is an array, check each product in the array
+          return product.some(prod => {
+            try {
+              // Extract product names based on language
+              let prodNames: string[] = [];
+              if (searchLanguage && prod?.name && typeof prod.name === 'object') {
+                // Search only in the specified language
+                const langValue = prod.name[searchLanguage];
+                prodNames = langValue ? [String(langValue).toLowerCase()] : [];
+              } else if (prod?.name) {
+                // Search in all languages
+                prodNames = Object.values(prod.name).map(val => String(val || '').toLowerCase());
+              }
+
+              // Extract author names based on language
+              const authors = prod?.authorId || [];
+              let authNames: string[] = [];
+
+              if (Array.isArray(authors)) {
+                if (searchLanguage) {
+                  // Search only in the specified language for each author
+                  authNames = authors.flatMap(author => {
+                    if (author && author.name && typeof author.name === 'object') {
+                      const langValue = author.name[searchLanguage];
+                      return langValue ? [String(langValue).toLowerCase()] : [];
+                    }
+                    return [];
+                  });
+                } else {
+                  // Search in all languages for each author
+                  authNames = authors.flatMap(author =>
+                    author && author.name ? Object.values(author.name).map(val => String(val || '').toLowerCase()) : []
+                  );
+                }
+              }
+
+              // Check if any name includes the search query
+              return prodNames.some(name =>
+                  typeof name === 'string' && name.includes(searchQuery)
+                ) ||
+                authNames.some(name =>
+                  typeof name === 'string' && name.includes(searchQuery)
+                );
+            } catch (err) {
+              console.error('Error processing product in array:', err);
+              return false;
+            }
+          });
+        }
+
+        // Extract product names based on language
+        let productNames: string[] = [];
+        if (searchLanguage && product?.name && typeof product.name === 'object') {
+          // Search only in the specified language
+          const langValue = product.name[searchLanguage];
+          productNames = langValue ? [String(langValue).toLowerCase()] : [];
+        } else if (product?.name) {
+          // Search in all languages
+          productNames = Object.values(product.name).map(val => String(val || '').toLowerCase());
+        }
+
+        // Extract author names based on language
+        const authors = product?.authorId || [];
+        let authorNames: string[] = [];
+
+        if (Array.isArray(authors)) {
+          if (searchLanguage) {
+            // Search only in the specified language for each author
+            authorNames = authors.flatMap(author => {
+              if (author && author.name && typeof author.name === 'object') {
+                const langValue = author.name[searchLanguage];
+                return langValue ? [String(langValue).toLowerCase()] : [];
+              }
+              return [];
+            });
+          } else {
+            // Search in all languages for each author
+            authorNames = authors.flatMap(author =>
+              author && author.name ? Object.values(author.name).map(val => String(val || '').toLowerCase()) : []
+            );
+          }
+        }
+
+        // Check if any name includes the search query
+        const result = productNames.some(name =>
+            typeof name === 'string' && name.includes(searchQuery)
+          ) ||
+          authorNames.some(name =>
+            typeof name === 'string' && name.includes(searchQuery)
+          );
+
+        return result;
+      } catch (error) {
+        console.error('Error in search filter:', error, 'for book:', book);
+        return false;
+      }
+    });
+
+    totalDataCount = filteredResults.length;
+    console.log('Filtered results count:', totalDataCount);
   }
   return {
     page,
@@ -140,8 +237,8 @@ export const updateBookStudyService = async (id: string, payload: any, res: Resp
     new: true,
   });
   if (!updatedBookStudy) return errorResponseHandler("Book study not found", httpStatusCode.NOT_FOUND, res);
-  
-  return {    
+
+  return {
     success: true,
     message: "Book study updated successfully",
     data: updatedBookStudy,
@@ -151,7 +248,7 @@ export const updateBookStudyService = async (id: string, payload: any, res: Resp
 export const deleteBookStudyService = async (id: string, res: Response) => {
   const deletedBookStudy = await bookStudiesModel.findByIdAndDelete(id);
   if (!deletedBookStudy) return errorResponseHandler("Book study not found", httpStatusCode.NOT_FOUND, res);
-  
+
   return {
     success: true,
     message: "Book study Deleted successfully",
@@ -167,19 +264,19 @@ export const deleteBookStudyService = async (id: string, res: Response) => {
 //   const bookStudy = await bookStudiesModel.find().populate({
 //     path: "productsId",
 //     populate: [
-//       { path: "authorId" }, 
-//       { path: "categoryId" }, 
-//       { path: "subCategoryId" }, 
+//       { path: "authorId" },
+//       { path: "categoryId" },
+//       { path: "subCategoryId" },
 //       { path: "publisherId" },
 //     ],
 //   });
-  
+
 //   if (!bookStudy) {
 //     return errorResponseHandler("Book study not found", httpStatusCode.NOT_FOUND, res);
 //   }
-  
+
 //   let categories: any[] = [];
-  
+
 //   bookStudy.forEach((study) => {
 //     if (study.productsId && !Array.isArray(study.productsId)) {
 //       categories.push((study.productsId as any).categoryId);
@@ -210,7 +307,7 @@ export const getBookStudyCategoryService = async (user: any, payload: any, res: 
       { path: "publisherId" },
     ],
   });
-  
+
   if (!bookStudy) {
     return errorResponseHandler("Book study not found", httpStatusCode.NOT_FOUND, res);
   }
@@ -281,7 +378,7 @@ export const getBookStudyTeacherService = async (payload: any, user: any, res: R
   return {
     success: true,
     message: "Book study Authors retrieved successfully",
-    data: { teachers: uniqueAuthors },  
+    data: { teachers: uniqueAuthors },
   };
 };
 
@@ -289,7 +386,7 @@ export const getPopularCoursesService = async (payload: any, user: any, res: Res
   const bookStudy = await bookStudiesModel.find()
   .populate({
     path: "productsId",
-    match: { averageRating: { $gte: 4, $lte: 5 } }, 
+    match: { averageRating: { $gte: 4, $lte: 5 } },
     populate: [
       { path: "authorId" },
       { path: "categoryId" },
@@ -298,7 +395,7 @@ export const getPopularCoursesService = async (payload: any, user: any, res: Res
     ],
   })
   .sort({
-    "productsId.averageRating": 1, 
+    "productsId.averageRating": 1,
   });
   const filteredBookStudy = bookStudy.filter((study) => study.productsId !== null);
 
@@ -313,16 +410,16 @@ export const getBookStudyNewbookForUserService = async (user: any, payload: any,
   const page = parseInt(payload.page as string) || 1;
   const limit = parseInt(payload.limit as string) || 0;
   const offset = (page - 1) * 20;
-  
+
   const today = new Date();
-  
+
   const sixMonthsAgo = new Date(today.setMonth(today.getMonth() - 6));
   const totalDataCount = await bookStudiesModel.countDocuments({
-    createdAt: { $gte: sixMonthsAgo } 
+    createdAt: { $gte: sixMonthsAgo }
   });
-  
+
   const newBooks = await bookStudiesModel.find({
-    createdAt: { $gte: sixMonthsAgo } 
+    createdAt: { $gte: sixMonthsAgo }
   })
     .populate({
       path: "productsId",
@@ -333,18 +430,18 @@ export const getBookStudyNewbookForUserService = async (user: any, payload: any,
         { path: "publisherId" },
       ],
     })
-    .sort({ createdAt: -1 })  
+    .sort({ createdAt: -1 })
     .skip(offset)
     .limit(limit);
 
   const favoriteBooks = await favoritesModel.find({ userId: user.id }).populate("productId");
   const favoriteIds = favoriteBooks
-    .filter((book) => book.productId && book.productId._id) 
+    .filter((book) => book.productId && book.productId._id)
     .map((book) => book.productId._id.toString());
 
   const newBooksWithFavoriteStatus = newBooks.map((book) => ({
     ...book.toObject(),
-    isFavorite: favoriteIds.includes(book._id.toString()), 
+    isFavorite: favoriteIds.includes(book._id.toString()),
   }));
 
   return {
@@ -362,9 +459,9 @@ export const getBookStudyReadProgressService = async (user: any, payload: any, r
   const Books = await bookStudiesModel.find({});
   const bookIds = Books.map(book => book.productsId);
 
-  const readProgress = await readProgressModel.find({ 
-    userId: user.id, 
-    bookId: { $in: bookIds } 
+  const readProgress = await readProgressModel.find({
+    userId: user.id,
+    bookId: { $in: bookIds }
   })
   .populate({
     path: "bookId",
@@ -404,4 +501,4 @@ export const getBookStudyForUserService = async (user: any, payload: any, res: R
       popularCourses: popularCourses.data.popularCourses
     },
   };
-};  
+};

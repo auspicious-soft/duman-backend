@@ -95,17 +95,70 @@ export const getAllBooksService = async (payload: any, res: Response) => {
   let totalDataCount;
   totalDataCount = await productsModel.countDocuments(query);
   if (payload.description) {
-    const searchQuery = payload.description.toLowerCase();
+    const searchQuery = typeof payload.description === 'string' ? payload.description.toLowerCase() : '';
+    const searchLanguage = payload.language && ['eng', 'kaz', 'rus'].includes(payload.language) ? payload.language : null;
+    console.log('searchQuery: ', searchQuery);
+    console.log('searchLanguage: ', searchLanguage);
 
     filteredResults = results.filter((book) => {
-      const product = book as any;
-      const authors = book?.authorId;
-      const productNames = product?.name ? Object.values(product.name).map((val: any) => val.toLowerCase()) : [];
+      try {
+        const product = book as any;
 
-      const authorNames: string[] = (authors as any[]).flatMap((author) => (author && author.name ? Object.values(author.name).map((val: any) => val.toLowerCase()) : []));
-      return productNames.some((name) => name.includes(searchQuery)) || authorNames.some((name) => name.includes(searchQuery));
+        // Handle case when product is null or undefined
+        if (!product) {
+          return false;
+        }
+
+        // Extract product names based on language
+        let productNames: string[] = [];
+        if (searchLanguage && product?.name && typeof product.name === 'object') {
+          // Search only in the specified language
+          const langValue = product.name[searchLanguage];
+          productNames = langValue ? [String(langValue).toLowerCase()] : [];
+        } else if (product?.name) {
+          // Search in all languages
+          productNames = Object.values(product.name).map(val => String(val || '').toLowerCase());
+        }
+
+        // Extract author names based on language
+        const authors = product?.authorId || [];
+        let authorNames: string[] = [];
+
+        if (Array.isArray(authors)) {
+          if (searchLanguage) {
+            // Search only in the specified language for each author
+            authorNames = authors.flatMap(author => {
+              if (author && author.name && typeof author.name === 'object') {
+                const langValue = author.name[searchLanguage];
+                return langValue ? [String(langValue).toLowerCase()] : [];
+              }
+              return [];
+            });
+          } else {
+            // Search in all languages for each author
+            authorNames = authors.flatMap(author =>
+              author && author.name ? Object.values(author.name).map(val => String(val || '').toLowerCase()) : []
+            );
+          }
+        }
+
+        // Check if any name includes the search query
+        const result = productNames.some(name =>
+            typeof name === 'string' && name.includes(searchQuery)
+          ) ||
+          authorNames.some(name =>
+            typeof name === 'string' && name.includes(searchQuery)
+          );
+
+        return result;
+      } catch (error) {
+        console.error('Error in search filter:', error, 'for book:', book);
+        return false;
+      }
     });
+
     totalDataCount = filteredResults.length;
+    console.log('Filtered results count:', totalDataCount);
   }
   return {
     page,
