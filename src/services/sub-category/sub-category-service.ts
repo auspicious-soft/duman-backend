@@ -45,8 +45,17 @@ export const getSubCategoriesService = async (payload: any, id: string, res: Res
       .populate("authorId");
 
     if (!books || books.length === 0) {
-      return errorResponseHandler("No blog found for this category", httpStatusCode.NO_CONTENT, res);
+      return {
+      success: true,
+      message: "Sub categories retrieved successfully",
+      data: { subCategories, books: [] },
+      page,
+      limit,
+      total: totalDataCount,
+    };
+      // return errorResponseHandler("No blog found for this category", httpStatusCode.NO_CONTENT, res);
     }
+
 
     return {
       success: true,

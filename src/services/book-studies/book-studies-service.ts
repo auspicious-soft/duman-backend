@@ -326,10 +326,41 @@ export const getBookStudyCategoryService = async (user: any, payload: any, res: 
     ))
   );
 
+  // Apply search filter if description is provided
+  let filteredCategories = uniqueCategories;
+  if (payload.description) {
+    const searchQuery = typeof payload.description === 'string' ? payload.description.toLowerCase() : '';
+    const searchLanguage = payload.language && ['eng', 'kaz', 'rus'].includes(payload.language) ? payload.language : null;
+
+    filteredCategories = uniqueCategories.filter((category) => {
+      try {
+        // Extract category names based on language
+        let categoryNames: string[] = [];
+
+        if (searchLanguage && category.name && typeof category.name === 'object') {
+          // Search only in the specified language
+          const langValue = category.name[searchLanguage];
+          categoryNames = langValue ? [String(langValue).toLowerCase()] : [];
+        } else if (category.name) {
+          // Search in all languages
+          categoryNames = Object.values(category.name).map(val => String(val || '').toLowerCase());
+        }
+
+        // Check if any name includes the search query
+        return categoryNames.some(name =>
+          typeof name === 'string' && name.includes(searchQuery)
+        );
+      } catch (error) {
+        console.error('Error in search filter:', error, 'for category:', category);
+        return false;
+      }
+    });
+  }
+
   return {
     success: true,
     message: "Book University categories retrieved successfully",
-    data: { categories: uniqueCategories },
+    data: { categories: filteredCategories },
   };
 };
 
@@ -375,10 +406,41 @@ export const getBookStudyTeacherService = async (payload: any, user: any, res: R
     ).values()
   );
 
+  // Apply search filter if description is provided
+  let filteredAuthors = uniqueAuthors;
+  if (payload.description) {
+    const searchQuery = typeof payload.description === 'string' ? payload.description.toLowerCase() : '';
+    const searchLanguage = payload.language && ['eng', 'kaz', 'rus'].includes(payload.language) ? payload.language : null;
+
+    filteredAuthors = uniqueAuthors.filter((author) => {
+      try {
+        // Extract author names based on language
+        let authorNames: string[] = [];
+
+        if (searchLanguage && author.name && typeof author.name === 'object') {
+          // Search only in the specified language
+          const langValue = author.name[searchLanguage];
+          authorNames = langValue ? [String(langValue).toLowerCase()] : [];
+        } else if (author.name) {
+          // Search in all languages
+          authorNames = Object.values(author.name).map(val => String(val || '').toLowerCase());
+        }
+
+        // Check if any name includes the search query
+        return authorNames.some(name =>
+          typeof name === 'string' && name.includes(searchQuery)
+        );
+      } catch (error) {
+        console.error('Error in search filter:', error, 'for author:', author);
+        return false;
+      }
+    });
+  }
+
   return {
     success: true,
     message: "Book study Authors retrieved successfully",
-    data: { teachers: uniqueAuthors },
+    data: { teachers: filteredAuthors },
   };
 };
 
@@ -439,17 +501,132 @@ export const getBookStudyNewbookForUserService = async (user: any, payload: any,
     .filter((book) => book.productId && book.productId._id)
     .map((book) => book.productId._id.toString());
 
-  const newBooksWithFavoriteStatus = newBooks.map((book) => ({
+  let newBooksWithFavoriteStatus = newBooks.map((book) => ({
     ...book.toObject(),
     isFavorite: favoriteIds.includes(book._id.toString()),
   }));
+
+  // Apply search filter if description is provided
+  if (payload.description) {
+    const searchQuery = typeof payload.description === 'string' ? payload.description.toLowerCase() : '';
+    const searchLanguage = payload.language && ['eng', 'kaz', 'rus'].includes(payload.language) ? payload.language : null;
+
+    newBooksWithFavoriteStatus = newBooksWithFavoriteStatus.filter((book) => {
+      try {
+        const product = book.productsId as any;
+
+        // Handle case when product is null or undefined
+        if (!product) {
+          return false;
+        }
+
+        // Handle case when product is an array
+        if (Array.isArray(product)) {
+          // If product is an array, check each product in the array
+          return product.some(prod => {
+            try {
+              // Extract product names based on language
+              let prodNames: string[] = [];
+              if (searchLanguage && prod?.name && typeof prod.name === 'object') {
+                // Search only in the specified language
+                const langValue = prod.name[searchLanguage];
+                prodNames = langValue ? [String(langValue).toLowerCase()] : [];
+              } else if (prod?.name) {
+                // Search in all languages
+                prodNames = Object.values(prod.name).map(val => String(val || '').toLowerCase());
+              }
+
+              // Extract author names based on language
+              const authors = prod?.authorId || [];
+              let authNames: string[] = [];
+
+              if (Array.isArray(authors)) {
+                if (searchLanguage) {
+                  // Search only in the specified language for each author
+                  authNames = authors.flatMap(author => {
+                    if (author && author.name && typeof author.name === 'object') {
+                      const langValue = author.name[searchLanguage];
+                      return langValue ? [String(langValue).toLowerCase()] : [];
+                    }
+                    return [];
+                  });
+                } else {
+                  // Search in all languages for each author
+                  authNames = authors.flatMap(author =>
+                    author && author.name ? Object.values(author.name).map(val => String(val || '').toLowerCase()) : []
+                  );
+                }
+              }
+
+              // Check if any name includes the search query
+              return prodNames.some(name =>
+                  typeof name === 'string' && name.includes(searchQuery)
+                ) ||
+                authNames.some(name =>
+                  typeof name === 'string' && name.includes(searchQuery)
+                );
+            } catch (err) {
+              console.error('Error processing product in array:', err);
+              return false;
+            }
+          });
+        }
+
+        // Extract product names based on language
+        let productNames: string[] = [];
+        if (searchLanguage && product?.name && typeof product.name === 'object') {
+          // Search only in the specified language
+          const langValue = product.name[searchLanguage];
+          productNames = langValue ? [String(langValue).toLowerCase()] : [];
+        } else if (product?.name) {
+          // Search in all languages
+          productNames = Object.values(product.name).map(val => String(val || '').toLowerCase());
+        }
+
+        // Extract author names based on language
+        const authors = product?.authorId || [];
+        let authorNames: string[] = [];
+
+        if (Array.isArray(authors)) {
+          if (searchLanguage) {
+            // Search only in the specified language for each author
+            authorNames = authors.flatMap(author => {
+              if (author && author.name && typeof author.name === 'object') {
+                const langValue = author.name[searchLanguage];
+                return langValue ? [String(langValue).toLowerCase()] : [];
+              }
+              return [];
+            });
+          } else {
+            // Search in all languages for each author
+            authorNames = authors.flatMap(author =>
+              author && author.name ? Object.values(author.name).map(val => String(val || '').toLowerCase()) : []
+            );
+          }
+        }
+
+        // Check if any name includes the search query
+        const result = productNames.some(name =>
+            typeof name === 'string' && name.includes(searchQuery)
+          ) ||
+          authorNames.some(name =>
+            typeof name === 'string' && name.includes(searchQuery)
+          );
+
+        return result;
+      } catch (error) {
+        console.error('Error in search filter:', error, 'for book:', book);
+        return false;
+      }
+    });
+  }
 
   return {
     success: true,
     message: "Books retrieved successfully",
     page,
     limit,
-    total: totalDataCount,
+    total: payload.description ? newBooksWithFavoriteStatus.length : totalDataCount,
     data: {
       newBooks: newBooksWithFavoriteStatus,
     },
@@ -487,7 +664,7 @@ export const getBookStudyForUserService = async (user: any, payload: any, res: R
   const readProgress = await getBookStudyReadProgressService(user, payload, res);
   const newBook = await getBookStudyNewbookForUserService(user, payload, res);
   const teachers = await getBookStudyTeacherService(payload, user, res);
-  const categories = await getBookStudyCategoryService(payload, user, res);
+  const categories = await getBookStudyCategoryService(user, payload, res);
   const popularCourses = await getPopularCoursesService(payload, user, res);
 
   return {
