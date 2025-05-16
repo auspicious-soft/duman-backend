@@ -22,7 +22,6 @@ export const createCollectionService = async (payload: any, res: Response) => {
 
 export const getCollectionService = async (id: string, payload: any, res: Response) => {
   const { query, sort } = nestedQueryBuilder(payload, ["name"]);
-  console.log('query: ', query);
 
   // First, get the collection with all its books
   const collection = await collectionsModel.findById(id).populate({
@@ -282,13 +281,7 @@ export const getAllCollectionsWithBooksService = async (payload: any, res: Respo
       });
     }
 
-    console.log('Distributed data:', {
-      "mind-blowing": transformedData["mind-blowing"].length,
-      "popular_collections": transformedData["popular_collections"].length,
-      "new_collections": transformedData["new_collections"].length
-    });
-
-    return {
+       return {
       page,
       limit,
       success: true,

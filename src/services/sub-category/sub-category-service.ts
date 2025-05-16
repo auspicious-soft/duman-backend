@@ -392,6 +392,7 @@ export const getSubCategoriesByCategoryIdService = async (payload: any, category
   };
 };
 export const getSubCategoriesByCategoryIdForUserService = async (payload: any, categoryId: string, res: Response) => {
+  console.log('payload: ', payload);
   const page = parseInt(payload.page as string) || 1;
   const limit = parseInt(payload.limit as string) || 0;
   const offset = (page - 1) * limit;

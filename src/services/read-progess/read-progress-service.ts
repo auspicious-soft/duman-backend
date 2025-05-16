@@ -18,7 +18,6 @@ export const getReadProgressById = async (readProgressId: string, userId: string
 };
 
 export const updateReadProgress = async (readProgressId: string, readProgressData: any, user: any, res: Response) => {
-  console.log('readProgressData: ', readProgressData);
   if (readProgressData.progress < 0 || readProgressData.progress > 100) {
     return errorResponseHandler("Progress must be between 0 and 100", httpStatusCode.BAD_REQUEST, res);
   }

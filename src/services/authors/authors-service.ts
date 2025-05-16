@@ -85,7 +85,6 @@ export const getAllAuthorsForUserService = async (user: any, payload: any, res: 
   const limit = parseInt(payload.limit as string) || 0;
   const offset = (page - 1) * limit;
   const { query, sort } = nestedQueryBuilder(payload, ["name"]);
-  console.log('query: ', query);
 
   ['type', 'genres', 'country'].forEach((key) => {
     if (payload[key]) {
@@ -103,8 +102,6 @@ export const getAllAuthorsForUserService = async (user: any, payload: any, res: 
   if (payload.description) {
     const searchQuery = typeof payload.description === 'string' ? payload.description.toLowerCase() : '';
     const searchLanguage = payload.language && ['eng', 'kaz', 'rus'].includes(payload.language) ? payload.language : null;
-    console.log('searchQuery: ', searchQuery);
-    console.log('searchLanguage: ', searchLanguage);
 
     authors = authors.filter((author) => {
       try {
@@ -131,7 +128,6 @@ export const getAllAuthorsForUserService = async (user: any, payload: any, res: 
     });
 
     totalDataCount = authors.length;
-    console.log('Filtered authors count:', totalDataCount);
   }
 
   // Get favorite authors

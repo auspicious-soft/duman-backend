@@ -108,8 +108,6 @@ export const getAllBookUniversitiesService = async (payload: any) => {
   if (payload.description) {
     const searchQuery = typeof payload.description === 'string' ? payload.description.toLowerCase() : '';
     const searchLanguage = payload.language && ['eng', 'kaz', 'rus'].includes(payload.language) ? payload.language : null;
-    console.log('searchQuery: ', searchQuery);
-    console.log('searchLanguage: ', searchLanguage);
 
     filteredResults = results.filter((book) => {
       try {
@@ -221,7 +219,6 @@ export const getAllBookUniversitiesService = async (payload: any) => {
     });
 
     totalDataCount = filteredResults.length;
-    console.log('Filtered results count:', totalDataCount);
   }
   return {
     page,
@@ -280,7 +277,6 @@ export const deleteBookUniversityService = async (id: string, res: Response) => 
 //   let categories: any[] = [];
 
 //   // Log the fetched data for debugging
-//   console.log("Fetched bookStudy data:", bookStudy);
 
 //   // Iterate through each study to extract categories
 //   bookStudy.forEach((study:any) => {
@@ -337,6 +333,7 @@ export const getBookUniversityCategoryService = async (user: any, payload: any, 
   const limit = parseInt(payload.limit as string) || 0;
   const offset = (page - 1) * limit;
 
+
   const bookStudy = await bookUniversitiesModel.find().populate({
     path: "productsId",
     populate: [
@@ -351,24 +348,80 @@ export const getBookUniversityCategoryService = async (user: any, payload: any, 
     return errorResponseHandler("Book study not found", httpStatusCode.NOT_FOUND, res);
   }
 
+
   let categories: any[] = [];
 
   bookStudy.forEach((study:any) => {
-    if (study.productsId && study.productsId.categoryId) {
-      categories.push(...study.productsId.categoryId);
+    if (study.productsId) {
+      if (!Array.isArray(study.productsId)) {
+        // If productsId is a single object
+        if (study.productsId.categoryId) {
+          categories.push(...study.productsId.categoryId);
+        }
+      } else {
+        // If productsId is an array
+        study.productsId.forEach((product: any) => {
+          if (product && product.categoryId) {
+            categories.push(...product.categoryId);
+          }
+        });
+      }
     }
   });
 
+
   const uniqueCategories = categories.filter((value, index, self) =>
     index === self.findIndex((t) => (
-      t._id === value._id
+      t && t._id && value && value._id && t._id.toString() === value._id.toString()
     ))
   );
+
+
+  // Apply search filter if description is provided
+  let filteredCategories = uniqueCategories;
+  if (payload.description) {
+    const searchQuery = typeof payload.description === 'string' ? payload.description.toLowerCase() : '';
+    const searchLanguage = payload.language && ['eng', 'kaz', 'rus'].includes(payload.language) ? payload.language : null;
+
+
+    filteredCategories = uniqueCategories.filter((category) => {
+      try {
+        if (!category || !category.name) {
+          return false;
+        }
+
+        // Extract category names based on language
+        let categoryNames: string[] = [];
+
+        if (searchLanguage && category.name && typeof category.name === 'object') {
+          // Search only in the specified language
+          const langValue = category.name[searchLanguage];
+          categoryNames = langValue ? [String(langValue).toLowerCase()] : [];
+        } else if (category.name) {
+          // Search in all languages
+          categoryNames = Object.values(category.name)
+            .filter(val => val !== null && val !== undefined)
+            .map(val => String(val).toLowerCase());
+        }
+
+        // Check if any name includes the search query
+        const result = categoryNames.some(name =>
+          typeof name === 'string' && name.includes(searchQuery)
+        );
+
+        return result;
+      } catch (error) {
+        console.error('Error in search filter:', error, 'for category:', category);
+        return false;
+      }
+    });
+  }
+
 
   return {
     success: true,
     message: "Book University categories retrieved successfully",
-    data: { categories: uniqueCategories },
+    data: { categories: filteredCategories },
   };
 };
 
@@ -454,10 +507,41 @@ export const getBookUniversityTeacherService = async (payload: any, user: any, r
     ).values()
   );
 
+  // Apply search filter if description is provided
+  let filteredAuthors = uniqueAuthors;
+  if (payload.description) {
+    const searchQuery = typeof payload.description === 'string' ? payload.description.toLowerCase() : '';
+    const searchLanguage = payload.language && ['eng', 'kaz', 'rus'].includes(payload.language) ? payload.language : null;
+
+    filteredAuthors = uniqueAuthors.filter((author) => {
+      try {
+        // Extract author names based on language
+        let authorNames: string[] = [];
+
+        if (searchLanguage && author.name && typeof author.name === 'object') {
+          // Search only in the specified language
+          const langValue = author.name[searchLanguage];
+          authorNames = langValue ? [String(langValue).toLowerCase()] : [];
+        } else if (author.name) {
+          // Search in all languages
+          authorNames = Object.values(author.name).map(val => String(val || '').toLowerCase());
+        }
+
+        // Check if any name includes the search query
+        return authorNames.some(name =>
+          typeof name === 'string' && name.includes(searchQuery)
+        );
+      } catch (error) {
+        console.error('Error in search filter:', error, 'for author:', author);
+        return false;
+      }
+    });
+  }
+
   return {
     success: true,
     message: "Book University Authors retrieved successfully",
-    data: { teachers: uniqueAuthors },
+    data: { teachers: filteredAuthors },
   };
 };
 
@@ -480,7 +564,7 @@ export const getPopularCoursesBookUniversityService = async (payload: any, user:
 
   return {
     success: true,
-    message: "Book Master Authors retrieved successfully",
+    message: "Book University popular courses retrieved successfully",
     data: { popularCourses: filteredBookStudy },
   };
 };
@@ -518,17 +602,132 @@ export const getBookUniversityNewbookService = async (user: any, payload: any, r
     .filter((book) => book.productId && book.productId._id)
     .map((book) => book.productId._id.toString());
 
-  const newBooksWithFavoriteStatus = newBooks.map((book) => ({
+  let newBooksWithFavoriteStatus = newBooks.map((book) => ({
     ...book.toObject(),
     isFavorite: favoriteIds.includes(book._id.toString()),
   }));
+
+  // Apply search filter if description is provided
+  if (payload.description) {
+    const searchQuery = typeof payload.description === 'string' ? payload.description.toLowerCase() : '';
+    const searchLanguage = payload.language && ['eng', 'kaz', 'rus'].includes(payload.language) ? payload.language : null;
+
+    newBooksWithFavoriteStatus = newBooksWithFavoriteStatus.filter((book) => {
+      try {
+        const product = book.productsId as any;
+
+        // Handle case when product is null or undefined
+        if (!product) {
+          return false;
+        }
+
+        // Handle case when product is an array
+        if (Array.isArray(product)) {
+          // If product is an array, check each product in the array
+          return product.some(prod => {
+            try {
+              // Extract product names based on language
+              let prodNames: string[] = [];
+              if (searchLanguage && prod?.name && typeof prod.name === 'object') {
+                // Search only in the specified language
+                const langValue = prod.name[searchLanguage];
+                prodNames = langValue ? [String(langValue).toLowerCase()] : [];
+              } else if (prod?.name) {
+                // Search in all languages
+                prodNames = Object.values(prod.name).map(val => String(val || '').toLowerCase());
+              }
+
+              // Extract author names based on language
+              const authors = prod?.authorId || [];
+              let authNames: string[] = [];
+
+              if (Array.isArray(authors)) {
+                if (searchLanguage) {
+                  // Search only in the specified language for each author
+                  authNames = authors.flatMap(author => {
+                    if (author && author.name && typeof author.name === 'object') {
+                      const langValue = author.name[searchLanguage];
+                      return langValue ? [String(langValue).toLowerCase()] : [];
+                    }
+                    return [];
+                  });
+                } else {
+                  // Search in all languages for each author
+                  authNames = authors.flatMap(author =>
+                    author && author.name ? Object.values(author.name).map(val => String(val || '').toLowerCase()) : []
+                  );
+                }
+              }
+
+              // Check if any name includes the search query
+              return prodNames.some(name =>
+                  typeof name === 'string' && name.includes(searchQuery)
+                ) ||
+                authNames.some(name =>
+                  typeof name === 'string' && name.includes(searchQuery)
+                );
+            } catch (err) {
+              console.error('Error processing product in array:', err);
+              return false;
+            }
+          });
+        }
+
+        // Extract product names based on language
+        let productNames: string[] = [];
+        if (searchLanguage && product?.name && typeof product.name === 'object') {
+          // Search only in the specified language
+          const langValue = product.name[searchLanguage];
+          productNames = langValue ? [String(langValue).toLowerCase()] : [];
+        } else if (product?.name) {
+          // Search in all languages
+          productNames = Object.values(product.name).map(val => String(val || '').toLowerCase());
+        }
+
+        // Extract author names based on language
+        const authors = product?.authorId || [];
+        let authorNames: string[] = [];
+
+        if (Array.isArray(authors)) {
+          if (searchLanguage) {
+            // Search only in the specified language for each author
+            authorNames = authors.flatMap(author => {
+              if (author && author.name && typeof author.name === 'object') {
+                const langValue = author.name[searchLanguage];
+                return langValue ? [String(langValue).toLowerCase()] : [];
+              }
+              return [];
+            });
+          } else {
+            // Search in all languages for each author
+            authorNames = authors.flatMap(author =>
+              author && author.name ? Object.values(author.name).map(val => String(val || '').toLowerCase()) : []
+            );
+          }
+        }
+
+        // Check if any name includes the search query
+        const result = productNames.some(name =>
+            typeof name === 'string' && name.includes(searchQuery)
+          ) ||
+          authorNames.some(name =>
+            typeof name === 'string' && name.includes(searchQuery)
+          );
+
+        return result;
+      } catch (error) {
+        console.error('Error in search filter:', error, 'for book:', book);
+        return false;
+      }
+    });
+  }
 
   return {
     success: true,
     message: "Books retrieved successfully",
     page,
     limit,
-    total: totalDataCount,
+    total: payload.description ? newBooksWithFavoriteStatus.length : totalDataCount,
     data: {
       newBooks: newBooksWithFavoriteStatus,
     },
@@ -563,20 +762,23 @@ export const getBookUniversityReadProgressService = async (user: any, payload: a
 };
 
 export const getBookUniversityForUserService = async (user: any, payload: any, res: Response) => {
+
   const readProgress = await getBookUniversityReadProgressService(user, payload, res);
   const newBook = await getBookUniversityNewbookService(user, payload, res);
   const teachers = await getBookUniversityTeacherService(payload, user, res);
-  const categories = await getBookUniversityCategoryService(payload, user, res);
+
+  const categories = await getBookUniversityCategoryService(user, payload, res);
+
   const popularCourses = await getPopularCoursesBookUniversityService(payload, user, res);
 
   return {
     success: true,
-    message: "Book Master retrieved successfully",
+    message: "Book University retrieved successfully",
     data: {
       readBooks: readProgress.data.readBooks,
       newBooks: newBook.data.newBooks,
       teachers: teachers.data.teachers,
-      categories: categories?.data?.categories,
+      categories: categories.data.categories,
       popularCourses: popularCourses.data.popularCourses
     },
   };

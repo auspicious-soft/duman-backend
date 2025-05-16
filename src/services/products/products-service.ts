@@ -97,8 +97,6 @@ export const getAllBooksService = async (payload: any, res: Response) => {
   if (payload.description) {
     const searchQuery = typeof payload.description === 'string' ? payload.description.toLowerCase() : '';
     const searchLanguage = payload.language && ['eng', 'kaz', 'rus'].includes(payload.language) ? payload.language : null;
-    console.log('searchQuery: ', searchQuery);
-    console.log('searchLanguage: ', searchLanguage);
 
     filteredResults = results.filter((book) => {
       try {
@@ -158,7 +156,6 @@ export const getAllBooksService = async (payload: any, res: Response) => {
     });
 
     totalDataCount = filteredResults.length;
-    console.log('Filtered results count:', totalDataCount);
   }
   return {
     page,
@@ -398,7 +395,6 @@ export const removeBookFromDiscountsService = async (payload: any, res: Response
 export const deleteBookService = async (id: string, res: Response) => {
   try {
     const deletedBook = await productsModel.findByIdAndDelete(id);
-    console.log("deletedBook: ", deletedBook);
     if (!deletedBook) return errorResponseHandler("Book not found", httpStatusCode.NOT_FOUND, res);
     if (deletedBook?.image) {
       await deleteFileFromS3(deletedBook.image);

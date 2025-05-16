@@ -112,7 +112,6 @@ export const getAllBookLivesWithBlogsService = async (payload: any, res: Respons
 
   // Limit to 5 entries
   const limitedBookLives = bookLivesWithBlogs.slice(0, 5);
-  console.log('limitedBookLives: ', limitedBookLives);
 
   // Assign book lives to the 3 fixed keys
   limitedBookLives.forEach((bookLive, index) => {

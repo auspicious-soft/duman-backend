@@ -108,8 +108,6 @@ export const getAllBookStudiesService = async (payload: any) => {
   if (payload.description) {
     const searchQuery = typeof payload.description === 'string' ? payload.description.toLowerCase() : '';
     const searchLanguage = payload.language && ['eng', 'kaz', 'rus'].includes(payload.language) ? payload.language : null;
-    console.log('searchQuery: ', searchQuery);
-    console.log('searchLanguage: ', searchLanguage);
 
     filteredResults = results.filter((book) => {
       try {
@@ -221,7 +219,6 @@ export const getAllBookStudiesService = async (payload: any) => {
     });
 
     totalDataCount = filteredResults.length;
-    console.log('Filtered results count:', totalDataCount);
   }
   return {
     page,
@@ -315,8 +312,20 @@ export const getBookStudyCategoryService = async (user: any, payload: any, res: 
   let categories: any[] = [];
 
   bookStudy.forEach((study:any) => {
-    if (study.productsId && study.productsId.categoryId) {
-      categories.push(...study.productsId.categoryId);
+    if (study.productsId) {
+      if (!Array.isArray(study.productsId)) {
+        // If productsId is a single object
+        if (study.productsId.categoryId) {
+          categories.push(...study.productsId.categoryId);
+        }
+      } else {
+        // If productsId is an array
+        study.productsId.forEach((product: any) => {
+          if (product.categoryId) {
+            categories.push(...product.categoryId);
+          }
+        });
+      }
     }
   });
 
