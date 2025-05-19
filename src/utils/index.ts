@@ -12,6 +12,7 @@ export const checkValidAdminRole = (req: Request, res: Response, next: any) => {
   if (role !== "admin") return res.status(403).json({ success: false, message: "Invalid role" });
   else return next();
 };
+
 export const checkValidPublisherRole = (req: Request, res: Response, next: any) => {
   const { role } = req.headers;
   if (role !== "publisher") return res.status(403).json({ success: false, message: "Invalid role" });
@@ -71,6 +72,8 @@ export const filterBooksByLanguage = (books: any[], languages: string[]): any[] 
     return false;
   });
 };
+
+
 
 export const sortBooks = (books: any[], sorting: string, languagePriority: string[] = [], appInterface: any): any[] => {
   switch (sorting?.toLowerCase()) {

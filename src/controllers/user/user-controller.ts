@@ -17,9 +17,11 @@ import {
   getCurrentUserDetailsService,
   updateCurrentUserDetailsService,
   WhatsappLoginService,
+  forgotPasswordResendOTPService,
 } from "src/services/user/user-service";
 import { newPassswordAfterOTPVerifiedService } from "src/services/admin/admin-service";
 import { verifyOtpPasswordResetService, newPassswordAfterOTPVerifiedUserService } from "../../services/user/user-service";
+import { generatePasswordResetToken, generatePasswordResetTokenByPhone } from "src/utils/mails/token";
 
 export const userSignup = async (req: Request, res: Response) => {
   try {
@@ -191,6 +193,21 @@ export const resendOTP = async (req: Request, res: Response) => {
     res.status(200).json({
       success: true,
       data: { response },
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: error instanceof Error ? error.message : "An error occurred",
+    });
+  }
+};
+export const forgotPasswordResendOTP = async (req: Request, res: Response) => {
+  try {
+    
+    const response = await forgotPasswordResendOTPService(req.body,res);
+
+    res.status(200).json({
+       success: true, message: "Password reset email sent with otp" 
     });
   } catch (error) {
     res.status(400).json({

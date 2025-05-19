@@ -58,7 +58,7 @@ export const getAllAuthorsService = async (payload: any, res: Response) => {
 
   const totalDataCount = Object.keys(query).length < 1 ? await authorsModel.countDocuments() : await authorsModel.countDocuments(query);
   const results = await authorsModel.find(query).sort({
-    createdAt: -1,  
+    createdAt: -1,
     ...sort,
   }).skip(offset).limit(limit).select("-__v");
   if (results.length)
@@ -85,11 +85,7 @@ export const getAllAuthorsForUserService = async (user: any, payload: any, res: 
   const limit = parseInt(payload.limit as string) || 0;
   const offset = (page - 1) * limit;
   const { query, sort } = nestedQueryBuilder(payload, ["name"]);
-  // ['type', 'genres', 'country'].forEach((key) => {
-  //   if (payload[key]) {
-  //     (query as any)[key === 'type' ? 'profession' : key] = payload[key];
-  //   }
-  // });
+
   ['type', 'genres', 'country'].forEach((key) => {
     if (payload[key]) {
       (query as any)[key === 'type' ? 'profession' : key] = {
@@ -97,25 +93,63 @@ export const getAllAuthorsForUserService = async (user: any, payload: any, res: 
       };
     }
   });
-  const totalDataCount = Object.keys(query).length < 1 ? await authorsModel.countDocuments() : await authorsModel.countDocuments(query);
-  const authors = await authorsModel.find(query).sort(sort).skip(offset).limit(limit).select("-__v");
+
+  // Get all authors based on the query
+  let authors = await authorsModel.find(query).sort(sort).skip(offset).limit(limit).select("-__v");
+  let totalDataCount = Object.keys(query).length < 1 ? await authorsModel.countDocuments() : await authorsModel.countDocuments(query);
+
+  // Apply search filter if description is provided
+  if (payload.description) {
+    const searchQuery = typeof payload.description === 'string' ? payload.description.toLowerCase() : '';
+    const searchLanguage = payload.language && ['eng', 'kaz', 'rus'].includes(payload.language) ? payload.language : null;
+
+    authors = authors.filter((author) => {
+      try {
+        // Extract author names based on language
+        let authorNames: string[] = [];
+
+        if (searchLanguage && author.name && typeof author.name === 'object') {
+          // Search only in the specified language
+          const langValue = author.name[searchLanguage];
+          authorNames = langValue ? [String(langValue).toLowerCase()] : [];
+        } else if (author.name) {
+          // Search in all languages
+          authorNames = Object.values(author.name).map(val => String(val || '').toLowerCase());
+        }
+
+        // Check if any name includes the search query
+        return authorNames.some(name =>
+          typeof name === 'string' && name.includes(searchQuery)
+        );
+      } catch (error) {
+        console.error('Error in search filter:', error, 'for author:', author);
+        return false;
+      }
+    });
+
+    totalDataCount = authors.length;
+  }
+
+  // Get favorite authors
   const favoriteAuthors = await authorFavoritesModel.find({ userId: user.id}).populate("authorId");
   const favoriteIds = favoriteAuthors.map((author) => author.authorId._id.toString());
 
+  // Add favorite status to authors
   const authorWithFavoriteStatus = authors.map((author) => ({
     ...author.toObject(),
     isFavorite: favoriteIds.includes(author._id.toString()),
   }));
-  if (authors.length)
+
+  if (authors.length) {
     return {
       success: true,
       message: "Authors retrieved successfully",
       page,
       limit,
       total: totalDataCount,
-      data: {authors:authorWithFavoriteStatus,}
+      data: {authors: authorWithFavoriteStatus}
     };
-  else {
+  } else {
     return {
       data: [],
       page,
@@ -165,5 +199,6 @@ export const getAuthorCountriesService = async (res: Response) => {
     console.error('Error fetching authors:', error);
     throw error;  // Rethrow the error to be caught by the controller
   }
+  
 };
 
