@@ -15,6 +15,7 @@ import { publishersModel } from "src/models/publishers/publishers-schema";
 import { authorsModel } from "src/models/authors/authors-schema";
 import { courseLessonsModel } from "src/models/course-lessons/course-lessons-schema";
 import { usersModel } from "src/models/user/user-schema";
+import { getAllCollectionsWithBooksService } from "../collections/collections-service";
 
 export const createBookService = async (payload: any, res: Response) => {
   const newBook = new productsModel(payload);
@@ -548,13 +549,14 @@ export const getAllAudioBookForUserService = async (payload: any, user: any, res
 
 export const getBookMarketForUserService = async (user: any, res: Response) => {
   const categories = await categoriesModel.find();
-  const collections = await collectionsModel
-    .find()
-    .limit(5)
-    .populate({
-      path: "booksId",
-      populate: [{ path: "authorId", select: "name" }],
-    });
+  // const collections = await collectionsModel
+  //   .find()
+  //   .limit(5)
+  //   .populate({
+  //     path: "booksId",
+  //     populate: [{ path: "authorId", select: "name" }],
+  //   });
+  const collections= await getAllCollectionsWithBooksService({}, res); 
   const publisher = await publishersModel.find().limit(10);
   const author = await authorsModel.find().limit(10);
   const readProgress = await readProgressModel.find({ userId: user.id }).populate({
