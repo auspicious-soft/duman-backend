@@ -1,7 +1,7 @@
 import { Response } from "express";
 import { errorResponseHandler } from "../../lib/errors/error-response-handler";
 import { httpStatusCode } from "../../lib/constant";
-import { nestedQueryBuilder, queryBuilder } from "src/utils";
+import { nestedQueryBuilder, queryBuilder, filterBooksByLanguage, sortBooks, toArray } from "src/utils";
 import { deleteFileFromS3 } from "src/config/s3";
 import { bookLivesModel } from "../../models/book-lives/book-lives-schema";
 import { blogsModel } from "src/models/blogs/blogs-schema";
@@ -138,7 +138,7 @@ export const getAllBookLivesForUserService = async (payload: any, res: Response)
   const totalDataCount = Object.keys(query).length < 1 ? await bookLivesModel.countDocuments() : await bookLivesModel.countDocuments(query);
 
   // Get all book lives
-  const bookLivesResults = await bookLivesModel.find(query).sort(sort).skip(offset).limit(limit).select("-__v");
+  let bookLivesResults = await bookLivesModel.find(query).sort(sort).skip(offset).limit(limit).select("-__v");
 
   if (!bookLivesResults.length) {
     return {
@@ -147,6 +147,32 @@ export const getAllBookLivesForUserService = async (payload: any, res: Response)
         blogs: []
       },
       message: "No book lives found",
+      page,
+      limit,
+      success: false,
+      total: 0,
+    };
+  }
+
+  // Apply language filtering to book lives
+  const languages = toArray(payload.language);
+  if (languages.length > 0) {
+    bookLivesResults = filterBooksByLanguage(bookLivesResults, languages);
+  }
+
+  // Apply sorting to book lives
+  if (payload.sorting) {
+    bookLivesResults = sortBooks(bookLivesResults, payload.sorting, payload.productsLanguage || [], payload.language);
+  }
+
+  // Check if we still have book lives after filtering
+  if (!bookLivesResults.length) {
+    return {
+      data: {
+        categories: [],
+        blogs: []
+      },
+      message: "No book lives found after filtering",
       page,
       limit,
       success: false,
@@ -166,7 +192,17 @@ export const getAllBookLivesForUserService = async (payload: any, res: Response)
   }
 
   // Get blogs for the selected category
-  const blogs = await blogsModel.find({ categoryId: categoryIdForBlogs }).select("-__v");
+  let blogs = await blogsModel.find({ categoryId: categoryIdForBlogs }).select("-__v");
+
+  // Apply language filtering to blogs
+  if (languages.length > 0) {
+    blogs = filterBooksByLanguage(blogs, languages);
+  }
+
+  // Apply sorting to blogs
+  if (payload.sorting) {
+    blogs = sortBooks(blogs, payload.sorting, payload.productsLanguage || [], payload.language);
+  }
 
   // Format the response data
   const categories = bookLivesResults.map(bookLife => bookLife.toObject());
