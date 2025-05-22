@@ -21,7 +21,7 @@ import { createBookLive, deleteBookLive, getAllBookLives, getBookLive, updateBoo
 import { createBlog, deleteBlog, getAllBlogs, getBlogById, updateBlog } from "src/controllers/blogs/blogs-controller";
 import { sendNotificationToUser, sendNotificationToUsers } from "src/controllers/notifications/notifications-controller";
 import { createCourseLesson, deleteCourseLanguage, deleteCourseLesson, deleteSubLesson, getCourseLesson, updateCourseLesson } from "src/controllers/course-lessons/course-lessons-controller";
-import { createAudiobookChapter, deleteAudiobookChapter, deleteAudiobookChaptersByProductId, getAllAudiobookChapters, getAudiobookChapter, getAudiobookChaptersByProductId, updateAudiobookChapter } from "src/controllers/audiobook-chapters/audiobook-chapters-controller";
+import { createAudiobookChapter, deleteAudiobookChapter, deleteAudiobookChaptersByProductId, getAllAudiobookChapters, getAudiobookChapter, getAudiobookChaptersByProductId, updateAudiobookChapter, updateMultipleAudiobookChapters } from "src/controllers/audiobook-chapters/audiobook-chapters-controller";
 
 const router = Router();
 
@@ -81,6 +81,7 @@ router.get("/audiobook-chapters", getAllAudiobookChapters);
 router.get("/audiobook-chapters/:id", getAudiobookChapter);
 router.get("/audiobook-chapters/product/:productId", getAudiobookChaptersByProductId);
 router.put("/audiobook-chapters/:id", updateAudiobookChapter);
+router.put("/audiobook-chapters", updateMultipleAudiobookChapters);
 router.delete("/audiobook-chapters/:id", deleteAudiobookChapter);
 router.delete("/audiobook-chapters/product/:productId", deleteAudiobookChaptersByProductId);
 

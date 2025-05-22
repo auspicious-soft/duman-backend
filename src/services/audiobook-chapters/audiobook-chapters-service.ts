@@ -199,3 +199,40 @@ export const deleteAudiobookChaptersByProductIdService = async (productId: strin
     return errorResponseHandler("Failed to delete audiobook chapters", httpStatusCode.INTERNAL_SERVER_ERROR, res);
   }
 };
+
+// Update multiple audiobook chapters
+export const updateMultipleAudiobookChaptersService = async (chapters: any | any[]) => {
+  const chaptersArray = Array.isArray(chapters) ? chapters : [chapters];
+
+  if (!chaptersArray.length) {
+    throw new Error("No chapters provided for update or creation.");
+  }
+
+  const chaptersToUpdate = chaptersArray.filter((chapter) => chapter._id);
+  const chaptersToCreate = chaptersArray.filter((chapter) => !chapter._id);
+
+  const bulkOperations = chaptersToUpdate.map((chapter) => ({
+    updateOne: {
+      filter: { _id: chapter._id },
+      update: { $set: chapter },
+    },
+  }));
+
+  let updateResult = { modifiedCount: 0 };
+  if (bulkOperations.length > 0) {
+    updateResult = await audiobookChaptersModel.bulkWrite(bulkOperations);
+  }
+
+  let createdChapters: any = [];
+  if (chaptersToCreate.length > 0) {
+    createdChapters = await audiobookChaptersModel.insertMany(chaptersToCreate);
+  }
+
+  return {
+    success: true,
+    message: `${updateResult.modifiedCount} audiobook chapter(s) updated, ${createdChapters.length} new chapter(s) created successfully`,
+    updatedCount: updateResult.modifiedCount,
+    createdCount: createdChapters.length,
+    createdChapters,
+  };
+};

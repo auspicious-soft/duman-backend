@@ -9,6 +9,7 @@ import {
   updateAudiobookChapterService,
   deleteAudiobookChapterService,
   deleteAudiobookChaptersByProductIdService,
+  updateMultipleAudiobookChaptersService,
 } from "src/services/audiobook-chapters/audiobook-chapters-service";
 
 // Create audiobook chapters with book details
@@ -86,5 +87,27 @@ export const deleteAudiobookChaptersByProductId = async (req: Request, res: Resp
   } catch (error: any) {
     const { code, message } = errorParser(error);
     return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
+  }
+};
+
+// Update multiple audiobook chapters
+export const updateMultipleAudiobookChapters = async (req: Request, res: Response) => {
+  try {
+    const { chapters } = req.body;
+    if (!chapters) {
+      return res.status(httpStatusCode.BAD_REQUEST).json({
+        success: false,
+        message: "No chapters provided for update"
+      });
+    }
+
+    const response = await updateMultipleAudiobookChaptersService(chapters);
+    return res.status(httpStatusCode.OK).json(response);
+  } catch (error: any) {
+    const { code, message } = errorParser(error);
+    return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: message || "Failed to update audiobook chapters"
+    });
   }
 };
