@@ -83,11 +83,15 @@ export const getAllBookLivesWithBlogsService = async (payload: any, res: Respons
 
   const totalDataCount = Object.keys(query).length < 1 ? await bookLivesModel.countDocuments() : await bookLivesModel.countDocuments(query);
 
+  // Get all book lives
   const bookLivesResults = await bookLivesModel.find(query).sort(sort).skip(offset).limit(limit).select("-__v");
 
   if (!bookLivesResults.length) {
     return {
-      data: {},
+      data: {
+        categories: [],
+        blogs: []
+      },
       message: "No book lives found",
       page,
       limit,
@@ -96,41 +100,87 @@ export const getAllBookLivesWithBlogsService = async (payload: any, res: Respons
     };
   }
 
-  const bookLivesWithBlogs = await Promise.all(
-    bookLivesResults.map(async (bookLife) => {
-      const blogs = await blogsModel.find({ categoryId: bookLife._id }).select("-__v");
-      return { ...bookLife.toObject(), blogs };
-    })
-  );
+  // Determine which category ID to use for blogs
+  let categoryIdForBlogs;
 
-  // Transform the results into the desired format with exactly 3 static keys
-  const transformedData: Record<string, any> = {
-    "blog": null,
-    "news": null,
-    
-  };
+  // If a specific category ID is provided in the query, use it
+  if (payload.categoryId) {
+    categoryIdForBlogs = payload.categoryId;
+  } else {
+    // Otherwise, use the ID of the first book live
+    categoryIdForBlogs = bookLivesResults[0]._id;
+  }
 
-  // Limit to 5 entries
-  const limitedBookLives = bookLivesWithBlogs.slice(0, 5);
+  // Get blogs for the selected category
+  const blogs = await blogsModel.find({ categoryId: categoryIdForBlogs }).select("-__v");
 
-  // Assign book lives to the 3 fixed keys
-  limitedBookLives.forEach((bookLive, index) => {
-    // Determine which key to use based on index
-    if (index === 0) {
-      transformedData["blog"] = bookLive;
-    } else if (index === 1) {
-      transformedData["news"] = bookLive;
-    } 
-    // Ignore any additional book lives beyond the first 3
-  });
+  // Format the response data
+  const categories = bookLivesResults.map(bookLife => bookLife.toObject());
 
   return {
     success: true,
-    message: "Book lives retrieved successfully",
+    message: "Book lives and blogs retrieved successfully",
     page,
     limit,
     total: totalDataCount,
-    data: transformedData,
+    data: {
+      categories: categories,
+      blogs: blogs
+    }
+  };
+};
+export const getAllBookLivesForUserService = async (payload: any, res: Response) => {
+  const page = parseInt(payload.page as string) || 1;
+  const limit = parseInt(payload.limit as string) || 0;
+  const offset = (page - 1) * limit;
+  const { query, sort } = nestedQueryBuilder(payload, ["name"]);
+
+  const totalDataCount = Object.keys(query).length < 1 ? await bookLivesModel.countDocuments() : await bookLivesModel.countDocuments(query);
+
+  // Get all book lives
+  const bookLivesResults = await bookLivesModel.find(query).sort(sort).skip(offset).limit(limit).select("-__v");
+
+  if (!bookLivesResults.length) {
+    return {
+      data: {
+        categories: [],
+        blogs: []
+      },
+      message: "No book lives found",
+      page,
+      limit,
+      success: false,
+      total: 0,
+    };
+  }
+
+  // Determine which category ID to use for blogs
+  let categoryIdForBlogs;
+
+  // If a specific category ID is provided in the query, use it
+  if (payload.categoryId) {
+    categoryIdForBlogs = payload.categoryId;
+  } else {
+    // Otherwise, use the ID of the first book live
+    categoryIdForBlogs = bookLivesResults[0]._id;
+  }
+
+  // Get blogs for the selected category
+  const blogs = await blogsModel.find({ categoryId: categoryIdForBlogs }).select("-__v");
+
+  // Format the response data
+  const categories = bookLivesResults.map(bookLife => bookLife.toObject());
+
+  return {
+    success: true,
+    message: "Book lives and blogs retrieved successfully",
+    page,
+    limit,
+    total: totalDataCount,
+    data: {
+      categories: categories,
+      blogs: blogs
+    }
   };
 };
 
