@@ -1,6 +1,6 @@
 import { Router } from "express";
 import {  getAllAuthorsForUser, getAuthorCountries, getAuthorForUser } from "src/controllers/authors/authors-controller";
-import {  getAllBookLivesForUser, getAllBookLivesWithBlogs, getBookLive } from "src/controllers/book-lives/book-lives-controller";
+import {  getAllBookLivesForUser, getBLogById } from "src/controllers/book-lives/book-lives-controller";
 import { getBookSchoolsByCode, verifyBookSchoolsByCode } from "src/controllers/book-schools/book-schools-controller";
 import { getAllCategories, getBooksByCategoryId } from "src/controllers/categories/categories-controller";
 import { getAllCollections, getCollectionForUser } from "src/controllers/collections/collections-controller";
@@ -38,7 +38,7 @@ router.get("/events/:id", getEventByIdHandler);
 
 // book-lives route
 router.get("/book-lives", getAllBookLivesForUser);
-router.get("/book-lives/:id", getBookLive);
+router.get("/book-lives/:id", getBLogById);
 
 //rating route
 router.put("/books/rating/:id", AddBookRating);

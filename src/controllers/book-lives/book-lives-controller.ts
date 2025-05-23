@@ -1,5 +1,5 @@
 import { Request, Response } from "express"
-import { createBookLiveService, getBookLiveService, updateBookLiveService, deleteBookLiveService, getAllBookLivesService, getAllBookLivesWithBlogsService, getAllBookLivesForUserService } from "../../services/book-lives/book-lives-service";
+import { createBookLiveService, getBookLiveService, updateBookLiveService, deleteBookLiveService, getAllBookLivesService, getAllBookLivesWithBlogsService, getAllBookLivesForUserService, getBLogByIdService } from "../../services/book-lives/book-lives-service";
 import { errorParser } from "../../lib/errors/error-response-handler";
 import { httpStatusCode } from "../../lib/constant";
 
@@ -24,6 +24,16 @@ export const getBookLive = async (req: Request, res: Response) => {
         return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
     }
 };
+export const getBLogById = async (req: Request, res: Response) => {
+    try {
+        const response = await getBLogByIdService(req.params.id, res);
+        return res.status(httpStatusCode.OK).json(response);
+    } catch (error: any) {
+        const { code, message } = errorParser(error);
+        return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
+    }
+};
+
 
 export const updateBookLive = async (req: Request, res: Response) => {
     try {

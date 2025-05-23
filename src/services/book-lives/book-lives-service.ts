@@ -43,6 +43,11 @@ export const getBookLiveService = async (id: string, payload: any, res: Response
     data: { bookLive, blogs },
   };
 };
+export const getBLogByIdService = async (id: string,  res: Response) => {
+  const blog = await blogsModel.findById(id);
+  if (!blog) return errorResponseHandler("Blog not found", httpStatusCode.NOT_FOUND, res);
+ return blog;
+};
 
 export const getAllBookLivesService = async (payload: any, res: Response) => {
   const page = parseInt(payload.page as string) || 1;
