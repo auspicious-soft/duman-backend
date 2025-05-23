@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { createEvent, getEventById, updateEvent, deleteEvent, getAllEvents } from '../../services/events/events-service';
+import { createEvent, getEventById, updateEvent, deleteEvent, getAllEvents, getAllEventsForUser } from '../../services/events/events-service';
 import { httpStatusCode } from 'src/lib/constant';
 import { errorParser } from 'src/lib/errors/error-response-handler';
 
@@ -49,6 +49,15 @@ export const deleteEventHandler = async (req: Request, res: Response) => {
 export const getAllEventsHandler = async (req: Request, res: Response) => {
     try {
       const response = await getAllEvents(req.query);
+      return res.status(httpStatusCode.OK).json(response)
+  } catch (error: any) {
+      const { code, message } = errorParser(error)
+      return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
+  }
+};
+export const getAllEventsHandlerForUser = async (req: Request, res: Response) => {
+    try {
+      const response = await getAllEventsForUser(req.query);
       return res.status(httpStatusCode.OK).json(response)
   } catch (error: any) {
       const { code, message } = errorParser(error)

@@ -1,6 +1,6 @@
 import { customAlphabet } from "nanoid";
 import { eventsModel } from "../../models/events/events-schema";
-import { queryBuilder } from "src/utils";
+import { queryBuilder, sortBooks } from "src/utils";
 import { errorResponseHandler } from "src/lib/errors/error-response-handler";
 import { httpStatusCode } from "src/lib/constant";
 import { deleteFileFromS3 } from "src/config/s3";
@@ -50,9 +50,42 @@ export const getAllEvents = async (payload: any) => {
   const limit = parseInt(payload.limit as string) || 0
   const offset = (page - 1) * limit
   const { query, sort } = queryBuilder(payload, ['name'])
- 
+
   const totalDataCount = Object.keys(query).length < 1 ? await eventsModel.countDocuments() : await eventsModel.countDocuments(query)
   const results = await eventsModel.find(query).sort({createdAt: -1, ...sort}).skip(offset).limit(limit).select("-__v")
+  if (results.length) return {
+      page,
+      limit,
+      success: true,
+      message: "Events retrieved successfully",
+      total: totalDataCount,
+      data: results
+  }
+  else {
+      return {
+          data: [],
+          page,
+          limit,
+          success: false,
+          message: "No events found",
+          total: 0
+      }
+  }
+}
+export const getAllEventsForUser = async (payload: any) => {
+  const page = parseInt(payload.page as string) || 1
+  const limit = parseInt(payload.limit as string) || 0
+  const offset = (page - 1) * limit
+  const { query, sort } = queryBuilder(payload, ['name'])
+
+  const totalDataCount = Object.keys(query).length < 1 ? await eventsModel.countDocuments() : await eventsModel.countDocuments(query)
+  let results = await eventsModel.find(query).sort({createdAt: -1, ...sort}).skip(offset).limit(limit).select("-__v")
+
+  // Apply sortBooks if sorting parameter is provided
+  if (payload.sorting && results.length) {
+    results = sortBooks(results, payload.sorting, payload.productsLanguage || [], payload.language);
+  }
+
   if (results.length) return {
       page,
       limit,

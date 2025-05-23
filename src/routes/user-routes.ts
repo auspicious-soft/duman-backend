@@ -5,7 +5,7 @@ import { getBookSchoolsByCode, verifyBookSchoolsByCode } from "src/controllers/b
 import { getAllCategories, getBooksByCategoryId } from "src/controllers/categories/categories-controller";
 import { getAllCollections, getCollectionForUser } from "src/controllers/collections/collections-controller";
 import {  verifyDiscountVoucher } from "src/controllers/discount-vouchers/discount-vouchers-controller";
-import { getAllEventsHandler, getEventByIdHandler } from "src/controllers/events/events-controller";
+import { getAllEventsHandler, getAllEventsHandlerForUser, getEventByIdHandler } from "src/controllers/events/events-controller";
 import {  getAllFavorites, getFavorite, updateFavorite } from "src/controllers/product-favorites/product-favorites-controller";
 import { getAllNotificationsOfUser, markAllNotificationsAsRead } from "src/controllers/notifications/notifications-controller";
 import { getAllAudioBookForUser, getAllBooks, getBook, getBookforUser, getBookMarketForUser, getCourseforUser, getNewbookForUser } from "src/controllers/products/products-controller";
@@ -33,7 +33,7 @@ const router = Router();
 router.get("/dashboard/:id", getUserDashboardStats);
 
 //book-events routes
-router.get("/events", getAllEventsHandler);
+router.get("/events", getAllEventsHandlerForUser);
 router.get("/events/:id", getEventByIdHandler);
 
 // book-lives route
