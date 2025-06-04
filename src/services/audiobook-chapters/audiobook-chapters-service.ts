@@ -9,13 +9,13 @@ import mongoose from "mongoose";
 import { createBookService } from "../products/products-service";
 
 // Create audiobook chapters with book details
-export const createAudiobookChapterService = async (bookDetails: any, chapters: any, res: Response) => {
+export const createAudiobookChapterService = async (bookDetails: any, chapters: any) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
-    const savedBook = await createBookService(bookDetails, res);
+    const savedBook = await createBookService(bookDetails, {} as Response);
     if (!savedBook?.data?._id) {
-      return errorResponseHandler("Book creation failed", httpStatusCode.NOT_FOUND, res);
+      throw new Error("Book creation failed");
     }
 
     const chaptersWithBookId = chapters.map((chapter: any) => ({
@@ -37,11 +37,7 @@ export const createAudiobookChapterService = async (bookDetails: any, chapters: 
     await session.abortTransaction();
     session.endSession();
 
-    return res.status(500).json({
-      success: false,
-      message: "Failed to create audiobook chapters",
-      error: error.message,
-    });
+    throw new Error(`Failed to create audiobook chapters: ${error.message}`);
   }
 };
 
@@ -136,6 +132,7 @@ export const updateAudiobookChapterService = async (id: string, payload: any, re
   try {
     const updatedChapter = await audiobookChaptersModel.findByIdAndUpdate(id, payload, {
       new: true,
+      upsert:true
     });
     if (!updatedChapter) {
       return errorResponseHandler("Audiobook chapter not found", httpStatusCode.NOT_FOUND, res);

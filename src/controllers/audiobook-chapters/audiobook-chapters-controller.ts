@@ -16,7 +16,7 @@ import {
 export const createAudiobookChapter = async (req: Request, res: Response) => {
   try {
     const { bookDetails, chapters } = req.body;
-    const response = await createAudiobookChapterService(bookDetails, chapters, res);
+    const response = await createAudiobookChapterService(bookDetails, chapters);
     return res.status(httpStatusCode.CREATED).json(response);
   } catch (error: any) {
     const { code, message } = errorParser(error);
