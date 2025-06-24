@@ -31,6 +31,16 @@ const ordersSchema = new mongoose.Schema(
       type: String,
       enum:['Pending','Completed','Failed'],
       default: 'Pending'
+    },
+    // Enhanced payment tracking fields
+    paymentCompletedAt: {
+      type: Date,
+    },
+    paymentAmount: {
+      type: Number,
+    },
+    paymentGatewayResponse: {
+      type: mongoose.Schema.Types.Mixed,
     }
   },
   { timestamps: true }

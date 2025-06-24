@@ -4,9 +4,11 @@ import { httpStatusCode } from "../../lib/constant";
 import { queryBuilder } from "src/utils";
 import { ordersModel } from "../../models/orders/orders-schema";
 import { customAlphabet } from "nanoid";
-import { productsModel } from "../../models/products/products-schema"; // Assuming you have a products model
+import { productsModel } from "../../models/products/products-schema";
+import { initializePayment } from "../payment/freedompay-service";
+import { usersModel } from "../../models/user/user-schema";
 
-export const createOrderService = async (payload: any, res: Response) => {
+export const createOrderService = async (payload: any, res: Response, userInfo?: any) => {
 
   // Check if any product is discounted
   const products = await productsModel.find({ _id: { $in: payload.productIds } });
@@ -24,10 +26,55 @@ export const createOrderService = async (payload: any, res: Response) => {
   payload.identifier = identifier();
   const newOrder = new ordersModel(payload);
   const savedOrder = await newOrder.save();
+
+  // Automatically initialize payment after order creation
+  let paymentData = null;
+  try {
+    console.log(`Order ${savedOrder.identifier} created successfully. Initializing payment...`);
+
+    // Get user information for payment initialization
+    let userPhone, userEmail;
+    if (userInfo && userInfo.phoneNumber && userInfo.email) {
+      // If userInfo is provided directly with phone and email
+      userPhone = userInfo.phoneNumber;
+      userEmail = userInfo.email;
+    } else {
+      // Fetch user details from database
+      const userId = userInfo?.id || payload.userId;
+      if (userId) {
+        const user = await usersModel.findById(userId);
+        if (user) {
+          userPhone = user.phoneNumber;
+          userEmail = user.email;
+        }
+      }
+    }
+
+    // Initialize payment with FreedomPay
+    const paymentResponse = await initializePayment(
+      savedOrder.identifier,
+      savedOrder.totalAmount,
+      `Payment for order ${savedOrder.identifier}`,
+      userPhone,
+      userEmail
+    );
+
+    paymentData = paymentResponse;
+    console.log(`Payment initialized successfully for order ${savedOrder.identifier}`);
+
+  } catch (paymentError) {
+    console.error(`Failed to initialize payment for order ${savedOrder.identifier}:`, paymentError);
+    // Don't fail the order creation if payment initialization fails
+    // Just log the error and continue
+  }
+
   return {
     success: true,
     message: "Order created successfully",
-    data: savedOrder,
+    data: {
+      order: savedOrder,
+      payment: paymentData
+    },
   };
 };
 

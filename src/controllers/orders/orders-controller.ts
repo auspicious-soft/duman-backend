@@ -6,7 +6,25 @@ import { httpStatusCode } from "../../lib/constant";
 
 export const createOrder = async (req: Request, res: Response) => {
     try {
-        const response = await createOrderService(req.body, res);
+        // Extract user information from the authenticated request
+        let userInfo = null;
+        if (req.user) {
+            // For mobile app users (JWT token)
+            if (typeof req.user === 'object' && 'id' in req.user) {
+                userInfo = {
+                    id: req.user.id,
+                    email: req.user.email,
+                    phoneNumber: req.user.phoneNumber
+                };
+            }
+        } else if ((req as any).currentUser) {
+            // For web users (Next.js auth)
+            const userId = (req as any).currentUser;
+            // We'll let the service fetch user details from the database
+            userInfo = { id: userId };
+        }
+
+        const response = await createOrderService(req.body, res, userInfo);
         return res.status(httpStatusCode.CREATED).json(response);
     } catch (error: any) {
         const { code, message } = errorParser(error);
