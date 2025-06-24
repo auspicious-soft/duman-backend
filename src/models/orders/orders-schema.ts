@@ -41,6 +41,9 @@ const ordersSchema = new mongoose.Schema(
     },
     paymentGatewayResponse: {
       type: mongoose.Schema.Types.Mixed,
+    },
+    redeemPoints:{
+      type: String
     }
   },
   { timestamps: true }

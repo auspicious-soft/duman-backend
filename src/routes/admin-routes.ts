@@ -5,7 +5,7 @@ import { createNewUser, deleteUser, getAllUser, getUser, getUserDashboardStats, 
 import { addBooksToCategory, createCategory, deleteCategory, getAllCategories, getCategory, updateCategory } from "src/controllers/categories/categories-controller";
 import { addBooksToSubCategory, createSubCategory, deleteSubCategory, getAllSubCategory, getSubCategoriesByCategoryId, getSubCategory, updateSubCategory } from "src/controllers/sub-categories/sub-categories-controller";
 import {  addBookToDiscounts, createBook, deleteBook, getAllBooks, getAllDiscountedBooks, getBook, removeBookFromDiscounts, updateBook } from "../controllers/products/products-controller";
-import { createOrder, deleteOrder, getAllOrders, getOrder, updateOrder } from "src/controllers/orders/orders-controller";
+import { createOrder, getAllOrders, getOrder, updateOrder } from "src/controllers/orders/orders-controller";
 import { createPublisher, deletePublisher, getAllPublishers, getPublisher, updatePublisher } from "src/controllers/publisher/publishers-controller";
 import { createAuthor, deleteAuthor, getAllAuthors, getAuthor, updateAuthor } from "src/controllers/authors/authors-controller";
 import { createStory, deleteStory, getAllStories, getStory, updateStory } from "src/controllers/stories/stories-controller";
@@ -104,7 +104,7 @@ router.post("/order", createOrder);
 router.get("/order", getAllOrders);
 router.get("/order/:id", getOrder);
 router.put("/order/:id", updateOrder);
-router.delete("/order/:id", deleteOrder);
+// router.delete("/order/:id", deleteOrder);
 
 // publishers route
 router.post("/publishers", createPublisher);

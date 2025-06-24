@@ -1,5 +1,5 @@
 import { Request, Response } from "express"
-import { createOrderService, getOrderService, updateOrderService, deleteOrderService, getAllOrdersService } from "../../services/orders/orders-service";
+import { createOrderService, getOrderService, updateOrderService, getAllOrdersService, getWalletHistoryService } from "../../services/orders/orders-service";
 import { errorParser } from "../../lib/errors/error-response-handler";
 import { httpStatusCode } from "../../lib/constant";
 
@@ -52,9 +52,9 @@ export const updateOrder = async (req: Request, res: Response) => {
     }
 };
 
-export const deleteOrder = async (req: Request, res: Response) => {
+export const getWalletHistory = async (req: Request, res: Response) => {
     try {
-        const response = await deleteOrderService(req.params.id, res);
+        const response = await getWalletHistoryService(req.params.id, res);
         return res.status(httpStatusCode.OK).json(response);
     } catch (error: any) {
         const { code, message } = errorParser(error);

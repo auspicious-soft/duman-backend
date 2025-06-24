@@ -25,7 +25,7 @@ import { getAllFaviouriteBooks, getAllFinishedBooks, getAllReadingBooks, getCour
 import { getAward } from "src/controllers/awards/awards-controller";
 import { getCourseLesson, getCourseLessonForUser, updateCourseLesson } from "src/controllers/course-lessons/course-lessons-controller";
 import { getAudiobookChapter, getAudiobookChaptersByProductId } from "src/controllers/audiobook-chapters/audiobook-chapters-controller";
-import { createOrder, deleteOrder, getAllOrders, getOrder, updateOrder } from "src/controllers/orders/orders-controller";
+import { createOrder, getAllOrders, getOrder, getWalletHistory, updateOrder } from "src/controllers/orders/orders-controller";
 
 
 const router = Router();
@@ -166,5 +166,7 @@ router.post("/order", createOrder);
 router.get("/order", getAllOrders);
 router.get("/order/:id", getOrder);
 router.put("/order/:id", updateOrder);
+router.get("/wallet/:id", getWalletHistory);
+
 
 export { router }

@@ -18,6 +18,7 @@ export interface UserDocument extends Document {
   profilePic?: string;
   authType?: string;
   schoolVoucher?: string;
+  wallet?:number;
 }
 const usersSchema = new mongoose.Schema(
   {
@@ -118,6 +119,9 @@ const usersSchema = new mongoose.Schema(
     country: {
       type: String,
     },
+    wallet:{
+      type: Number,
+    }
   },
   { timestamps: true }
 );
