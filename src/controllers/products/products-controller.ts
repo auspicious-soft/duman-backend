@@ -44,7 +44,7 @@ export const getBook = async (req: Request, res: Response) => {
 };
 export const getBookforUser = async (req: Request, res: Response) => {
   try {
-    const response = await getBookForUserService(req.params.id,req.user, res);
+    const response = await getBookForUserService(req.params.id,req.query,req.user, res);
     return res.status(httpStatusCode.OK).json(response);
   } catch (error: any) {
     const { code, message } = errorParser(error);
@@ -104,8 +104,7 @@ export const deleteBook = async (req: Request, res: Response) => {
 
 export const getBookMarketForUser = async (req: Request, res: Response) => {
   try {
-
-    const response = await getBookMarketForUserService(req.user, res);
+    const response = await getBookMarketForUserService(req.user,req.query, res);
     return res.status(httpStatusCode.OK).json(response);
   } catch (error: any) {
     const { code, message } = errorParser(error);

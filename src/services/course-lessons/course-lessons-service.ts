@@ -127,7 +127,7 @@ export const getCourseLessonByIdForUserService = async (user: any, payload: any,
   const lessons = await courseLessonsModel.find({ productId: productId }).skip(offset).limit(limit).select("-__v").lean();
   const reviewCount = await productRatingsModel.countDocuments({ productId: productId });
   const isFavorite = await favoritesModel.exists({ userId: user.id, productId: productId });
-  const isPurchased = await ordersModel.find({ productIds: productId, userId: user.id }).lean();
+  const isPurchased = await ordersModel.find({ productIds: {$in:productId}, userId: user.id, status:"Completed" }).lean();
 
   return {
     success: true,

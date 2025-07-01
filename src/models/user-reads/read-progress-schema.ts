@@ -26,11 +26,20 @@ const readProgressSchema = new mongoose.Schema(
         courseLessonId: {
           type: mongoose.Schema.Types.ObjectId,
           ref: "courseLessons", // Reference the courseLesson model
-          required: true,
+          // required: true,
         },
         sectionId: {
           type: mongoose.Schema.Types.ObjectId, // Store the section’s _id
-          required: true,
+          // required: true,
+        },
+      },
+    ],
+    readAudioChapter: [
+      {
+        audioChapterId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "audiobookChapters", 
+          // required: true,
         },
       },
     ],
