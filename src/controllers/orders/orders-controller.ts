@@ -24,7 +24,7 @@ export const createOrder = async (req: Request, res: Response) => {
             userInfo = { id: userId };
         }
 
-        const response = await createOrderService(req.body, res, userInfo);
+        const response = await createOrderService(req.body, res, userInfo, req.user);
         return res.status(httpStatusCode.CREATED).json(response);
     } catch (error: any) {
         const { code, message } = errorParser(error);

@@ -9,8 +9,7 @@ import { initializePayment } from "../payment/freedompay-service";
 import { usersModel } from "../../models/user/user-schema";
 import { walletHistoryModel } from "src/models/wallet-history/wallet-history-schema";
 
-export const createOrderService = async (payload: any, res: Response, userInfo?: any) => {
-	// Check if any product is discounted
+export const createOrderService = async (payload: any, res: Response,userDetails:any, userInfo?: any) => {
 	const products = await productsModel.find({ _id: { $in: payload.productIds } });
 	const hasDiscountedProduct = products.some((product) => product.isDiscounted);
 
@@ -20,7 +19,7 @@ export const createOrderService = async (payload: any, res: Response, userInfo?:
 
 	const identifier = customAlphabet("0123456789", 5);
 	payload.identifier = identifier();
-	const newOrder = new ordersModel(payload);
+	const newOrder = new ordersModel({...payload, userId:userDetails.id});
 	const savedOrder = await newOrder.save();
 	if (payload.redeemPoints) {
 		await usersModel.findByIdAndUpdate(payload.userId, { $inc: { wallet: -payload.redeemPoints } });
@@ -39,7 +38,7 @@ export const createOrderService = async (payload: any, res: Response, userInfo?:
 			userEmail = userInfo.email;
 		} else {
 			// Fetch user details from database
-			const userId = userInfo?.id || payload.userId;
+			const userId = userDetails.id ;
 			if (userId) {
 				const user = await usersModel.findById(userId);
 				if (user) {
