@@ -389,8 +389,8 @@ export const getBookForUserService = async (id: string, payload: any, user: any,
 		return errorResponseHandler("Book not found", httpStatusCode.NOT_FOUND, res);
 	}
 	const isFavorite = await favoritesModel.exists({ userId: user.id, productId: id });
-	const relatedBooks = await productsModel.find({ categoryId: { $in: book?.categoryId }, type: book?.type}).populate([{ path: "authorId" }]);
-	const isPurchased = await ordersModel.find({ productIds: { $in: id }, userId: user.id, status:"Completed" });
+	const relatedBooks = await productsModel.find({ categoryId: { $in: book?.categoryId }, type: book?.type }).populate([{ path: "authorId" }]);
+	const isPurchased = await ordersModel.find({ productIds: { $in: id }, userId: user.id, status: "Completed" });
 	let language;
 
 	if (book.type === "audiobook") {
@@ -400,19 +400,16 @@ export const getBookForUserService = async (id: string, payload: any, user: any,
 			language = "eng";
 		}
 		const chapters = await audiobookChaptersModel.find({ productId: id, lang: language });
-		console.log('chapters: ', chapters);
-const userReadProgress = await readProgressModel.findOne({ userId: user.id, bookId: id });
-console.log('userReadProgress: ', userReadProgress);
+		const userReadProgress = await readProgressModel.findOne({ userId: user.id, bookId: id });
 
-// If userReadProgress exists, get readSections (array of chapter IDs)
-const readChapters = userReadProgress?.readAudioChapter?.map((section: any) => section?.audioChapterId.toString()) || [];
-console.log('readChapters: ', readChapters);
+		// If userReadProgress exists, get readSections (array of chapter IDs)
+		const readChapters = userReadProgress?.readAudioChapter?.map((section: any) => section?.audioChapterId.toString()) || [];
 
-// Add isRead property to each chapter
-const chaptersWithIsRead = chapters.map((chapter) => ({
-	...chapter.toObject(),
-	isRead: readChapters.includes(chapter._id.toString()),
-}));
+		// Add isRead property to each chapter
+		const chaptersWithIsRead = chapters.map((chapter) => ({
+			...chapter.toObject(),
+			isRead: readChapters.includes(chapter._id.toString()),
+		}));
 		return {
 			success: true,
 			message: "Audiobook retrieved successfully",
@@ -634,7 +631,7 @@ export const getCourseForUserService = async (id: string, user: any, res: Respon
 	const relatedCourses = await productsModel.find({ categoryId: { $in: course?.categoryId }, type: "course" }).populate([{ path: "authorId", select: "name" }]);
 	const reviewCount = await productRatingsModel.countDocuments({ productId: id });
 	const isFavorite = await favoritesModel.exists({ userId: user.id, productId: id });
-	const isPurchased = await ordersModel.find({ productIds: id, userId: user.id,status:"Completed" });
+	const isPurchased = await ordersModel.find({ productIds: id, userId: user.id, status: "Completed" });
 	return {
 		success: true,
 		message: "Course retrieved successfully",
@@ -647,6 +644,34 @@ export const getCourseForUserService = async (id: string, user: any, res: Respon
 			relatedCourses: relatedCourses,
 			isPurchased: isPurchased.length > 0 ? true : false,
 			favorite: isFavorite ? true : false,
+		},
+	};
+};
+export const getChaptersByAudiobookIDForUserService = async (id: string,  payload: any,user: any, res: Response) => {
+	console.log('payload: ', payload);
+	let language;
+
+	if (payload.lang) {
+		language = payload.lang;
+	} else {
+		language = "eng";
+	}
+	const chapters = await audiobookChaptersModel.find({ productId: id, lang: language });
+	const userReadProgress = await readProgressModel.findOne({ userId: user.id, bookId: id });
+
+	// If userReadProgress exists, get readSections (array of chapter IDs)
+	const readChapters = userReadProgress?.readAudioChapter?.map((section: any) => section?.audioChapterId.toString()) || [];
+
+	// Add isRead property to each chapter
+	const chaptersWithIsRead = chapters.map((chapter) => ({
+		...chapter.toObject(),
+		isRead: readChapters.includes(chapter._id.toString()),
+	}));
+	return {
+		success: true,
+		message: "Audiobook retrieved successfully",
+		data: {
+			chapter: chaptersWithIsRead,
 		},
 	};
 };

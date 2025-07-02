@@ -8,7 +8,7 @@ import {  verifyDiscountVoucher } from "src/controllers/discount-vouchers/discou
 import { getAllEventsHandler, getAllEventsHandlerForUser, getEventByIdHandler } from "src/controllers/events/events-controller";
 import {  getAllFavorites, getFavorite, updateFavorite } from "src/controllers/product-favorites/product-favorites-controller";
 import { getAllNotificationsOfUser, markAllNotificationsAsRead } from "src/controllers/notifications/notifications-controller";
-import { getAllAudioBookForUser, getAllBooks, getBook, getBookforUser, getBookMarketForUser, getCourseforUser, getNewbookForUser } from "src/controllers/products/products-controller";
+import { getAllAudioBookForUser, getAllBooks, getBook, getBookforUser, getBookMarketForUser, getChaptersByAudiobookIDForUser, getCourseforUser, getNewbookForUser } from "src/controllers/products/products-controller";
 import { getAllPublishers, getPublisherForUser, getPublisherWorkForUser } from "src/controllers/publisher/publishers-controller";
 import { AddBookRating, getRating } from "src/controllers/rating/rating-controller";
 import { getAllReadProgressHandler, getReadProgressByIdHandler, updateReadProgressHandler } from "src/controllers/read-progess/read-progress-controller";
@@ -64,6 +64,7 @@ router.get("/books", getAllBooks);
 router.get("/new-books", getNewbookForUser);
 router.get("/audiobooks", getAllAudioBookForUser);
 router.get("/books/:id", getBookforUser);
+router.get("/audiobook/:id/chapters", getChaptersByAudiobookIDForUser);
 
 // collections route
 router.get("/collections", getAllCollections);

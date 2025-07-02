@@ -18,7 +18,7 @@ const __filename = fileURLToPath(import.meta.url) // <-- Define __filename
 const __dirname = path.dirname(__filename)        // <-- Define __dirname
 // const serviceAccount = require(path.join(__dirname, 'config/firebase-adminsdk.json'));
 
-const PORT = process.env.PORT || 8000
+const PORT = process.env.PORT || 8080
 const app = express()
 
 app.use(express.json());
