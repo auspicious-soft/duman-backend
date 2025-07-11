@@ -648,7 +648,6 @@ export const getCourseForUserService = async (id: string, user: any, res: Respon
 	};
 };
 export const getChaptersByAudiobookIDForUserService = async (id: string,  payload: any,user: any, res: Response) => {
-	console.log('payload: ', payload);
 	let language;
 
 	if (payload.lang) {
