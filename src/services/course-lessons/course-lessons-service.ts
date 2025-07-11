@@ -91,11 +91,10 @@ export const getCourseLessonByIdForUserService = async (user: any, payload: any,
   let courseLessons;
 
   courseLessons = await courseLessonsModel.find({ productId: productId, lang: userData?.language }).lean();
-  console.log('courseLessons: ', courseLessons);
   const courseReadProgress = await readProgressModel.findOne({ bookId: productId, userId: user.id }).lean();
 
   if (courseLessons.length === 0 && course?.name) {
-    const languagesToCheck = [userData?.language, "eng", ...availableLanguages].filter((lang, index, self) => self.indexOf(lang) === index);
+    const languagesToCheck = [payload?.lang, "eng", ...availableLanguages].filter((lang, index, self) => self.indexOf(lang) === index);
     for (let lang of languagesToCheck) {
       courseLessons = await courseLessonsModel.find({ productId: productId, lang: lang }).lean();
       if (courseLessons.length > 0) break;

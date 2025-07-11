@@ -27,7 +27,7 @@ export const getReadProgressByIdHandler = async (req: Request, res: Response) =>
 
 export const updateReadProgressHandler = async (req: Request, res: Response) => {
   try {
-    const response = await updateReadProgress(req.params.id, req.body,req.user,res);
+    const response = await updateReadProgress(req.params.id, req.body, req.user,res);
     return res.status(httpStatusCode.OK).json(response);
   } catch (error: any) {
     const { code, message } = errorParser(error);
