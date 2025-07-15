@@ -82,6 +82,7 @@ export const getCourseLessonByIdForUserService = async (user: any, payload: any,
   const page = parseInt(payload.page as string) || 1;
   const limit = parseInt(payload.limit as string) || 0;
   const offset = (page - 1) * limit;
+  const { lang : language } = payload;
 
   // Fetch user data and course
   const userData = await usersModel.findById(user.id).lean();
@@ -90,7 +91,7 @@ export const getCourseLessonByIdForUserService = async (user: any, payload: any,
   const availableLanguages = ["eng", "kaz", "rus"];
   let courseLessons;
 
-  courseLessons = await courseLessonsModel.find({ productId: productId, lang: userData?.language }).lean();
+  courseLessons = await courseLessonsModel.find({ productId: productId, lang: language }).lean();
   const courseReadProgress = await readProgressModel.findOne({ bookId: productId, userId: user.id }).lean();
 
   if (courseLessons.length === 0 && course?.name) {

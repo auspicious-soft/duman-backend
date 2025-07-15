@@ -628,7 +628,7 @@ export const getCourseForUserService = async (id: string, user: any, res: Respon
 	if (!course) {
 		return errorResponseHandler("Book not found", httpStatusCode.NOT_FOUND, res);
 	}
-	const relatedCourses = await productsModel.find({ categoryId: { $in: course?.categoryId }, type: "course" }).populate([{ path: "authorId", select: "name" }]);
+	const relatedCourses = await productsModel.find({ categoryId: { $in: course?.categoryId }, type: "course", _id: { $ne: id } }).populate([{ path: "authorId", select: "name" }]);
 	const reviewCount = await productRatingsModel.countDocuments({ productId: id });
 	const isFavorite = await favoritesModel.exists({ userId: user.id, productId: id });
 	const isPurchased = await ordersModel.find({ productIds: id, userId: user.id, status: "Completed" });
