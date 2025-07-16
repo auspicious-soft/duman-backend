@@ -169,7 +169,7 @@ export const getAllProductsForStocksTabService = async (payload: any, res: Respo
 
 	const query: any = payload.type ? { type: payload.type } : {};
 
-	const sort: any = {};
+	const sort: any = {createdAt: -1};
 	if (payload.orderColumn && payload.order) {
 		sort[payload.orderColumn] = payload.order === "asc" ? 1 : -1;
 	}
