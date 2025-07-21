@@ -1,32 +1,141 @@
 import { Router } from "express";
-import {  getAllAuthorsForUser, getAuthorCountries, getAuthorForUser } from "src/controllers/authors/authors-controller";
-import {  getAllBookLivesForUser, getBLogById } from "src/controllers/book-lives/book-lives-controller";
-import { getBookSchoolsByCode, verifyBookSchoolsByCode } from "src/controllers/book-schools/book-schools-controller";
-import { getAllCategories, getBooksByCategoryId } from "src/controllers/categories/categories-controller";
-import { getAllCollections, getCollectionForUser } from "src/controllers/collections/collections-controller";
-import {  verifyDiscountVoucher } from "src/controllers/discount-vouchers/discount-vouchers-controller";
-import { getAllEventsHandler, getAllEventsHandlerForUser, getEventByIdHandler } from "src/controllers/events/events-controller";
-import {  getAllFavorites, getFavorite, updateFavorite } from "src/controllers/product-favorites/product-favorites-controller";
-import { getAllNotificationsOfUser, markAllNotificationsAsRead } from "src/controllers/notifications/notifications-controller";
-import { getAllAudioBookForUser, getAllBooks, getBook, getBookforUser, getBookMarketForUser, getChaptersByAudiobookIDForUser, getCourseforUser, getNewbookForUser } from "src/controllers/products/products-controller";
-import { getAllPublishers, getPublisherForUser, getPublisherWorkForUser } from "src/controllers/publisher/publishers-controller";
-import { AddBookRating, getRating } from "src/controllers/rating/rating-controller";
-import { getAllReadProgressHandler, getReadProgressByIdHandler, updateReadProgressHandler } from "src/controllers/read-progess/read-progress-controller";
-import { getAllStories, getStory } from "src/controllers/stories/stories-controller";
-import {  getSubCategoriesByCategoryIdForUser, getSubCategoryforUser } from "src/controllers/sub-categories/sub-categories-controller";
-import { getHomePageHandler, getproductsTabHandler } from "src/controllers/user-home-page/user-home-page-controller";
-import {  changePasswordUser, getCurrentUserDetails, getUserDashboardStats, updateCurrentUserDetails,  } from "src/controllers/user/user-controller";
-import { getAllAuthorFavorites, getAuthorFavorite, updateAuthorFavorite } from "src/controllers/author-favorites/author-favorites-controller";
-import { getAllSummaries, getSummaryForUser } from "src/controllers/summaries/summaries-controller";
-import { getBookStudyCategoriesStudy, getBookStudyForUser, getBookStudyNewbooks, getBookStudyReadProgress, getBookStudyTeachers, getPopularCourses } from "src/controllers/book-studies/book-studies-controller";
-import { getBookMasterCategories, getBookMasterForUser, getBookMasterTeachers, getPopularCoursesBookMaster } from "src/controllers/book-masters/book-masters-controller";
-import { getBookUniversityCategories, getBookUniversityForUser, getBookUniversityNewbooks, getBookUniversityReadProgress, getBookUniversityTeachers, getPopularCoursesBookUniversity } from "src/controllers/book-universities/book-universities-controller";
-import { getAllFaviouriteBooks, getAllFinishedBooks, getAllReadingBooks, getCoursesForBookRoom } from "src/controllers/book-room/book-room-controller";
+import {
+  getAllAuthorsForUser,
+  getAuthorCountries,
+  getAuthorForUser,
+} from "src/controllers/authors/authors-controller";
+import {
+  getAllBookLivesForUser,
+  getBLogById,
+} from "src/controllers/book-lives/book-lives-controller";
+import {
+  getBookSchoolsByCode,
+  verifyBookSchoolsByCode,
+} from "src/controllers/book-schools/book-schools-controller";
+import {
+  getAllCategories,
+  getBooksByCategoryId,
+} from "src/controllers/categories/categories-controller";
+import {
+  getAllCollections,
+  getCollectionForUser,
+} from "src/controllers/collections/collections-controller";
+import { verifyDiscountVoucher } from "src/controllers/discount-vouchers/discount-vouchers-controller";
+import {
+  getAllEventsHandler,
+  getAllEventsHandlerForUser,
+  getEventByIdHandler,
+} from "src/controllers/events/events-controller";
+import {
+  getAllFavorites,
+  getFavorite,
+  updateFavorite,
+} from "src/controllers/product-favorites/product-favorites-controller";
+import {
+  getAllNotificationsOfUser,
+  markAllNotificationsAsRead,
+} from "src/controllers/notifications/notifications-controller";
+import {
+  getAllAudioBookForUser,
+  getAllBooks,
+  getBook,
+  getBookforUser,
+  getBookMarketForUser,
+  getChaptersByAudiobookIDForUser,
+  getCourseforUser,
+  getNewbookForUser,
+} from "src/controllers/products/products-controller";
+import {
+  getAllPublishers,
+  getPublisherForUser,
+  getPublisherWorkForUser,
+} from "src/controllers/publisher/publishers-controller";
+import {
+  AddBookRating,
+  getRating,
+} from "src/controllers/rating/rating-controller";
+import {
+  getAllReadProgressHandler,
+  getReadProgressByIdHandler,
+  updateReadProgressHandler,
+} from "src/controllers/read-progess/read-progress-controller";
+import {
+  getAllStories,
+  getStory,
+} from "src/controllers/stories/stories-controller";
+import {
+  getSubCategoriesByCategoryIdForUser,
+  getSubCategoryforUser,
+} from "src/controllers/sub-categories/sub-categories-controller";
+import {
+  getHomePageHandler,
+  getproductsTabHandler,
+} from "src/controllers/user-home-page/user-home-page-controller";
+import {
+  changePasswordUser,
+  getCurrentUserDetails,
+  getUserDashboardStats,
+  updateCurrentUserDetails,
+} from "src/controllers/user/user-controller";
+import {
+  getAllAuthorFavorites,
+  getAuthorFavorite,
+  updateAuthorFavorite,
+} from "src/controllers/author-favorites/author-favorites-controller";
+import {
+  getAllSummaries,
+  getSummaryForUser,
+} from "src/controllers/summaries/summaries-controller";
+import {
+  getBookStudyCategoriesStudy,
+  getBookStudyForUser,
+  getBookStudyNewbooks,
+  getBookStudyReadProgress,
+  getBookStudyTeachers,
+  getPopularCourses,
+} from "src/controllers/book-studies/book-studies-controller";
+import {
+  getBookMasterCategories,
+  getBookMasterForUser,
+  getBookMasterTeachers,
+  getPopularCoursesBookMaster,
+} from "src/controllers/book-masters/book-masters-controller";
+import {
+  getBookUniversityCategories,
+  getBookUniversityForUser,
+  getBookUniversityNewbooks,
+  getBookUniversityReadProgress,
+  getBookUniversityTeachers,
+  getPopularCoursesBookUniversity,
+} from "src/controllers/book-universities/book-universities-controller";
+import {
+  getAllFaviouriteBooks,
+  getAllFinishedBooks,
+  getAllReadingBooks,
+  getCoursesForBookRoom,
+} from "src/controllers/book-room/book-room-controller";
 import { getAward } from "src/controllers/awards/awards-controller";
-import { getCourseLesson, getCourseLessonForUser, updateCourseLesson } from "src/controllers/course-lessons/course-lessons-controller";
-import { getAudiobookChapter, getAudiobookChaptersByProductId } from "src/controllers/audiobook-chapters/audiobook-chapters-controller";
-import { createOrder, getAllOrders, getOrder, getWalletHistory, updateOrder } from "src/controllers/orders/orders-controller";
-
+import {
+  getCourseLesson,
+  getCourseLessonForUser,
+  updateCourseLesson,
+} from "src/controllers/course-lessons/course-lessons-controller";
+import {
+  getAudiobookChapter,
+  getAudiobookChaptersByProductId,
+} from "src/controllers/audiobook-chapters/audiobook-chapters-controller";
+import {
+  createOrder,
+  getAllOrders,
+  getOrder,
+  getWalletHistory,
+  updateOrder,
+} from "src/controllers/orders/orders-controller";
+import {
+  createOrAddToCartController,
+  getUserCartController,
+  removeFromCartController,
+} from "src/controllers/cart/cart-controller";
 
 const router = Router();
 
@@ -49,11 +158,14 @@ router.get("/book-schools/verify", verifyBookSchoolsByCode);
 router.get("/book-schools/books", getBookSchoolsByCode);
 
 //notifications route
-router.route("/:id/notifications").get( getAllNotificationsOfUser).put( markAllNotificationsAsRead)
+router
+  .route("/:id/notifications")
+  .get(getAllNotificationsOfUser)
+  .put(markAllNotificationsAsRead);
 
 //home-page  route
-router.route("/home-page").get( getHomePageHandler)
-router.get("/home-page/products", getproductsTabHandler)
+router.route("/home-page").get(getHomePageHandler);
+router.get("/home-page/products", getproductsTabHandler);
 
 //stories route
 router.get("/stories", getAllStories);
@@ -99,7 +211,10 @@ router.get("/publishers/:id/work", getPublisherWorkForUser);
 //categories routes
 router.get("/categories", getAllCategories);
 router.get("/categories/:id/products", getBooksByCategoryId);
-router.get("/categories/:categoryId/sub-categories", getSubCategoriesByCategoryIdForUser);
+router.get(
+  "/categories/:categoryId/sub-categories",
+  getSubCategoriesByCategoryIdForUser
+);
 
 //sub-categories routes
 router.get("/sub-categories/:id", getSubCategoryforUser);
@@ -133,7 +248,10 @@ router.get("/books-masters/popular-courses", getPopularCoursesBookMaster);
 router.get("/books-universities", getBookUniversityForUser);
 router.get("/books-universities/categories", getBookUniversityCategories);
 router.get("/books-universities/speakers", getBookUniversityTeachers);
-router.get("/books-universities/popular-courses", getPopularCoursesBookUniversity);
+router.get(
+  "/books-universities/popular-courses",
+  getPopularCoursesBookUniversity
+);
 router.get("/books-universities/new-books", getBookUniversityNewbooks);
 router.get("/books-universities/read-progress", getBookUniversityReadProgress);
 
@@ -160,7 +278,10 @@ router.get("/course/:id", getCourseforUser);
 
 // audiobook-chapters routes
 router.get("/audiobook-chapters/:id", getAudiobookChapter);
-router.get("/audiobook-chapters/product/:productId", getAudiobookChaptersByProductId);
+router.get(
+  "/audiobook-chapters/product/:productId",
+  getAudiobookChaptersByProductId
+);
 
 // order route
 router.post("/order", createOrder);
@@ -169,5 +290,10 @@ router.get("/order/:id", getOrder);
 router.put("/order/:id", updateOrder);
 router.get("/wallet/:id", getWalletHistory);
 
+// Cart Route
+router.route("/cart")
+  .post(createOrAddToCartController).get(getUserCartController);
 
-export { router }
+router.patch("/cart/:id", removeFromCartController);
+
+export { router };
