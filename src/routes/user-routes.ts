@@ -133,6 +133,7 @@ import {
 } from "src/controllers/orders/orders-controller";
 import {
   createOrAddToCartController,
+  deleteCartController,
   getUserCartController,
   removeFromCartController,
 } from "src/controllers/cart/cart-controller";
@@ -292,8 +293,7 @@ router.get("/wallet/:id", getWalletHistory);
 
 // Cart Route
 router.route("/cart")
-  .post(createOrAddToCartController).get(getUserCartController);
-
+  .post(createOrAddToCartController).get(getUserCartController).delete(deleteCartController);
 router.patch("/cart/:id", removeFromCartController);
 
 export { router };

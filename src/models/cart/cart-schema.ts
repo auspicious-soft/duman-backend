@@ -13,8 +13,7 @@ const cartSchema = new mongoose.Schema({
     required:true
   }],
   buyed: {
-  type: String,
-  enum: ["pending", "purchased", "cancelled"], // or whatever makes sense for your app
+  type: String, 
   default: "pending", // optional default
 }
 },{

@@ -125,3 +125,20 @@ export const removeFromCartService = async (req:any, res: Response) => {
     };
   }
 };
+
+export const deleteCartService = async (req: any, res: Response) => {
+  const user = req.user;
+
+  const cart = await cartModel.findOne({ userId: user.id });
+
+  if (!cart) {
+    return errorResponseHandler("Cart not found", httpStatusCode.NOT_FOUND, res);
+  }
+
+  await cartModel.findByIdAndDelete(cart._id);
+
+  return {
+    success: true,
+    message: "Cart deleted successfully",
+  };
+};
