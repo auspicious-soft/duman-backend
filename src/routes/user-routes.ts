@@ -55,6 +55,7 @@ import {
   getRating,
 } from "src/controllers/rating/rating-controller";
 import {
+  generateCertificate,
   getAllReadProgressHandler,
   getReadProgressByIdHandler,
   updateReadProgressHandler,
@@ -290,6 +291,9 @@ router.get("/order", getAllOrders);
 router.get("/order/:id", getOrder);
 router.put("/order/:id", updateOrder);
 router.get("/wallet/:id", getWalletHistory);
+
+// certificate route
+router.post("/generate-certificate", generateCertificate);
 
 // Cart Route
 router.route("/cart")
