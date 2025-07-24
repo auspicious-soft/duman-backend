@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { httpStatusCode } from "../../lib/constant";
-import { errorParser } from "../../lib/errors/error-response-handler";
+import { errorParser, errorResponseHandler } from "../../lib/errors/error-response-handler";
+import Busboy from "busboy";
 import {
   createUserService,
   deleteUserService,
@@ -22,6 +23,8 @@ import {
 import { newPassswordAfterOTPVerifiedService } from "src/services/admin/admin-service";
 import { verifyOtpPasswordResetService, newPassswordAfterOTPVerifiedUserService } from "../../services/user/user-service";
 import { generatePasswordResetToken, generatePasswordResetTokenByPhone } from "src/utils/mails/token";
+import { Readable } from "stream";
+import { uploadStreamToS3Service } from "src/config/s3";
 
 export const userSignup = async (req: Request, res: Response) => {
   try {
@@ -232,6 +235,80 @@ export const updateCurrentUserDetails = async (req: Request, res: Response) => {
     return res.status(httpStatusCode.OK).json(response);
   } catch (error: any) {
     const { code, message } = errorParser(error);
+    return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
+  }
+};
+
+export const uploadUserImageController = async (req: Request, res: Response) => {
+  try {
+    const userData = req.user as any;
+    const userEmail = userData.email || req.query.email as string;
+    
+    if (!userEmail) {
+      return errorResponseHandler('User email is required', httpStatusCode.BAD_REQUEST, res);
+    }
+    
+    // Check content type
+    if (!req.headers['content-type']?.includes('multipart/form-data')) {
+      return errorResponseHandler('Content-Type must be multipart/form-data', httpStatusCode.BAD_REQUEST, res);
+    }
+    const busboy = Busboy({ headers: req.headers });
+    let uploadPromise: Promise<string> | null = null;
+    
+    busboy.on('file', async (fieldname: string, fileStream: any, fileInfo: any) => {
+      if (fieldname !== 'image') {
+        fileStream.resume(); // Skip this file
+        return;
+      }
+      
+      const { filename, mimeType } = fileInfo;
+      
+      // Create a readable stream from the file stream
+      const readableStream = new Readable();
+      readableStream._read = () => {}; // Required implementation
+      
+      fileStream.on('data', (chunk :any) => {
+        readableStream.push(chunk);
+      });
+      
+      fileStream.on('end', () => {
+        readableStream.push(null); // End of stream
+      });
+      
+      uploadPromise = uploadStreamToS3Service(
+        readableStream,
+        filename,
+        mimeType,
+        userEmail
+      );
+    });
+    
+    busboy.on('finish', async () => {
+      if (!uploadPromise) {
+        return res.status(httpStatusCode.BAD_REQUEST).json({
+          success: false,
+          message: 'No image file found in the request'
+        });
+      }
+      
+      try {
+        const imageKey = await uploadPromise;
+        return res.status(httpStatusCode.OK).json({
+          success: true,
+          message: 'Image uploaded successfully',
+          data: { imageKey }
+        });
+      } catch (error) {
+        console.error('Upload error:', error);
+        const { code, message } = errorParser(error);
+        return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
+      }
+    });
+    
+    req.pipe(busboy);
+  } catch (error) {
+    console.error('Upload error:', error);
+     const { code, message } = errorParser(error);
     return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
   }
 };

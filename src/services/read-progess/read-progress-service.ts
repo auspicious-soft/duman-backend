@@ -296,7 +296,6 @@ export const generateCertificateBothFormatsService = async (payload: { name: str
 };
 
 export const generateCertificateService = async (payload: { name: string; date: string; courseTitle: string }, user: any) => {
-	console.log("payload: ", payload);
 	try {
 		// Create a new PDF document
 		const pdfDoc = await PDFDocument.create();
@@ -353,16 +352,6 @@ export const generateCertificateService = async (payload: { name: string; date: 
 			height: height,
 			color: rgb(0.85, 0.6, 0.35), // Orange sidebar
 		});
-
-		// Add "bookstagram" text vertically on the left sidebar
-		// page.drawText('bookstagram', {
-		//   x: 50,
-		//   y: height / 2 - 100,
-		//   size: 50,
-		//   font: helveticaBoldFont,
-		//   color: rgb(1, 1, 1),
-		//   rotate: degrees(90),
-		// });
 		if (ceoImage) {
 			page.drawImage(ceoImage, {
 				x: 12,
@@ -501,7 +490,7 @@ export const generateCertificateService = async (payload: { name: string; date: 
 				x: 140,
 				y: 0,
 				width: 185,
-				height: 165,
+				height: 155,
 				// rotate: degrees(10),
 			});
 		}

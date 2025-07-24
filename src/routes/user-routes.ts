@@ -77,6 +77,7 @@ import {
   getCurrentUserDetails,
   getUserDashboardStats,
   updateCurrentUserDetails,
+  uploadUserImageController,
 } from "src/controllers/user/user-controller";
 import {
   getAllAuthorFavorites,
@@ -272,6 +273,7 @@ router.put("/change-password", changePasswordUser);
 //user-details route
 router.get("/user-details", getCurrentUserDetails);
 router.put("/user-details", updateCurrentUserDetails);
+router.post("/upload-image", uploadUserImageController);
 
 // course-lessons routes
 router.get("/course-lessons", getAllBooks);
