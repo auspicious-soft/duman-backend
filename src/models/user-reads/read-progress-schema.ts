@@ -16,11 +16,6 @@ const readProgressSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-    // readSections: [{
-    //   type: mongoose.Schema.Types.ObjectId,
-    //   ref: "courseLessons.sections",
-    //   required: false, 
-    // }],
     readSections: [
       {
         courseLessonId: {
@@ -43,7 +38,11 @@ const readProgressSchema = new mongoose.Schema(
         },
       },
     ],
-    certificate: {
+    certificatePng: {
+      type: String,
+      default: null,
+    },
+    certificatePdf: {
       type: String,
       default: null,
     },

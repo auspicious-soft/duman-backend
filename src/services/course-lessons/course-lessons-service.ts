@@ -14,6 +14,7 @@ import { favoritesModel } from "src/models/product-favorites/product-favorites-s
 import { ordersModel } from "src/models/orders/orders-schema";
 import { read } from "fs";
 import { readProgressModel } from "src/models/user-reads/read-progress-schema";
+import { getCourseProgress } from "../read-progess/read-progress-service";
 
 export const createCourseLessonService = async (bookDetails: any, lessons: any, res: Response) => {
   const session = await mongoose.startSession();
@@ -82,7 +83,7 @@ export const getCourseLessonByIdForUserService = async (user: any, payload: any,
   const page = parseInt(payload.page as string) || 1;
   const limit = parseInt(payload.limit as string) || 0;
   const offset = (page - 1) * limit;
-  const { lang : language } = payload;
+  const { lang: language } = payload;
 
   // Fetch user data and course
   const userData = await usersModel.findById(user.id).lean();
@@ -91,13 +92,13 @@ export const getCourseLessonByIdForUserService = async (user: any, payload: any,
   const availableLanguages = ["eng", "kaz", "rus"];
   let courseLessons;
 
-  courseLessons = await courseLessonsModel.find({ productId: productId, lang: language }).lean();
+  courseLessons = await courseLessonsModel.find({ productId: productId, lang: language }).sort({ srNo: 1 }).lean();
   const courseReadProgress = await readProgressModel.findOne({ bookId: productId, userId: user.id }).lean();
 
   if (courseLessons.length === 0 && course?.name) {
     const languagesToCheck = [payload?.lang, "eng", ...availableLanguages].filter((lang, index, self) => self.indexOf(lang) === index);
     for (let lang of languagesToCheck) {
-      courseLessons = await courseLessonsModel.find({ productId: productId, lang: lang }).lean();
+      courseLessons = await courseLessonsModel.find({ productId: productId, lang: lang }).sort({ srNo: 1 }).lean();
       if (courseLessons.length > 0) break;
     }
   }
@@ -113,22 +114,43 @@ export const getCourseLessonByIdForUserService = async (user: any, payload: any,
   // Convert read section IDs into a Set for quick lookup
   const readSectionIds = new Set(courseReadProgress?.readSections.map((subLessons: any) => subLessons.sectionId.toString()) || []);
 
-  // Add isDone property to subLessons
-  courseLessons = courseLessons.map((lesson) => ({
-    ...lesson,
-    subLessons: lesson.subLessons.map((subLessons) => ({
-      ...subLessons,
-      isDone: readSectionIds.has(subLessons._id.toString()), // Check if section is read
-    })),
-  }));
+  // Add isDone and isOpen properties to lessons and subLessons
+  courseLessons = courseLessons.map((lesson, index, lessons) => {
+    // Determine if the lesson is open
+    let isOpen = false;
+    if (lesson.srNo === 1) {
+      // First lesson is always open
+      isOpen = true;
+    } else if (index > 0) {
+      // Check if all sessions in the previous lesson are read
+      const prevLesson = lessons[index - 1];
+      isOpen = prevLesson.subLessons.every((subLesson) =>
+        courseReadProgress?.readSections?.some(
+          (section) =>
+            section.courseLessonId?.toString() === prevLesson._id.toString() &&
+            section.sectionId?.toString() === subLesson._id.toString()
+        )
+      );
+    }
+
+    return {
+      ...lesson,
+      isOpen, // Add isOpen property to lesson
+      subLessons: lesson.subLessons.map((subLessons) => ({
+        ...subLessons,
+        isDone: readSectionIds.has(subLessons._id.toString()), // Check if section is read
+      })),
+    };
+  });
 
   // Pagination and other data
   const totalDataCount = await courseLessonsModel.countDocuments({ productId: productId });
   const lessons = await courseLessonsModel.find({ productId: productId }).skip(offset).limit(limit).select("-__v").lean();
   const reviewCount = await productRatingsModel.countDocuments({ productId: productId });
   const isFavorite = await favoritesModel.exists({ userId: user.id, productId: productId });
-  const isPurchased = await ordersModel.find({ productIds: {$in:productId}, userId: user.id, status:"Completed" }).lean();
-
+  const isPurchased = await ordersModel.find({ productIds: { $in: productId }, userId: user.id, status: "Completed" }).lean();
+  const courseProgress = await getCourseProgress(productId, payload.lang, user.id);
+  console.log('courseProgress: ', courseProgress);
   return {
     success: true,
     message: "Course lessons retrieved successfully",
@@ -137,13 +159,84 @@ export const getCourseLessonByIdForUserService = async (user: any, payload: any,
     total: totalDataCount,
     data: {
       courseLessons,
-      // lessons,
       reviewCount,
       isFavorite: !!isFavorite,
       isPurchased: isPurchased.length > 0,
+      courseProgress,
     },
   };
 };
+
+
+
+// export const getCourseLessonByIdForUserService = async (user: any, payload: any, productId: string) => {
+//   const page = parseInt(payload.page as string) || 1;
+//   const limit = parseInt(payload.limit as string) || 0;
+//   const offset = (page - 1) * limit;
+//   const { lang : language } = payload;
+
+//   // Fetch user data and course
+//   const userData = await usersModel.findById(user.id).lean();
+//   const course = await productsModel.findById(productId).lean();
+
+//   const availableLanguages = ["eng", "kaz", "rus"];
+//   let courseLessons;
+
+//   courseLessons = await courseLessonsModel.find({ productId: productId, lang: language }).sort({ srNo: 1 }).lean();
+//   const courseReadProgress = await readProgressModel.findOne({ bookId: productId, userId: user.id }).lean();
+
+//   if (courseLessons.length === 0 && course?.name) {
+//     const languagesToCheck = [payload?.lang, "eng", ...availableLanguages].filter((lang, index, self) => self.indexOf(lang) === index);
+//     for (let lang of languagesToCheck) {
+//       courseLessons = await courseLessonsModel.find({ productId: productId, lang: lang }).sort({ srNo: 1 }).lean();
+//       if (courseLessons.length > 0) break;
+//     }
+//   }
+
+//   if (courseLessons.length === 0) {
+//     return {
+//       success: false,
+//       message: "No lessons found for this course in any of the available languages",
+//       data: [],
+//     };
+//   }
+
+//   // Convert read section IDs into a Set for quick lookup
+//   const readSectionIds = new Set(courseReadProgress?.readSections.map((subLessons: any) => subLessons.sectionId.toString()) || []);
+
+//   // Add isDone property to subLessons
+//   courseLessons = courseLessons.map((lesson) => ({
+//     ...lesson,
+//     subLessons: lesson.subLessons.map((subLessons) => ({
+//       ...subLessons,
+//       isDone: readSectionIds.has(subLessons._id.toString()), // Check if section is read
+//     })),
+//   }));
+
+//   // Pagination and other data
+//   const totalDataCount = await courseLessonsModel.countDocuments({ productId: productId });
+//   const lessons = await courseLessonsModel.find({ productId: productId }).skip(offset).limit(limit).select("-__v").lean();
+//   const reviewCount = await productRatingsModel.countDocuments({ productId: productId });
+//   const isFavorite = await favoritesModel.exists({ userId: user.id, productId: productId });
+//   const isPurchased = await ordersModel.find({ productIds: {$in:productId}, userId: user.id, status:"Completed" }).lean();
+//   const courseProgress = await getCourseProgress(productId, payload.lang, user.id);
+//   console.log('courseProgress: ', courseProgress);
+//   return {
+//     success: true,
+//     message: "Course lessons retrieved successfully",
+//     page,
+//     limit,
+//     total: totalDataCount,
+//     data: {
+//       courseLessons,
+//       // lessons,
+//       reviewCount,
+//       isFavorite: !!isFavorite,
+//       isPurchased: isPurchased.length > 0,
+//       courseProgress,
+//     },
+//   };
+// };
 
 export const updateCourseLessons = async (lessons: any | any[]) => {
   const lessonsArray = Array.isArray(lessons) ? lessons : [lessons];

@@ -21,6 +21,8 @@ import { fileURLToPath } from "url";
 import { fromBuffer } from "pdf2pic";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { createCanvas, loadImage } from "canvas";
+import { usersModel } from "src/models/user/user-schema";
+import { courseLessonsModel } from "src/models/course-lessons/course-lessons-schema";
 
 export const getReadProgressById = async (readProgressId: string, userId: string) => {
 	return await readProgressModel.findOne({ userId, bookId: readProgressId }).populate([{ path: "bookId" }, { path: "readSections.sectionId" }]);
@@ -95,7 +97,6 @@ export const getAllReadProgress = async (payload: any, user: any) => {
 };
 
 export const generateCertificatePNGService = async (payload: { name: string; date: string; courseTitle: string }, user: any) => {
-	console.log("PNG Certificate payload: ", payload);
 
 	try {
 		// Create canvas with certificate dimensions (750x500 to match PDF)
@@ -268,14 +269,32 @@ export const generateCertificatePNGService = async (payload: { name: string; dat
 };
 
 // Optional: Combined function to generate both PDF and PNG
-export const generateCertificateBothFormatsService = async (payload: { name: string; date: string; courseTitle: string }, user: any) => {
+export const generateCertificateBothFormatsService = async (data:any, user: any) => {
 	try {
+		const userDetail:any = await usersModel.findById(user.id);
+		console.log('userDetail: ', userDetail);
+		if (!userDetail) {
+			throw new Error("User not found");
+		}
+        const course:any = await readProgressModel.findOne({ userId: user.id, bookId: data.courseId }).populate("bookId");
+		if (!course) {
+			throw new Error("Course not found for the user");
+		}
+		const payload = { name: userDetail.firstName.eng, date: new Date().toLocaleDateString(), courseTitle: course?.bookId?.name?.eng };
 		// Generate PDF certificate
 		const pdfResult = await generateCertificateService(payload, user);
 
 		// Generate PNG certificate
 		const pngResult = await generateCertificatePNGService(payload, user);
-
+		// if (course) {
+		// 	course.isCompleted = true;
+		// 	await course.save();
+		// }
+		if (pdfResult.data && pngResult.data) {
+			course.certificatePdf = pdfResult.data.s3Key;
+			course.certificatePng = pngResult.data.s3Key;
+			await course.save();
+		}
 		return {
 			success: pdfResult.success && pngResult.success,
 			message: "Certificates generated in both formats",
@@ -296,6 +315,7 @@ export const generateCertificateBothFormatsService = async (payload: { name: str
 };
 
 export const generateCertificateService = async (payload: { name: string; date: string; courseTitle: string }, user: any) => {
+	console.log('payload: ', payload);
 	try {
 		// Create a new PDF document
 		const pdfDoc = await PDFDocument.create();
@@ -546,4 +566,66 @@ export const generateCertificateService = async (payload: { name: string; date: 
 			error: error.message,
 		};
 	}
+};
+
+
+export const getCourseProgress = async (courseId:string, lang:string, userId:string) => {
+  try {
+    // Fetch all lessons for the given courseId and language
+    const lessons = await courseLessonsModel
+      .find({ productId: courseId, lang })
+      .sort({ srNo: 1 })
+      .lean();
+
+    // Fetch user's read progress for the course
+    const readProgress = await readProgressModel
+      .findOne({ userId, bookId: courseId })
+      .lean();
+
+    // Initialize the result array
+    const result = [];
+
+    // Process each lesson
+    for (let i = 0; i < lessons.length; i++) {
+      const lesson = lessons[i];
+      const lessonProgress = {
+        Srno: lesson.srNo,
+        lessonId: lesson._id,
+        isOpen: false, // Default to false
+        session: lesson.subLessons.map((subLesson) => ({
+          Srno: subLesson.srNo,
+          sessionId: subLesson._id,
+          isRead: readProgress?.readSections?.some(
+            (section) =>
+              section.courseLessonId?.toString() === lesson._id.toString() &&
+              section.sectionId?.toString() === subLesson._id.toString()
+          ) || false,
+        })),
+      };
+
+      // Determine if the lesson is open
+      if (lesson.srNo === 1) {
+        // First lesson is always open
+        lessonProgress.isOpen = true;
+      } else {
+        // Check if all sessions in the previous lesson are read
+        const prevLesson = lessons[i - 1];
+        const prevLessonRead = prevLesson.subLessons.every((subLesson) =>
+          readProgress?.readSections?.some(
+            (section) =>
+              section.courseLessonId?.toString() === prevLesson._id.toString() &&
+              section.sectionId?.toString() === subLesson._id.toString()
+          )
+        );
+        lessonProgress.isOpen = prevLessonRead;
+      }
+
+      result.push(lessonProgress);
+    }
+
+    return result;
+  } catch (error) {
+    console.error("Error in getCourseProgress:", error);
+    throw error;
+  }
 };
