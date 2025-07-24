@@ -75,8 +75,10 @@ import {
 import {
   changePasswordUser,
   getCurrentUserDetails,
+  getUserBadge,
   getUserDashboardStats,
   updateCurrentUserDetails,
+  updateCurrentUserLanguage,
   uploadUserImageController,
 } from "src/controllers/user/user-controller";
 import {
@@ -139,6 +141,7 @@ import {
   getUserCartController,
   removeFromCartController,
 } from "src/controllers/cart/cart-controller";
+import { getSettings } from "src/controllers/settings/settings-controller";
 
 const router = Router();
 
@@ -273,7 +276,9 @@ router.put("/change-password", changePasswordUser);
 //user-details route
 router.get("/user-details", getCurrentUserDetails);
 router.put("/user-details", updateCurrentUserDetails);
+router.put("/user-language", updateCurrentUserLanguage);
 router.post("/upload-image", uploadUserImageController);
+router.get("/get-badge", getUserBadge);
 
 // course-lessons routes
 router.get("/course-lessons", getAllBooks);
@@ -292,7 +297,7 @@ router.post("/order", createOrder);
 router.get("/order", getAllOrders);
 router.get("/order/:id", getOrder);
 router.put("/order/:id", updateOrder);
-router.get("/wallet/:id", getWalletHistory);
+router.get("/wallet-history", getWalletHistory);
 
 // certificate route
 router.post("/generate-certificate", generateCertificate);
@@ -301,5 +306,9 @@ router.post("/generate-certificate", generateCertificate);
 router.route("/cart")
   .post(createOrAddToCartController).get(getUserCartController).delete(deleteCartController);
 router.patch("/cart/:id", removeFromCartController);
+
+//Policies route
+router.get("/policies", getSettings)
+
 
 export { router };

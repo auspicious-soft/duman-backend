@@ -22,6 +22,7 @@ import { createBlog, deleteBlog, getAllBlogs, getBlogById, updateBlog } from "sr
 import { sendNotificationToUser, sendNotificationToUsers } from "src/controllers/notifications/notifications-controller";
 import { createCourseLesson, deleteCourseLanguage, deleteCourseLesson, deleteSubLesson, getCourseLesson, updateCourseLesson } from "src/controllers/course-lessons/course-lessons-controller";
 import { createAudiobookChapter, deleteAudiobookChapter, deleteAudiobookChaptersByProductId, getAllAudiobookChapters, getAudiobookChapter, getAudiobookChaptersByProductId, updateAudiobookChapter, updateMultipleAudiobookChapters } from "src/controllers/audiobook-chapters/audiobook-chapters-controller";
+import { createSettings, getSettings } from "src/controllers/settings/settings-controller";
 
 const router = Router();
 
@@ -206,5 +207,8 @@ router.delete("/blogs/:id", deleteBlog);
 //notifications route
 router.post("/send-notification", sendNotificationToUsers)
 router.post("/send-notification-to-specific-users", sendNotificationToUser)
+//Policies route
+router.post("/policies", createSettings)
+router.get("/policies", getSettings)
 
 export { router };

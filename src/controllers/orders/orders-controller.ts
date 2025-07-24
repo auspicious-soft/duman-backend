@@ -54,7 +54,7 @@ export const updateOrder = async (req: Request, res: Response) => {
 
 export const getWalletHistory = async (req: Request, res: Response) => {
     try {
-        const response = await getWalletHistoryService(req.params.id, res);
+        const response = await getWalletHistoryService(req.user, res);
         return res.status(httpStatusCode.OK).json(response);
     } catch (error: any) {
         const { code, message } = errorParser(error);

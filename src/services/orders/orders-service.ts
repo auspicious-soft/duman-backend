@@ -134,14 +134,14 @@ export const updateOrderService = async (id: string, payload: any, res: Response
 	};
 };
 
-export const getWalletHistoryService = async (id: string, res: Response) => {
-	const user = await usersModel.findById(id);
+export const getWalletHistoryService = async (userData: any, res: Response) => {
+	const user = await usersModel.findById(userData.id);
 	if (!user) return errorResponseHandler("User not found", httpStatusCode.NOT_FOUND, res);
-	const walletHistory = await walletHistoryModel.find({ userId: id }).populate("orderId");
+	const walletHistory = await walletHistoryModel.find({ userId: userData.id }).populate("orderId");
 
 	return {
 		success: true,
 		message: "Wallet History fetched successfully",
-		data: walletHistory,
+		data: { wallet: user.wallet, history: walletHistory },
 	};
 };

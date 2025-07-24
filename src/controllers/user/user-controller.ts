@@ -19,6 +19,8 @@ import {
   updateCurrentUserDetailsService,
   WhatsappLoginService,
   forgotPasswordResendOTPService,
+  getUserBadgeService,
+  updateCurrentUserLanguageService,
 } from "src/services/user/user-service";
 import { newPassswordAfterOTPVerifiedService } from "src/services/admin/admin-service";
 import { verifyOtpPasswordResetService, newPassswordAfterOTPVerifiedUserService } from "../../services/user/user-service";
@@ -232,6 +234,24 @@ export const getCurrentUserDetails = async (req: Request, res: Response) => {
 export const updateCurrentUserDetails = async (req: Request, res: Response) => {
   try {
     const response = await updateCurrentUserDetailsService(req.user,req.body, res);
+    return res.status(httpStatusCode.OK).json(response);
+  } catch (error: any) {
+    const { code, message } = errorParser(error);
+    return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
+  }
+};
+export const updateCurrentUserLanguage = async (req: Request, res: Response) => {
+  try {
+    const response = await updateCurrentUserLanguageService(req.user,req.query,req.body, res);
+    return res.status(httpStatusCode.OK).json(response);
+  } catch (error: any) {
+    const { code, message } = errorParser(error);
+    return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
+  }
+};
+export const getUserBadge = async (req: Request, res: Response) => {
+  try {
+    const response = await getUserBadgeService(req.user, res);
     return res.status(httpStatusCode.OK).json(response);
   } catch (error: any) {
     const { code, message } = errorParser(error);
