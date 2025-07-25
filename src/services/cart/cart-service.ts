@@ -51,8 +51,13 @@ export const createOrAddToCartService = async (user: any, body: any, res: Respon
 // Get User's Cart (Only Pending)
 export const getUserCartService = async (user: any) => {
   const cart = await cartModel
-    .findOne({ userId: user.id, buyed: "pending" })
-    .populate("productId");
+  .findOne({ userId: user.id, buyed: "pending" })
+  .populate({
+    path: "productId",
+    populate: [
+      { path: "authorId" },
+    ],
+  });
 
   return {
     success: true,

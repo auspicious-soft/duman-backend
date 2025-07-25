@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { JwtPayload } from 'jsonwebtoken';
 import { httpStatusCode } from 'src/lib/constant';
 import { errorParser } from 'src/lib/errors/error-response-handler';
-import {  generateCertificateBothFormatsService, generateCertificateService, getAllReadProgress, getReadProgressById, updateReadProgress } from 'src/services/read-progess/read-progress-service';
+import {  generateCertificateBothFormatsService, generateCertificateService, getAllReadProgress, getReadProgressById, updateCourseStatusService, updateReadProgress } from 'src/services/read-progess/read-progress-service';
 
 // export const createReadProgressHandler = async (req: Request, res: Response) => {
 //   try {
@@ -48,6 +48,15 @@ export const generateCertificate = async (req: Request, res: Response) => {
 export const getAllReadProgressHandler = async (req: Request, res: Response) => {
   try {
     const response = await getAllReadProgress(req.query,req.user);
+    return res.status(httpStatusCode.OK).json(response);
+  } catch (error: any) {
+    const { code, message } = errorParser(error);
+    return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
+  }
+};
+export const updateCourseStatus = async (req: Request, res: Response) => {
+  try {
+    const response = await updateCourseStatusService(req.params.id,req.user);
     return res.status(httpStatusCode.OK).json(response);
   } catch (error: any) {
     const { code, message } = errorParser(error);

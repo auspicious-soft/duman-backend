@@ -58,6 +58,7 @@ import {
   generateCertificate,
   getAllReadProgressHandler,
   getReadProgressByIdHandler,
+  updateCourseStatus,
   updateReadProgressHandler,
 } from "src/controllers/read-progess/read-progress-controller";
 import {
@@ -284,6 +285,7 @@ router.get("/get-badge", getUserBadge);
 router.get("/course-lessons", getAllBooks);
 router.get("/course-lessons/:id", getCourseLessonForUser);
 router.get("/course/:id", getCourseforUser);
+router.put("/complete-course/:id", updateCourseStatus);
 
 // audiobook-chapters routes
 router.get("/audiobook-chapters/:id", getAudiobookChapter);

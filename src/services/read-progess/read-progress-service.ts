@@ -629,3 +629,29 @@ export const getCourseProgress = async (courseId:string, lang:string, userId:str
     throw error;
   }
 };
+ 
+export const updateCourseStatusService = async (courseId: string, userData: any) => {
+  try {
+	// Find the read progress for the user and course
+	const readProgress = await readProgressModel.findOne({ userId: userData.id, bookId: courseId });
+
+	if (!readProgress) {
+	  throw new Error("Read progress not found for the user and course");
+	}
+
+	// Update the isCompleted status based on progress
+	readProgress.isCompleted = true;
+	readProgress.progress = 100; // Set progress to 100% as the course is completed
+	// Save the updated read progress
+	await readProgress.save();
+
+	return {
+	  success: true,
+	  message: "Course status updated successfully",
+	  data: { isCompleted: readProgress.isCompleted },
+	};
+  } catch (error) {
+	console.error("Error updating course status:", error);
+	throw error;
+  }
+}

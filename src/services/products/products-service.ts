@@ -17,6 +17,7 @@ import { courseLessonsModel } from "src/models/course-lessons/course-lessons-sch
 import { usersModel } from "src/models/user/user-schema";
 import { getAllCollectionsWithBooksService } from "../collections/collections-service";
 import { audiobookChaptersModel } from "src/models/audiobook-chapters/audiobook-chapters-schema";
+import { cartModel } from "src/models/cart/cart-schema";
 
 export const createBookService = async (payload: any, res: Response) => {
 	const newBook = new productsModel(payload);
@@ -169,7 +170,7 @@ export const getAllProductsForStocksTabService = async (payload: any, res: Respo
 
 	const query: any = payload.type ? { type: payload.type } : {};
 
-	const sort: any = {createdAt: -1}; 
+	const sort: any = { createdAt: -1 };
 	if (payload.orderColumn && payload.order) {
 		sort[payload.orderColumn] = payload.order === "asc" ? 1 : -1;
 	}
@@ -391,6 +392,8 @@ export const getBookForUserService = async (id: string, payload: any, user: any,
 	const isFavorite = await favoritesModel.exists({ userId: user.id, productId: id });
 	const relatedBooks = await productsModel.find({ categoryId: { $in: book?.categoryId }, type: book?.type }).populate([{ path: "authorId" }]);
 	const isPurchased = await ordersModel.find({ productIds: { $in: id }, userId: user.id, status: "Completed" });
+	const isAddedToCart = await cartModel.find({ productId: { $in: [id] }, userId: user.id, buyed: "pending" }).lean();
+
 	let language;
 
 	if (book.type === "audiobook") {
@@ -423,6 +426,7 @@ export const getBookForUserService = async (id: string, payload: any, user: any,
 				},
 				relatedBooks: relatedBooks,
 				isPurchased: isPurchased.length > 0 ? true : false,
+				isAddedToCart: isAddedToCart.length > 0 ? true : false,
 				favorite: isFavorite ? true : false,
 			},
 		};
@@ -438,6 +442,7 @@ export const getBookForUserService = async (id: string, payload: any, user: any,
 			},
 			relatedBooks: relatedBooks,
 			isPurchased: isPurchased.length > 0 ? true : false,
+			isAddedToCart: isAddedToCart.length > 0 ? true : false,
 			favorite: isFavorite ? true : false,
 		},
 	};
@@ -632,6 +637,8 @@ export const getCourseForUserService = async (id: string, user: any, res: Respon
 	const reviewCount = await productRatingsModel.countDocuments({ productId: id });
 	const isFavorite = await favoritesModel.exists({ userId: user.id, productId: id });
 	const isPurchased = await ordersModel.find({ productIds: id, userId: user.id, status: "Completed" });
+	const isAddedToCart = await cartModel.find({ productId: { $in: [id] }, userId: user.id, buyed: "pending" }).lean();
+
 	return {
 		success: true,
 		message: "Course retrieved successfully",
@@ -643,11 +650,12 @@ export const getCourseForUserService = async (id: string, user: any, res: Respon
 			reviewCount: reviewCount > 0 ? reviewCount : 0,
 			relatedCourses: relatedCourses,
 			isPurchased: isPurchased.length > 0 ? true : false,
+			isAddedToCart: isAddedToCart.length > 0 ? true : false,
 			favorite: isFavorite ? true : false,
 		},
 	};
 };
-export const getChaptersByAudiobookIDForUserService = async (id: string,  payload: any,user: any, res: Response) => {
+export const getChaptersByAudiobookIDForUserService = async (id: string, payload: any, user: any, res: Response) => {
 	let language;
 
 	if (payload.lang) {
