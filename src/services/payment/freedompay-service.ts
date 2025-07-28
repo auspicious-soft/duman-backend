@@ -5,7 +5,8 @@ import { ordersModel } from "src/models/orders/orders-schema";
 import { freedomPayConfig } from "src/config/freedompay";
 import { parseStringPromise } from "xml2js";
 import { walletHistoryModel } from "src/models/wallet-history/wallet-history-schema";
-import { usersModel } from 'src/models/user/user-schema';
+import { usersModel } from "src/models/user/user-schema";
+import { cartModel } from "src/models/cart/cart-schema";
 
 console.log(freedomPayConfig);
 
@@ -36,14 +37,13 @@ async function handlePaymentSuccess(order: any, paymentDetails: any) {
 			completedAt: new Date(),
 		});
 		const amount = ((Number(paymentDetails.pg_amount) || 0) * 100) / 100;
-		console.log("amount:", amount);
-	const orderDetails = await ordersModel.findOne({ identifier: order.identifier });
-	await walletHistoryModel.create({ orderId: orderDetails?._id, userId: order.userId, type: "earn", points: amount });
-	await usersModel.findByIdAndUpdate(order.userId, { $inc: { wallet: amount } });
-		
+		const orderDetails = await ordersModel.findOne({ identifier: order.identifier });
+		await walletHistoryModel.create({ orderId: orderDetails?._id, userId: order.userId, type: "earn", points: amount });
+		await usersModel.findByIdAndUpdate(order.userId, { $inc: { wallet: amount } });
+		const cart = await cartModel.findOneAndDelete({ userId: order.userId }); 
+			console.log("cart: ", cart);
 	} catch (error) {
 		console.error("Error in post-payment success handling:", error);
-
 	}
 }
 
@@ -88,7 +88,6 @@ export const initializePayment = async (orderId: string, amount: number, descrip
 			...(userEmail && { pg_user_contact_email: userEmail }),
 		};
 
-		console.log(params.pg_amount, "amount");
 		params.pg_sig = generateSignature(params, freedomPayConfig.secretKey, "init_payment.php");
 
 		const formData = new FormData();
@@ -106,7 +105,7 @@ export const initializePayment = async (orderId: string, amount: number, descrip
 
 		// Parse XML response
 		const parsedResponse = await parseStringPromise(response.data, { explicitArray: false });
-		console.log('parsedResponse: ', parsedResponse);
+		console.log("parsedResponse: ", parsedResponse);
 
 		const redirectUrl = parsedResponse.response.pg_redirect_url;
 		if (redirectUrl) {
@@ -208,6 +207,7 @@ export const processResultRequest = async (params: Record<string, any>) => {
 
 		// Find the order in the database
 		const order = await ordersModel.findOne({ identifier: orderId });
+		console.log('order: ', order);
 
 		if (!order) {
 			console.error(`Order not found for payment result: ${orderId}`);
@@ -239,7 +239,7 @@ export const processResultRequest = async (params: Record<string, any>) => {
 			order.paymentMethod = params.pg_payment_method || "FreedomPay";
 			order.paymentCompletedAt = new Date();
 			order.paymentAmount = paymentAmount;
-
+			
 			// Store the complete payment gateway response for audit purposes
 			order.paymentGatewayResponse = {
 				pg_payment_id: paymentId,
@@ -259,8 +259,10 @@ export const processResultRequest = async (params: Record<string, any>) => {
 				processedAt: new Date(),
 			};
 
+			const cart = await cartModel.findOneAndDelete({ userId: order.userId }); 
+			console.log("cart: ", cart);
 			await order.save();
-
+			
 			console.log(`Order ${orderId} successfully updated with payment details:`, {
 				transactionId: paymentId,
 				paymentMethod: order.paymentMethod,
@@ -276,10 +278,8 @@ export const processResultRequest = async (params: Record<string, any>) => {
 				pg_description: "Order paid",
 				pg_salt: Math.random().toString(36).substring(2, 15),
 			};
-
 			// Generate signature for the response
 			response.pg_sig = generateSignature(response, freedomPayConfig.secretKey, "result.php");
-
 			return response;
 		} else {
 			// Payment failed
@@ -320,7 +320,6 @@ export const processResultRequest = async (params: Record<string, any>) => {
 			pg_description: "Internal server error",
 			pg_salt: Math.random().toString(36).substring(2, 15),
 		};
-
 		// Generate signature for the response
 		response.pg_sig = generateSignature(response, freedomPayConfig.secretKey, "result.php");
 

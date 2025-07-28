@@ -33,17 +33,13 @@ export const checkPublisherAuth = async (req: Request, res: Response, next: Next
 export const checkAuth = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const token = req.headers.authorization?.split(" ")[1]
-        console.log('token: ', token);
         if (!token) return res.status(httpStatusCode.UNAUTHORIZED).json({ success: false, message: "Unauthorized token missing" })
 
         const isMobileApp = req.headers['x-client-type'] === 'mobile'
-        console.log('isMobileApp: ', isMobileApp);
-
         if (isMobileApp) {
             const decoded = jwt.verify(token, process.env.AUTH_SECRET as string)
             if (!decoded) return res.status(httpStatusCode.UNAUTHORIZED).json({ success: false, message: "Unauthorized token invalid or expired" })
             req.user = decoded
-        console.log('req.user: ', req.user);
         }
         else {
             const decoded = await decode({

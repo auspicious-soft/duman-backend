@@ -57,6 +57,7 @@ import {
 import {
   generateCertificate,
   getAllReadProgressHandler,
+  getCourseCertificateHandler,
   getReadProgressByIdHandler,
   updateCourseStatus,
   updateReadProgressHandler,
@@ -192,6 +193,7 @@ router.get("/collections/:id", getCollectionForUser);
 // read-progress route
 router.get("/read-progress", getAllReadProgressHandler);
 router.get("/read-progress/:id", getReadProgressByIdHandler);
+router.get("/certificate/:id", getCourseCertificateHandler);
 router.put("/read-progress/:id", updateReadProgressHandler);
 
 //favorites route

@@ -28,9 +28,16 @@ export const getReadProgressById = async (readProgressId: string, userId: string
 	return await readProgressModel.findOne({ userId, bookId: readProgressId }).populate([{ path: "bookId" }, { path: "readSections.sectionId" }]);
 };
 
+export const getCourseCertificateService = async (readProgressId: string, userId: string) => {
+	const certificate = await readProgressModel.findOne({ userId, bookId: readProgressId }).select("certificatePdf certificatePng");
+	return {
+		success: true,
+		message: "Course certificate retrieved successfully",
+		data: certificate,
+	};
+};
+
 export const updateReadProgress = async (readProgressId: string, readProgressData: any, user: any, res: Response) => {
-	console.log("readProgressData: ", readProgressData);
-	console.log("readProgressId: ", readProgressId);
 	if (readProgressData.progress < 0 || readProgressData.progress > 100) {
 		return errorResponseHandler("Progress must be between 0 and 100", httpStatusCode.BAD_REQUEST, res);
 	}
@@ -46,7 +53,6 @@ export const updateReadProgress = async (readProgressId: string, readProgressDat
 	}
 
 	const ReadProgress = await readProgressModel.findOneAndUpdate({ userId, bookId: readProgressId }, updateData, { new: true, upsert: true }).populate("bookId");
-	console.log("ReadProgress: ", ReadProgress);
 
 	if (!ReadProgress) {
 		return errorResponseHandler("Read Progress not found", httpStatusCode.NOT_FOUND, res);
@@ -97,7 +103,6 @@ export const getAllReadProgress = async (payload: any, user: any) => {
 };
 
 export const generateCertificatePNGService = async (payload: { name: string; date: string; courseTitle: string }, user: any) => {
-
 	try {
 		// Create canvas with certificate dimensions (750x500 to match PDF)
 		const canvas = createCanvas(750, 500);
@@ -269,32 +274,34 @@ export const generateCertificatePNGService = async (payload: { name: string; dat
 };
 
 // Optional: Combined function to generate both PDF and PNG
-export const generateCertificateBothFormatsService = async (data:any, user: any) => {
+export const generateCertificateBothFormatsService = async (data: any, user: any) => {
 	try {
-		const userDetail:any = await usersModel.findById(user.id);
-		console.log('userDetail: ', userDetail);
+		const userDetail: any = await usersModel.findById(user.id);
 		if (!userDetail) {
 			throw new Error("User not found");
 		}
-        const course:any = await readProgressModel.findOne({ userId: user.id, bookId: data.courseId }).populate("bookId");
+		const course: any = await readProgressModel.findOne({ userId: user.id, bookId: data.courseId }).populate("bookId");
 		if (!course) {
 			throw new Error("Course not found for the user");
 		}
+
 		const payload = { name: userDetail.firstName.eng, date: new Date().toLocaleDateString(), courseTitle: course?.bookId?.name?.eng };
 		// Generate PDF certificate
 		const pdfResult = await generateCertificateService(payload, user);
 
 		// Generate PNG certificate
 		const pngResult = await generateCertificatePNGService(payload, user);
-		// if (course) {
-		// 	course.isCompleted = true;
-		// 	await course.save();
-		// }
+
 		if (pdfResult.data && pngResult.data) {
 			course.certificatePdf = pdfResult.data.s3Key;
 			course.certificatePng = pngResult.data.s3Key;
 			await course.save();
 		}
+		// Update the isCompleted status based on progress
+		course.isCompleted = true;
+		course.progress = 100; // Set progress to 100% as the course is completed
+		// Save the updated read progress
+		await course.save();
 		return {
 			success: pdfResult.success && pngResult.success,
 			message: "Certificates generated in both formats",
@@ -315,7 +322,6 @@ export const generateCertificateBothFormatsService = async (data:any, user: any)
 };
 
 export const generateCertificateService = async (payload: { name: string; date: string; courseTitle: string }, user: any) => {
-	console.log('payload: ', payload);
 	try {
 		// Create a new PDF document
 		const pdfDoc = await PDFDocument.create();
@@ -568,90 +574,74 @@ export const generateCertificateService = async (payload: { name: string; date: 
 	}
 };
 
+export const getCourseProgress = async (courseId: string, lang: string, userId: string) => {
+	try {
+		// Fetch all lessons for the given courseId and language
+		const lessons = await courseLessonsModel.find({ productId: courseId, lang }).sort({ srNo: 1 }).lean();
 
-export const getCourseProgress = async (courseId:string, lang:string, userId:string) => {
-  try {
-    // Fetch all lessons for the given courseId and language
-    const lessons = await courseLessonsModel
-      .find({ productId: courseId, lang })
-      .sort({ srNo: 1 })
-      .lean();
+		// Fetch user's read progress for the course
+		const readProgress = await readProgressModel.findOne({ userId, bookId: courseId }).lean();
 
-    // Fetch user's read progress for the course
-    const readProgress = await readProgressModel
-      .findOne({ userId, bookId: courseId })
-      .lean();
+		// Initialize the result array
+		const result = [];
 
-    // Initialize the result array
-    const result = [];
+		// Process each lesson
+		for (let i = 0; i < lessons.length; i++) {
+			const lesson = lessons[i];
+			const lessonProgress = {
+				Srno: lesson.srNo,
+				lessonId: lesson._id,
+				isOpen: false, // Default to false
+				session: lesson.subLessons.map((subLesson) => ({
+					Srno: subLesson.srNo,
+					sessionId: subLesson._id,
+					isRead: readProgress?.readSections?.some((section) => section.courseLessonId?.toString() === lesson._id.toString() && section.sectionId?.toString() === subLesson._id.toString()) || false,
+				})),
+			};
 
-    // Process each lesson
-    for (let i = 0; i < lessons.length; i++) {
-      const lesson = lessons[i];
-      const lessonProgress = {
-        Srno: lesson.srNo,
-        lessonId: lesson._id,
-        isOpen: false, // Default to false
-        session: lesson.subLessons.map((subLesson) => ({
-          Srno: subLesson.srNo,
-          sessionId: subLesson._id,
-          isRead: readProgress?.readSections?.some(
-            (section) =>
-              section.courseLessonId?.toString() === lesson._id.toString() &&
-              section.sectionId?.toString() === subLesson._id.toString()
-          ) || false,
-        })),
-      };
+			// Determine if the lesson is open
+			if (lesson.srNo === 1) {
+				// First lesson is always open
+				lessonProgress.isOpen = true;
+			} else {
+				// Check if all sessions in the previous lesson are read
+				const prevLesson = lessons[i - 1];
+				const prevLessonRead = prevLesson.subLessons.every((subLesson) => readProgress?.readSections?.some((section) => section.courseLessonId?.toString() === prevLesson._id.toString() && section.sectionId?.toString() === subLesson._id.toString()));
+				lessonProgress.isOpen = prevLessonRead;
+			}
 
-      // Determine if the lesson is open
-      if (lesson.srNo === 1) {
-        // First lesson is always open
-        lessonProgress.isOpen = true;
-      } else {
-        // Check if all sessions in the previous lesson are read
-        const prevLesson = lessons[i - 1];
-        const prevLessonRead = prevLesson.subLessons.every((subLesson) =>
-          readProgress?.readSections?.some(
-            (section) =>
-              section.courseLessonId?.toString() === prevLesson._id.toString() &&
-              section.sectionId?.toString() === subLesson._id.toString()
-          )
-        );
-        lessonProgress.isOpen = prevLessonRead;
-      }
+			result.push(lessonProgress);
+		}
 
-      result.push(lessonProgress);
-    }
-
-    return result;
-  } catch (error) {
-    console.error("Error in getCourseProgress:", error);
-    throw error;
-  }
-};
- 
-export const updateCourseStatusService = async (courseId: string, userData: any) => {
-  try {
-	// Find the read progress for the user and course
-	const readProgress = await readProgressModel.findOne({ userId: userData.id, bookId: courseId });
-
-	if (!readProgress) {
-	  throw new Error("Read progress not found for the user and course");
+		return result;
+	} catch (error) {
+		console.error("Error in getCourseProgress:", error);
+		throw error;
 	}
+};
 
-	// Update the isCompleted status based on progress
-	readProgress.isCompleted = true;
-	readProgress.progress = 100; // Set progress to 100% as the course is completed
-	// Save the updated read progress
-	await readProgress.save();
+export const updateCourseStatusService = async (courseId: string, userData: any) => {
+	try {
+		// Find the read progress for the user and course
+		const readProgress = await readProgressModel.findOne({ userId: userData.id, bookId: courseId });
 
-	return {
-	  success: true,
-	  message: "Course status updated successfully",
-	  data: { isCompleted: readProgress.isCompleted },
-	};
-  } catch (error) {
-	console.error("Error updating course status:", error);
-	throw error;
-  }
-}
+		if (!readProgress) {
+			throw new Error("Read progress not found for the user and course");
+		}
+
+		// Update the isCompleted status based on progress
+		readProgress.isCompleted = true;
+		readProgress.progress = 100; // Set progress to 100% as the course is completed
+		// Save the updated read progress
+		await readProgress.save();
+
+		return {
+			success: true,
+			message: "Course status updated successfully",
+			data: { isCompleted: readProgress.isCompleted },
+		};
+	} catch (error) {
+		console.error("Error updating course status:", error);
+		throw error;
+	}
+};
