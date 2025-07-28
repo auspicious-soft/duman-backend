@@ -20,16 +20,19 @@ export const getRatingService = async (id: string, res: Response) => {
   const ratings = await productRatingsModel.find({ productId: id }).populate([{ path: "userId", select: "-password -__v -otp -token" }]);
   const totalRatings = ratings.length;
   const product = await productsModel.findById(id);
+  const ratingStats: { [key: string]: number } = { rating1: 0, rating2: 0, rating3: 0, rating4: 0, rating5: 0 };
   if (!ratings || ratings.length === 0) {
-    return errorResponseHandler("Rating not found", httpStatusCode.NOT_FOUND, res);
-  }
+ return {
+    success: true,
+    message: "Ratings retrieved successfully",
+    data: { ratings: [] ,...ratingStats , averageRating:  0 ,totalRatings},
+  };  }
 
   const objectId = new mongoose.Types.ObjectId(id);
 
   const ratingCounts = await productRatingsModel.aggregate([{ $match: { productId: objectId } }, { $group: { _id: "$rating", count: { $sum: 1 } } }]);
 
 
-  const ratingStats: { [key: string]: number } = { rating1: 0, rating2: 0, rating3: 0, rating4: 0, rating5: 0 };
 
   ratingCounts.forEach(({ _id, count }) => {
     if (_id >= 1 && _id <= 5) {
