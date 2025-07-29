@@ -39,6 +39,7 @@ const sanitizeUser = (user: any): UserDocument => {
 };
 
 export const loginUserService = async (userData: UserDocument, authType: string, res: Response) => {
+	console.log('userData: ', userData);
 	let query = getSignUpQueryByAuthType(userData, authType);
 
 	let user: any = await usersModel.findOne(query);
@@ -69,6 +70,7 @@ export const loginUserService = async (userData: UserDocument, authType: string,
 const createNewUser = async (userData: any, authType: string) => {
 	let newUser = new usersModel({
 		email: userData.email,
+		fullName: userData.fullName,
 		lastName: userData.lastName,
 		firstName: userData.firstName,
 		authType: authType,
@@ -84,6 +86,8 @@ const createNewUser = async (userData: any, authType: string) => {
 };
 
 export const signUpService = async (userData: UserDocument, authType: string, res: Response) => {
+	console.log('authType: ', authType);
+	console.log('userData: ', userData);
 	if (!authType) {
 		return errorResponseHandler("Auth type is required", httpStatusCode.BAD_REQUEST, res);
 	}
@@ -91,7 +95,9 @@ export const signUpService = async (userData: UserDocument, authType: string, re
 	// if (authType === "Email" && (!userData.password || !userData.email)) {
 	//   return errorResponseHandler("Both email and password is required for Email authentication", httpStatusCode.BAD_REQUEST, res);
 	// }
-
+	// if(userData.firstName && userData.lastName){
+	// 	userData.fullName = `${userData.firstName?.eng} ${userData.lastName}`
+	// }
 	const query = getSignUpQueryByAuthType(userData, authType);
 	const existingUser = await usersModel.findOne(query);
 	const existingUserResponse = existingUser ? handleExistingUser(existingUser as any, authType, res) : null;

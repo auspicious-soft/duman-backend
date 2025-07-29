@@ -284,8 +284,10 @@ export const generateCertificateBothFormatsService = async (data: any, user: any
 		if (!course) {
 			throw new Error("Course not found for the user");
 		}
+		const userName= userDetail.fullName.eng || userDetail.fullName.kaz || userDetail.fullName.rus || userDetail.firstName.eng || userDetail.firstName.kaz || userDetail.firstName.rus 
+		console.log('userName: ', userName);
 
-		const payload = { name: userDetail.firstName.eng, date: new Date().toLocaleDateString(), courseTitle: course?.bookId?.name?.eng };
+		const payload = { name: userName, date: new Date().toLocaleDateString(), courseTitle: course?.bookId?.name?.eng };
 		// Generate PDF certificate
 		const pdfResult = await generateCertificateService(payload, user);
 

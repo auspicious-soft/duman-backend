@@ -6,6 +6,8 @@ export interface UserDocument extends Document {
   email?: string;
   password?: string;
   fullName?: string;
+  firstName?: string;
+  lastName?: string;
   phoneNumber?: string;
   otp?: {
     code: string;
