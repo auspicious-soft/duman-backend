@@ -281,6 +281,7 @@ router.get("/user-details", getCurrentUserDetails);
 router.put("/user-details", updateCurrentUserDetails);
 router.put("/user-language", updateCurrentUserLanguage);
 router.post("/upload-image", uploadUserImageController);
+
 router.get("/get-badge", getUserBadge);
 
 // course-lessons routes
