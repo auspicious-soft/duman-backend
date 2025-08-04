@@ -273,7 +273,12 @@ export const uploadUserImageController = async (req: Request, res: Response) => 
     if (!req.headers['content-type']?.includes('multipart/form-data')) {
       return errorResponseHandler('Content-Type must be multipart/form-data', httpStatusCode.BAD_REQUEST, res);
     }
-    const busboy = Busboy({ headers: req.headers });
+    const busboy = Busboy({
+      headers: req.headers,
+      limits: {
+        fileSize: 500 * 1024 * 1024, // 500 MB limit
+      },
+    });
     let uploadPromise: Promise<string> | null = null;
     
     busboy.on('file', async (fieldname: string, fileStream: any, fileInfo: any) => {
