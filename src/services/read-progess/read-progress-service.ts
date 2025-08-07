@@ -280,19 +280,23 @@ export const generateCertificateBothFormatsService = async (data: any, user: any
 		if (!userDetail) {
 			throw new Error("User not found");
 		}
-		const course: any = await readProgressModel.findOne({ userId: user.id, bookId: data.courseId }).populate("bookId");
+		let course: any = await readProgressModel.findOne({ userId: user.id, bookId: data.courseId }).populate("bookId");
 		if (!course) {
-			throw new Error("Course not found for the user");
-		}
-		let name
-		if(userDetail.fullName){
-			name = userDetail.fullName.eng
-		}
-		else if(userDetail.firstName){
-			name = (userDetail?.firstName.eng !== null ? userDetail?.firstName.eng : userDetail.firstName.kaz !== null ? userDetail.firstName.kaz : userDetail.firstName.rus !== null ? userDetail.firstName.rus : '')
-		}
-		
+			course = await readProgressModel.create({
+				userId: user.id,
+				bookId: data.courseId,
+				// Add any default fields your schema requires here
+			});
 
+			// Optional: populate the newly created course if needed
+			course = await readProgressModel.findById(course._id).populate("bookId");
+		}
+		let name;
+		if (userDetail.fullName) {
+			name = userDetail.fullName.eng;
+		} else if (userDetail.firstName) {
+			name = userDetail?.firstName.eng !== null ? userDetail?.firstName.eng : userDetail.firstName.kaz !== null ? userDetail.firstName.kaz : userDetail.firstName.rus !== null ? userDetail.firstName.rus : "";
+		}
 
 		const payload = { name: name, date: new Date().toLocaleDateString(), courseTitle: course?.bookId?.name?.eng };
 		// Generate PDF certificate
