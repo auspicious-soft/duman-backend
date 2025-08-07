@@ -18,155 +18,68 @@ import { getCourseProgress } from "../read-progess/read-progress-service";
 import { cartModel } from "src/models/cart/cart-schema";
 
 export const createCourseLessonService = async (bookDetails: any, lessons: any, res: Response) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-  try {
-    const savedBook = await createBookService(bookDetails, res);
-    if (!savedBook?.data?._id) {
-      return errorResponseHandler("Book creation failed", httpStatusCode.NOT_FOUND, res);
-    }
+	const session = await mongoose.startSession();
+	session.startTransaction();
+	try {
+		const savedBook = await createBookService(bookDetails, res);
+		if (!savedBook?.data?._id) {
+			return errorResponseHandler("Book creation failed", httpStatusCode.NOT_FOUND, res);
+		}
 
-    const lessonsWithBookId = lessons.map((lesson: any) => ({
-      ...lesson,
-      productId: savedBook.data._id,
-      // type: lesson.type || "course",
-    }));
+		const lessonsWithBookId = lessons.map((lesson: any) => ({
+			...lesson,
+			productId: savedBook.data._id,
+			// type: lesson.type || "course",
+		}));
 
-    const savedCourseLessons = await courseLessonsModel.insertMany(lessonsWithBookId, { session });
+		const savedCourseLessons = await courseLessonsModel.insertMany(lessonsWithBookId, { session });
 
-    await session.commitTransaction();
-    session.endSession();
+		await session.commitTransaction();
+		session.endSession();
 
-    return {
-      success: true,
-      message: "Course lessons created successfully",
-      data: savedCourseLessons,
-    };
-  } catch (error: any) {
-    await session.abortTransaction();
-    session.endSession();
+		return {
+			success: true,
+			message: "Course lessons created successfully",
+			data: savedCourseLessons,
+		};
+	} catch (error: any) {
+		await session.abortTransaction();
+		session.endSession();
 
-    return res.status(500).json({
-      success: false,
-      message: "Failed to create course lessons",
-      error: error.message,
-    });
-  }
+		return res.status(500).json({
+			success: false,
+			message: "Failed to create course lessons",
+			error: error.message,
+		});
+	}
 };
 
 export const getCourseLessonByIdService = async (payload: any, productId: string) => {
-  const page = parseInt(payload.page as string) || 1;
-  const limit = parseInt(payload.limit as string) || 0;
-  const offset = (page - 1) * limit;
-  const courseData = await productsModel.findById(productId);
-  const totalDataCount = Object.keys({ productId: productId }).length < 1 ? await courseLessonsModel.countDocuments() : await courseLessonsModel.countDocuments({ productId: productId });
-  const lessons = await courseLessonsModel.find({ productId: productId }).skip(offset).limit(limit).select("-__v");
+	const page = parseInt(payload.page as string) || 1;
+	const limit = parseInt(payload.limit as string) || 0;
+	const offset = (page - 1) * limit;
+	const courseData = await productsModel.findById(productId);
+	const totalDataCount = Object.keys({ productId: productId }).length < 1 ? await courseLessonsModel.countDocuments() : await courseLessonsModel.countDocuments({ productId: productId });
+	const lessons = await courseLessonsModel.find({ productId: productId }).skip(offset).limit(limit).select("-__v");
 
-  if (lessons.length > 0) {
-    return {
-      success: true,
-      message: "Course lessons retrieved successfully",
-      page,
-      limit,
-      total: totalDataCount,
-      data: { courseData, lessons },
-    };
-  } else {
-    return {
-      success: true,
-      message: "No lessons present for this course",
-      data: { courseData },
-    };
-  }
+	if (lessons.length > 0) {
+		return {
+			success: true,
+			message: "Course lessons retrieved successfully",
+			page,
+			limit,
+			total: totalDataCount,
+			data: { courseData, lessons },
+		};
+	} else {
+		return {
+			success: true,
+			message: "No lessons present for this course",
+			data: { courseData },
+		};
+	}
 };
-export const getCourseLessonByIdForUserService = async (user: any, payload: any, productId: string) => {
-  const page = parseInt(payload.page as string) || 1;
-  const limit = parseInt(payload.limit as string) || 0;
-  const offset = (page - 1) * limit;
-  const { lang: language } = payload;
 
-  // Fetch user data and course
-  const userData = await usersModel.findById(user.id).lean();
-  const course = await productsModel.findById(productId).lean();
-
-  const availableLanguages = ["eng", "kaz", "rus"];
-  let courseLessons;
-  const reviewCount = await productRatingsModel.countDocuments({ productId: productId });
-	const readProgress = await readProgressModel.findOne({ userId: user.id, bookId: productId });
-
-  courseLessons = await courseLessonsModel.find({ productId: productId, lang: language }).sort({ srNo: 1 }).lean();
-  const courseReadProgress = await readProgressModel.findOne({ bookId: productId, userId: user.id }).lean();
-
-  if (courseLessons.length === 0 && course?.name) {
-    const languagesToCheck = [payload?.lang, "eng", ...availableLanguages].filter((lang, index, self) => self.indexOf(lang) === index);
-    for (let lang of languagesToCheck) {
-      courseLessons = await courseLessonsModel.find({ productId: productId, lang: lang }).sort({ srNo: 1 }).lean();
-      if (courseLessons.length > 0) break;
-    }
-  }
-  
-  const isFavorite = await favoritesModel.exists({ userId: user.id, productId: productId });
-  const isPurchased = await ordersModel.find({ productIds: { $in: productId }, userId: user.id, status: "Completed" }).lean();
-  const isAddedToCart = await cartModel.find({ productId: { $in: [productId] }, userId: user.id, buyed: "pending" }).lean();
-
-  if (courseLessons.length === 0) {
-    return {
-      success: false,
-      message: "No lessons found for this course in any of the available languages",
-      data: [],
-    };
-  }
-
-  // Convert read section IDs into a Set for quick lookup
-  const readSectionIds = new Set(courseReadProgress?.readSections.map((subLessons: any) => subLessons.sectionId.toString()) || []);
-
-  // Add isDone and isOpen properties to lessons and subLessons
-  courseLessons = courseLessons.map((lesson, index, lessons) => {
-    // Determine if the lesson is open
-    let isOpen = false;
-    if (lesson.srNo === 1) {
-      // First lesson is always open
-      isOpen = true;
-    } else if (index > 0) {
-      // Check if all sessions in the previous lesson are read
-      const prevLesson = lessons[index - 1];
-      isOpen = prevLesson.subLessons.every((subLesson) =>
-        courseReadProgress?.readSections?.some(
-          (section) =>
-            section.courseLessonId?.toString() === prevLesson._id.toString() &&
-            section.sectionId?.toString() === subLesson._id.toString()
-        )
-      );
-    }
-    return {
-      ...lesson,
-      isOpen, // Add isOpen property to lesson
-      subLessons: lesson.subLessons.map((subLessons) => ({
-        ...subLessons,
-        isDone: readSectionIds.has(subLessons._id.toString()), // Check if section is read
-      })),
-    };
-  });
-
-  // Check if all lessons and sublessons are completed for certificate availability
-  const certificateAvailable = courseLessons.every(lesson => 
-    lesson.subLessons.every(subLesson => subLesson.isDone)
-  );
-
-  return {
-    success: true,
-    message: "Lessons retrieved successfully",
-    data: {
-      courseCompleted: readProgress?.isCompleted || false,
-      courseLessons,
-      reviewCount,
-      isFavorite: !!isFavorite,
-      isPurchased: isPurchased.length > 0,
-      isAddedToCart: isAddedToCart.length > 0,
-      certificateAvailable
-    },
-  };
-}
 // export const getCourseLessonByIdForUserService = async (user: any, payload: any, productId: string) => {
 //   const page = parseInt(payload.page as string) || 1;
 //   const limit = parseInt(payload.limit as string) || 0;
@@ -179,6 +92,8 @@ export const getCourseLessonByIdForUserService = async (user: any, payload: any,
 
 //   const availableLanguages = ["eng", "kaz", "rus"];
 //   let courseLessons;
+//   const reviewCount = await productRatingsModel.countDocuments({ productId: productId });
+// 	const readProgress = await readProgressModel.findOne({ userId: user.id, bookId: productId });
 
 //   courseLessons = await courseLessonsModel.find({ productId: productId, lang: language }).sort({ srNo: 1 }).lean();
 //   const courseReadProgress = await readProgressModel.findOne({ bookId: productId, userId: user.id }).lean();
@@ -190,6 +105,10 @@ export const getCourseLessonByIdForUserService = async (user: any, payload: any,
 //       if (courseLessons.length > 0) break;
 //     }
 //   }
+
+//   const isFavorite = await favoritesModel.exists({ userId: user.id, productId: productId });
+//   const isPurchased = await ordersModel.find({ productIds: { $in: productId }, userId: user.id, status: "Completed" }).lean();
+//   const isAddedToCart = await cartModel.find({ productId: { $in: [productId] }, userId: user.id, buyed: "pending" }).lean();
 
 //   if (courseLessons.length === 0) {
 //     return {
@@ -220,7 +139,6 @@ export const getCourseLessonByIdForUserService = async (user: any, payload: any,
 //         )
 //       );
 //     }
-
 //     return {
 //       ...lesson,
 //       isOpen, // Add isOpen property to lesson
@@ -231,164 +149,237 @@ export const getCourseLessonByIdForUserService = async (user: any, payload: any,
 //     };
 //   });
 
-//   // Pagination and other data
-//   const totalDataCount = await courseLessonsModel.countDocuments({ productId: productId });
-//   const lessons = await courseLessonsModel.find({ productId: productId }).skip(offset).limit(limit).select("-__v").lean();
-//   const reviewCount = await productRatingsModel.countDocuments({ productId: productId });
-//   const isFavorite = await favoritesModel.exists({ userId: user.id, productId: productId });
-//   const isPurchased = await ordersModel.find({ productIds: { $in: productId }, userId: user.id, status: "Completed" }).lean();
-//   const courseProgress = await getCourseProgress(productId, payload.lang, user.id);
-//   console.log('courseProgress: ', courseProgress);
+//   // Check if all lessons and sublessons are completed for certificate availability
+//   const certificateAvailable = courseLessons.every(lesson =>
+//     lesson.subLessons.every(subLesson => subLesson.isDone)
+//   );
+
 //   return {
 //     success: true,
-//     message: "Course lessons retrieved successfully",
-//     page,
-//     limit,
-//     total: totalDataCount,
+//     message: "Lessons retrieved successfully",
 //     data: {
+//       courseCompleted: readProgress?.isCompleted || false,
 //       courseLessons,
 //       reviewCount,
 //       isFavorite: !!isFavorite,
 //       isPurchased: isPurchased.length > 0,
-//       courseProgress,
+//       isAddedToCart: isAddedToCart.length > 0,
+//       certificateAvailable
 //     },
 //   };
-// };
+// }
+
+export const getCourseLessonByIdForUserService = async (user: any, payload: any, productId: string) => {
+	const page = parseInt(payload.page as string) || 1;
+	const limit = parseInt(payload.limit as string) || 0;
+	const offset = (page - 1) * limit;
+	const { lang: language } = payload;
+
+	// Fetch user data and course
+	const userData = await usersModel.findById(user.id).lean();
+	const course = await productsModel.findById(productId).lean();
+
+	const availableLanguages = ["eng", "kaz", "rus"];
+	let courseLessons;
+	const reviewCount = await productRatingsModel.countDocuments({ productId: productId });
+	const readProgress = await readProgressModel.findOne({ userId: user.id, bookId: productId });
+
+	courseLessons = await courseLessonsModel.find({ productId: productId, lang: language }).sort({ srNo: 1 }).lean();
+	const courseReadProgress = await readProgressModel.findOne({ bookId: productId, userId: user.id }).lean();
+
+	if (courseLessons.length === 0 && course?.name) {
+		const languagesToCheck = [payload?.lang, "eng", ...availableLanguages].filter((lang, index, self) => self.indexOf(lang) === index);
+		for (let lang of languagesToCheck) {
+			courseLessons = await courseLessonsModel.find({ productId: productId, lang: lang }).sort({ srNo: 1 }).lean();
+			if (courseLessons.length > 0) break;
+		}
+	}
+
+	const isFavorite = await favoritesModel.exists({ userId: user.id, productId: productId });
+	const isPurchased = await ordersModel.find({ productIds: { $in: productId }, userId: user.id, status: "Completed" }).lean();
+	const isAddedToCart = await cartModel.find({ productId: { $in: [productId] }, userId: user.id, buyed: "pending" }).lean();
+
+	if (courseLessons.length === 0) {
+		return {
+			success: false,
+			message: "No lessons found for this course in any of the available languages",
+			data: [],
+		};
+	}
+
+	// Convert read section IDs into a Set for quick lookup
+	const readSectionIds = new Set(courseReadProgress?.readSections.map((subLessons: any) => subLessons.sectionId.toString()) || []);
+
+	courseLessons = courseLessons.map((lesson, index, lessons) => {
+		let isOpen = false;
+		if (lesson.srNo === 1) {
+			isOpen = true; // First lesson is always open
+		} else if (index > 0) {
+			const prevLesson = lessons[index - 1];
+			// Check if all sub-lessons in the previous lesson are either in readSections or have file === null
+			isOpen = prevLesson.subLessons.every((subLesson) => subLesson.file === null || courseReadProgress?.readSections?.some((section) => section.courseLessonId?.toString() === prevLesson._id.toString() && section.sectionId?.toString() === subLesson._id.toString()));
+		}
+		return {
+			...lesson,
+			isOpen,
+			subLessons: lesson.subLessons.map((subLessons) => ({
+				...subLessons,
+				isDone: subLessons.file === null ? true : readSectionIds.has(subLessons._id.toString()),
+			})),
+		};
+	});
+
+	// Check if all lessons and sublessons are completed for certificate availability
+	const certificateAvailable = courseLessons.every((lesson) => lesson.subLessons.every((subLesson) => subLesson.isDone));
+
+	return {
+		success: true,
+		message: "Lessons retrieved successfully",
+		data: {
+			courseCompleted: readProgress?.isCompleted || false,
+			courseLessons,
+			reviewCount,
+			isFavorite: !!isFavorite,
+			isPurchased: isPurchased.length > 0,
+			isAddedToCart: isAddedToCart.length > 0,
+			certificateAvailable,
+		},
+	};
+};
 
 export const updateCourseLessons = async (lessons: any | any[]) => {
-  const lessonsArray = Array.isArray(lessons) ? lessons : [lessons];
+	const lessonsArray = Array.isArray(lessons) ? lessons : [lessons];
 
-  if (!lessonsArray.length) {
-    throw new Error("No lessons provided for update or creation.");
-  }
+	if (!lessonsArray.length) {
+		throw new Error("No lessons provided for update or creation.");
+	}
 
-  const lessonsToUpdate = lessonsArray.filter((lesson) => lesson._id);
-  const lessonsToCreate = lessonsArray.filter((lesson) => !lesson._id);
+	const lessonsToUpdate = lessonsArray.filter((lesson) => lesson._id);
+	const lessonsToCreate = lessonsArray.filter((lesson) => !lesson._id);
 
-  const bulkOperations = lessonsToUpdate.map((lesson) => ({
-    updateOne: {
-      filter: { _id: lesson._id },
-      update: { $set: lesson },
-    },
-  }));
+	const bulkOperations = lessonsToUpdate.map((lesson) => ({
+		updateOne: {
+			filter: { _id: lesson._id },
+			update: { $set: lesson },
+		},
+	}));
 
-  let updateResult = { modifiedCount: 0 };
-  if (bulkOperations.length > 0) {
-    updateResult = await courseLessonsModel.bulkWrite(bulkOperations);
-  }
+	let updateResult = { modifiedCount: 0 };
+	if (bulkOperations.length > 0) {
+		updateResult = await courseLessonsModel.bulkWrite(bulkOperations);
+	}
 
-  let createdLessons: any = [];
-  if (lessonsToCreate.length > 0) {
-    createdLessons = await courseLessonsModel.insertMany(lessonsToCreate);
-  }
+	let createdLessons: any = [];
+	if (lessonsToCreate.length > 0) {
+		createdLessons = await courseLessonsModel.insertMany(lessonsToCreate);
+	}
 
-  return {
-    success: true,
-    message: `${updateResult.modifiedCount} course lesson(s) updated, ${createdLessons.length} new lesson(s) created successfully`,
-    updatedCount: updateResult.modifiedCount,
-    createdCount: createdLessons.length,
-    createdLessons,
-  };
+	return {
+		success: true,
+		message: `${updateResult.modifiedCount} course lesson(s) updated, ${createdLessons.length} new lesson(s) created successfully`,
+		updatedCount: updateResult.modifiedCount,
+		createdCount: createdLessons.length,
+		createdLessons,
+	};
 };
 
 export const deleteCourseLessonService = async (courseLessonId: string, res: Response) => {
-  const deletedCourseLesson: any = await courseLessonsModel.findByIdAndDelete(courseLessonId);
-  if (!deletedCourseLesson) return errorResponseHandler("Course lesson not found", httpStatusCode.NOT_FOUND, res);
+	const deletedCourseLesson: any = await courseLessonsModel.findByIdAndDelete(courseLessonId);
+	if (!deletedCourseLesson) return errorResponseHandler("Course lesson not found", httpStatusCode.NOT_FOUND, res);
 
-  const fileKeys = deletedCourseLesson.subLessons?.map((section: any) => section.file) || [];
-  const additionFileKeys = deletedCourseLesson.subLessons?.flatMap((section: any) => section?.additionalFiles?.map((file: any) => file.file) || []);
+	const fileKeys = deletedCourseLesson.subLessons?.map((section: any) => section.file) || [];
+	const additionFileKeys = deletedCourseLesson.subLessons?.flatMap((section: any) => section?.additionalFiles?.map((file: any) => file.file) || []);
 
-  for (const filePath of fileKeys) {
-    if (filePath) {
-      await deleteFileFromS3(filePath);
-    }
-  }
-  for (const filePath of additionFileKeys) {
-    if (filePath) {
-      await deleteFileFromS3(filePath);
-    }
-  }
-  return {
-    success: true,
-    message: "Course lesson Deleted successfully",
-    data: deletedCourseLesson,
-  };
+	for (const filePath of fileKeys) {
+		if (filePath) {
+			await deleteFileFromS3(filePath);
+		}
+	}
+	for (const filePath of additionFileKeys) {
+		if (filePath) {
+			await deleteFileFromS3(filePath);
+		}
+	}
+	return {
+		success: true,
+		message: "Course lesson Deleted successfully",
+		data: deletedCourseLesson,
+	};
 };
 export const deleteSublessonsService = async (LessonId: string, subLessonId: string, res: Response) => {
-  const Lesson: any = await courseLessonsModel.findById(LessonId);
-  if (!Lesson) return errorResponseHandler("Course lesson not found", httpStatusCode.NOT_FOUND, res);
-  const subLessons = Lesson.subLessons;
-  const index = subLessons.findIndex((i: any) => {
-    return i._id.toString() === subLessonId;
-  });
-  if (index === -1) return errorResponseHandler("Sublesson not found", httpStatusCode.NOT_FOUND, res);
+	const Lesson: any = await courseLessonsModel.findById(LessonId);
+	if (!Lesson) return errorResponseHandler("Course lesson not found", httpStatusCode.NOT_FOUND, res);
+	const subLessons = Lesson.subLessons;
+	const index = subLessons.findIndex((i: any) => {
+		return i._id.toString() === subLessonId;
+	});
+	if (index === -1) return errorResponseHandler("Sublesson not found", httpStatusCode.NOT_FOUND, res);
 
-  const deletedSubLesson = subLessons.splice(index, 1);
-  await Lesson.save();
-  const fileKeys = deletedSubLesson?.map((section: any) => section.file) || [];
-  const additionFileKeys = deletedSubLesson?.flatMap((section: any) => section?.additionalFiles?.map((file: any) => file.file) || []);
+	const deletedSubLesson = subLessons.splice(index, 1);
+	await Lesson.save();
+	const fileKeys = deletedSubLesson?.map((section: any) => section.file) || [];
+	const additionFileKeys = deletedSubLesson?.flatMap((section: any) => section?.additionalFiles?.map((file: any) => file.file) || []);
 
-  for (const filePath of fileKeys) {
-    if (filePath) {
-      await deleteFileFromS3(filePath);
-    }
-  }
-  return {
-    success: true,
-    message: "Sub lesson Deleted successfully",
-    data: deletedSubLesson,
-  };
+	for (const filePath of fileKeys) {
+		if (filePath) {
+			await deleteFileFromS3(filePath);
+		}
+	}
+	return {
+		success: true,
+		message: "Sub lesson Deleted successfully",
+		data: deletedSubLesson,
+	};
 };
 export const deleteCourseLanguageService = async (productId: string, lang: any, res: Response) => {
-  
-  const Lessons: any = await courseLessonsModel.find({productId:productId,lang:lang}).lean();
-  if (!Lessons) return errorResponseHandler("Course lesson not found", httpStatusCode.NOT_FOUND, res);
-  const LessonIds = Lessons.map((i: any) => i._id.toString());
-  await courseLessonsModel.deleteMany({ _id: { $in: LessonIds } });
-  const fileKeys = Lessons.map((section: any) => section.subLessons?.map((section: any) => section.file) || []).flat();
-  const additionFileKeys = Lessons.map((section: any) => section.subLessons?.map((section: any) => section.additionalFiles?.map((file: any) => file.file) || [])).flat(Infinity);
+	const Lessons: any = await courseLessonsModel.find({ productId: productId, lang: lang }).lean();
+	if (!Lessons) return errorResponseHandler("Course lesson not found", httpStatusCode.NOT_FOUND, res);
+	const LessonIds = Lessons.map((i: any) => i._id.toString());
+	await courseLessonsModel.deleteMany({ _id: { $in: LessonIds } });
+	const fileKeys = Lessons.map((section: any) => section.subLessons?.map((section: any) => section.file) || []).flat();
+	const additionFileKeys = Lessons.map((section: any) => section.subLessons?.map((section: any) => section.additionalFiles?.map((file: any) => file.file) || [])).flat(Infinity);
 
-  for (const filePath of fileKeys) {
-    if (filePath) {
-      await deleteFileFromS3(filePath);
-    }
-  }
-  for (const filePath of additionFileKeys) {
-    if (filePath) {
-      await deleteFileFromS3(filePath);
-    }
-  }
-  return {
-    success: true,
-    message: "Course language Deleted successfully",
-  };
+	for (const filePath of fileKeys) {
+		if (filePath) {
+			await deleteFileFromS3(filePath);
+		}
+	}
+	for (const filePath of additionFileKeys) {
+		if (filePath) {
+			await deleteFileFromS3(filePath);
+		}
+	}
+	return {
+		success: true,
+		message: "Course language Deleted successfully",
+	};
 };
 
 export const getAllCourseLessons = async (payload: any) => {
-  const page = parseInt(payload.page as string) || 1;
-  const limit = parseInt(payload.limit as string) || 0;
-  const offset = (page - 1) * limit;
-  const { query, sort } = queryBuilder(payload, ["lessonTitle"]);
+	const page = parseInt(payload.page as string) || 1;
+	const limit = parseInt(payload.limit as string) || 0;
+	const offset = (page - 1) * limit;
+	const { query, sort } = queryBuilder(payload, ["lessonTitle"]);
 
-  const totalDataCount = Object.keys(query).length < 1 ? await courseLessonsModel.countDocuments() : await courseLessonsModel.countDocuments(query);
-  const results = await courseLessonsModel.find(query).sort(sort).skip(offset).limit(limit).select("-__v");
-  if (results.length)
-    return {
-      page,
-      limit,
-      success: true,
-      message: "Course lessons retrieved successfully",
-      total: totalDataCount,
-      data: results,
-    };
-  else {
-    return {
-      data: [],
-      page,
-      limit,
-      success: false,
-      message: "No course lessons found",
-      total: 0,
-    };
-  }
+	const totalDataCount = Object.keys(query).length < 1 ? await courseLessonsModel.countDocuments() : await courseLessonsModel.countDocuments(query);
+	const results = await courseLessonsModel.find(query).sort(sort).skip(offset).limit(limit).select("-__v");
+	if (results.length)
+		return {
+			page,
+			limit,
+			success: true,
+			message: "Course lessons retrieved successfully",
+			total: totalDataCount,
+			data: results,
+		};
+	else {
+		return {
+			data: [],
+			page,
+			limit,
+			success: false,
+			message: "No course lessons found",
+			total: 0,
+		};
+	}
 };
