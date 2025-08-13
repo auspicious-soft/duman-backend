@@ -592,7 +592,7 @@ export const updateCurrentUserDetailsService = async (userData: any, payload: an
 	const updatedUser = await usersModel
 		.findByIdAndUpdate(
 			userData.id,
-			{ $set: { email: payload.email, phoneNumber: payload.phoneNumber, name: payload.name, profilePic: payload.profilePic, country: payload.country } },
+			{ $set: { email: payload.email, phoneNumber: payload.phoneNumber, firstName: payload.firstName,fullName:payload.fullName, profilePic: payload.profilePic, country: payload.country } },
 			{
 				new: true,
 			}
