@@ -134,10 +134,45 @@ export const updateOrderService = async (id: string, payload: any, res: Response
 	};
 };
 
-export const getWalletHistoryService = async (userData: any, res: Response) => {
+
+
+export const getWalletHistoryService = async (userData: any, payload: any, res: Response) => {
 	const user = await usersModel.findById(userData.id);
 	if (!user) return errorResponseHandler("User not found", httpStatusCode.NOT_FOUND, res);
-	const walletHistory = await walletHistoryModel.find({ userId: userData.id }).populate("orderId");
+
+	// Handle month filtering
+	let filter: any = { userId: userData.id };
+	if (payload.month) {
+		const monthMap: { [key: string]: number } = {
+			jan: 0,
+			feb: 1,
+			mar: 2,
+			apr: 3,
+			may: 4,
+			jun: 5,
+			jul: 6,
+			aug: 7,
+			sep: 8,
+			oct: 9,
+			nov: 10,
+			dec: 11,
+		};
+
+		const monthKey = payload.month.toLowerCase();
+		const monthNumber = monthMap[monthKey];
+
+		if (monthNumber !== undefined) {
+			const year = new Date().getFullYear(); // You can make this dynamic if needed
+			const startDate = new Date(year, monthNumber, 1);
+			const endDate = new Date(year, monthNumber + 1, 1);
+
+			filter.createdAt = { $gte: startDate, $lt: endDate };
+		}
+	}
+
+	const walletHistory = await walletHistoryModel
+		.find(filter)
+		.populate("orderId");
 
 	return {
 		success: true,
