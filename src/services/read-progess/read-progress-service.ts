@@ -281,6 +281,7 @@ export const generateCertificateBothFormatsService = async (data: any, user: any
 			throw new Error("User not found");
 		}
 		let course: any = await readProgressModel.findOne({ userId: user.id, bookId: data.courseId }).populate("bookId");
+		console.log('course: ', course);
 		if (!course) {
 			course = await readProgressModel.create({
 				userId: user.id,
@@ -290,6 +291,17 @@ export const generateCertificateBothFormatsService = async (data: any, user: any
 
 			// Optional: populate the newly created course if needed
 			course = await readProgressModel.findById(course._id).populate("bookId");
+			console.log('course-readProgressModel: ', course);
+		}
+		if(course.certificatePdf && course.certificatePng) {
+			return {
+				success: true,
+				message: "Certificate already exists",
+				data: {
+					pdf:{s3Key: course.certificatePdf},
+					png: {s3Key: course.certificatePng},
+				},
+			};
 		}
 		let name;
 		if (userDetail.fullName) {
@@ -594,6 +606,7 @@ export const getCourseProgress = async (courseId: string, lang: string, userId: 
 
 		// Fetch user's read progress for the course
 		const readProgress = await readProgressModel.findOne({ userId, bookId: courseId }).lean();
+		console.log('readProgress: ', readProgress);
 
 		// Initialize the result array
 		const result = [];

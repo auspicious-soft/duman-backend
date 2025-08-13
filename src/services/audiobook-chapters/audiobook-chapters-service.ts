@@ -7,6 +7,12 @@ import { Response } from "express";
 import { productsModel } from "src/models/products/products-schema";
 import mongoose from "mongoose";
 import { createBookService } from "../products/products-service";
+import { usersModel } from "src/models/user/user-schema";
+import { productRatingsModel } from "src/models/ratings/ratings-schema";
+import { readProgressModel } from "src/models/user-reads/read-progress-schema";
+import { favoritesModel } from "src/models/product-favorites/product-favorites-schema";
+import { ordersModel } from "src/models/orders/orders-schema";
+import { cartModel } from "src/models/cart/cart-schema";
 
 // Create audiobook chapters with book details
 export const createAudiobookChapterService = async (bookDetails: any, chapters: any) => {
@@ -57,21 +63,100 @@ export const getAudiobookChapterByIdService = async (id: string, res: Response) 
     return errorResponseHandler("Failed to retrieve audiobook chapter", httpStatusCode.INTERNAL_SERVER_ERROR, res);
   }
 };
+// export const getAudiobookChapterByIdService = async (user: any, payload: any, productId: string) => {
+//   const page = parseInt(payload.page as string) || 1;
+//   const limit = parseInt(payload.limit as string) || 0;
+//   const offset = (page - 1) * limit;
+//   const { lang: language } = payload;
 
+//   // Fetch user data and course
+//   const userData = await usersModel.findById(user.id).lean();
+//   const course = await productsModel.findById(productId).lean();
+
+//   const availableLanguages = ["eng", "kaz", "rus"];
+//   let courseLessons;
+//   const reviewCount = await productRatingsModel.countDocuments({ productId: productId });
+//   const readProgress = await readProgressModel.findOne({ userId: user.id, bookId: productId });
+
+//   courseLessons = await audiobookChaptersModel.find({ productId: productId, lang: language }).sort({ srNo: 1 }).lean();
+//   const courseReadProgress = await readProgressModel.findOne({ bookId: productId, userId: user.id }).lean();
+
+//   if (courseLessons.length === 0 && course?.name) {
+//     const languagesToCheck = [payload?.lang, "eng", ...availableLanguages].filter((lang, index, self) => self.indexOf(lang) === index);
+//     for (let lang of languagesToCheck) {
+//       courseLessons = await audiobookChaptersModel.find({ productId: productId, lang: lang }).sort({ srNo: 1 }).lean();
+//       if (courseLessons.length > 0) break;
+//     }
+//   }
+
+//   const isFavorite = await favoritesModel.exists({ userId: user.id, productId: productId });
+//   const isPurchased = await ordersModel.find({ productIds: { $in: productId }, userId: user.id, status: "Completed" }).lean();
+//   const isAddedToCart = await cartModel.find({ productId: { $in: [productId] }, userId: user.id, buyed: "pending" }).lean();
+
+//   if (courseLessons.length === 0) {
+//     return {
+//       success: false,
+//       message: "No lessons found for this course in any of the available languages",
+//       data: [],
+//     };
+//   }
+
+//   // Convert read section IDs into a Set for quick lookup
+//   const readSectionIds = new Set(courseReadProgress?.readAudioChapter?.map((subLessons: any) => subLessons.audioChapterId.toString()) || []);
+
+//   courseLessons = courseLessons.map((lesson, index, lessons) => {
+//     let isOpen = false;
+//     if (lesson.srNo === 1) {
+//       isOpen = true; // First lesson is always open
+//     } else if (index > 0) {
+//       const prevLesson = lessons[index - 1];
+//       // Check if all sub-lessons in the previous lesson are either in readSections or have file === null
+//       isOpen = Array.isArray(prevLesson) && prevLesson.every((subLesson) => subLesson.file === null || courseReadProgress?.readSections?.some((section) => section?.audioChapterId?.toString() === subLesson._id.toString()));
+//     }
+//     return {
+//       ...lesson,
+//       isOpen,
+//       // subLessons: lesson.map((subLessons) => ({
+//       //   ...subLessons,
+//         // isDone: readSectionIds.has(subLessons._id.toString()),
+//       // })),
+//     };
+//   });
+
+//   // Check if all lessons and sublessons are completed for certificate availability
+//   const certificateAvailable = courseLessons.every((lesson) => lesson.subLessons.every((subLesson) => subLesson.isDone));
+
+//   return {
+//     success: true,
+//     message: "Lessons retrieved successfully",
+//     data: {
+//       courseCompleted: readProgress?.isCompleted || false,
+//       courseLessons,
+//       reviewCount,
+//       isFavorite: !!isFavorite,
+//       isPurchased: isPurchased.length > 0,
+//       isAddedToCart: isAddedToCart.length > 0,
+//       certificateAvailable,
+//     },
+//   };
+// };
 // Get all audiobook chapters for a specific product
-export const getAudiobookChaptersByProductIdService = async (payload: any, productId: string) => {
+export const getAudiobookChaptersByProductIdForAdminService = async (payload: any, productId: string) => {
   const page = parseInt(payload.page as string) || 1;
   const limit = parseInt(payload.limit as string) || 0;
   const offset = (page - 1) * limit;
-
+  let query: { [key: string]: any } = {};
+  if (payload.lang) {
+    query.lang = payload.lang;
+  }
   const productData = await productsModel.findById(productId);
-  const totalDataCount = await audiobookChaptersModel.countDocuments({ productId: productId });
-  const chapters = await audiobookChaptersModel.find({ productId: productId })
+  const totalDataCount = await audiobookChaptersModel.countDocuments({ productId: productId, ...query });
+  const chapters = await audiobookChaptersModel.find({ productId: productId, ...query })
     .sort({ srNo: 1 })
     .skip(offset)
     .limit(limit)
     .select("-__v")
-    .populate('productId');
+    // .populate('productId');
 
   if (chapters.length > 0) {
     return {
@@ -90,6 +175,90 @@ export const getAudiobookChaptersByProductIdService = async (payload: any, produ
     };
   }
 };
+
+
+
+export const getAudiobookChaptersByProductIdService = async (user: any, payload: any, productId: string) => {
+  console.log('productId: ', productId);
+  const page = parseInt(payload.page as string) || 1;
+  const limit = parseInt(payload.limit as string) || 0;
+  const offset = (page - 1) * limit;
+
+  let query: { [key: string]: any } = {};
+  if (payload.lang) {
+    query.lang = payload.lang;
+  }
+
+  // Get product
+  const productData = await productsModel.findById(productId).lean();
+  console.log('productData: ', productData);
+
+  // Get read progress for the user and product
+  const readProgress = await readProgressModel.findOne({
+    userId: user?.id,
+    bookId: productId
+  }).lean();
+
+  // Create a Set of read audioChapterIds for fast lookup
+  const readAudioChapterIds = new Set(
+    readProgress?.readAudioChapter?.map(ch => ch.audioChapterId ? ch.audioChapterId.toString() : null).filter(id => id !== null) || []
+  );
+
+  // Get total chapters and paginated result
+  const totalDataCount = await audiobookChaptersModel.countDocuments({ productId, ...query });
+
+  let chapters = await audiobookChaptersModel.find({ productId, ...query })
+    .sort({ srNo: 1 })
+    .skip(offset)
+    .limit(limit)
+    .select("-__v")
+    .lean();
+
+  // Enhance each chapter with isDone and isOpen
+  chapters = chapters.map((chapter, index, chapterArray) => {
+    const isDone = readAudioChapterIds.has(chapter._id.toString());
+
+    let isOpen = false;
+    if (chapter.srNo === 1) {
+      isOpen = true; // First chapter is always open
+    } else if (index > 0) {
+      const prevChapter = chapterArray[index - 1];
+      const prevChapterDone = readAudioChapterIds.has(prevChapter._id.toString());
+      isOpen = prevChapterDone;
+    }
+
+    return {
+      ...chapter,
+      isDone,
+      isOpen,
+    };
+  });
+
+  // Return formatted response
+  if (chapters.length > 0) {
+    return {
+      success: true,
+      message: "Audiobook chapters retrieved successfully",
+      page,
+      limit,
+      total: totalDataCount,
+      data: {
+        productData,
+        chapters,
+        audiobookCompleted: readProgress?.isCompleted || false,
+      },
+    };
+  } else {
+    return {
+      success: true,
+      message: "No chapters present for this audiobook",
+      data: { productData },
+    };
+  }
+};
+
+
+
 
 // Get all audiobook chapters
 export const getAllAudiobookChaptersService = async (payload: any) => {

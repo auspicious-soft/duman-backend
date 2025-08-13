@@ -10,6 +10,7 @@ import {
   deleteAudiobookChapterService,
   deleteAudiobookChaptersByProductIdService,
   updateMultipleAudiobookChaptersService,
+  getAudiobookChaptersByProductIdForAdminService,
 } from "src/services/audiobook-chapters/audiobook-chapters-service";
 
 // Create audiobook chapters with book details
@@ -38,7 +39,16 @@ export const getAudiobookChapter = async (req: Request, res: Response) => {
 // Get all audiobook chapters for a specific product
 export const getAudiobookChaptersByProductId = async (req: Request, res: Response) => {
   try {
-    const response = await getAudiobookChaptersByProductIdService(req.query, req.params.productId);
+    const response = await getAudiobookChaptersByProductIdService(req.user, req.query, req.params.productId);
+    return res.status(httpStatusCode.OK).json(response);
+  } catch (error: any) {
+    const { code, message } = errorParser(error);
+    return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
+  }
+};
+export const getAudiobookChaptersByProductIdForAdmin = async (req: Request, res: Response) => {
+  try {
+    const response = await getAudiobookChaptersByProductIdForAdminService( req.query, req.params.productId);
     return res.status(httpStatusCode.OK).json(response);
   } catch (error: any) {
     const { code, message } = errorParser(error);
