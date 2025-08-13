@@ -135,39 +135,37 @@ export const updateOrderService = async (id: string, payload: any, res: Response
 };
 
 
-
 export const getWalletHistoryService = async (userData: any, payload: any, res: Response) => {
 	const user = await usersModel.findById(userData.id);
 	if (!user) return errorResponseHandler("User not found", httpStatusCode.NOT_FOUND, res);
 
-	// Handle month filtering
+	// Base filter: user-specific
 	let filter: any = { userId: userData.id };
+
+	// If month filter is provided
 	if (payload.month) {
 		const monthMap: { [key: string]: number } = {
-			jan: 0,
-			feb: 1,
-			mar: 2,
-			apr: 3,
-			may: 4,
-			jun: 5,
-			jul: 6,
-			aug: 7,
-			sep: 8,
-			oct: 9,
-			nov: 10,
-			dec: 11,
+			jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
+			jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11,
 		};
 
 		const monthKey = payload.month.toLowerCase();
 		const monthNumber = monthMap[monthKey];
 
 		if (monthNumber !== undefined) {
-			const year = new Date().getFullYear(); // You can make this dynamic if needed
+			const year = payload.year ? parseInt(payload.year, 10) : new Date().getFullYear();
 			const startDate = new Date(year, monthNumber, 1);
 			const endDate = new Date(year, monthNumber + 1, 1);
 
 			filter.createdAt = { $gte: startDate, $lt: endDate };
 		}
+	} else if (payload.year) {
+		// If only year is provided, filter by the full year
+		const year = parseInt(payload.year, 10);
+		const startDate = new Date(year, 0, 1);
+		const endDate = new Date(year + 1, 0, 1);
+
+		filter.createdAt = { $gte: startDate, $lt: endDate };
 	}
 
 	const walletHistory = await walletHistoryModel
