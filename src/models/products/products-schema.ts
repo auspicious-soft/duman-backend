@@ -42,7 +42,7 @@ const productsSchema = new mongoose.Schema({
     },
     type: {
       type: String,
-      enum: ["e-book", "podcast", "audiobook", "course","video-lecture"],
+      enum: ["e-book", "podcast", "audiobook", "course","video-lecture","audio&ebook"],
       required: true,
     },
     publisherId: {
