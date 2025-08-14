@@ -21,6 +21,7 @@ const __dirname = path.dirname(__filename)        // <-- Define __dirname
 const PORT = process.env.PORT || 8080
 const app = express()
 
+
 app.use(express.json());
 app.set("trust proxy", true)
 app.use(bodyParser.json({
