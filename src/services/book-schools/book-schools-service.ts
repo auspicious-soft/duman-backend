@@ -25,18 +25,32 @@ export const getBookSchoolService = async (payload: any, id: string, res: Respon
 
   const bookSchool = await bookSchoolsModel.findById(id).populate("publisherId");
   if (!bookSchool) return errorResponseHandler("Book school not found", httpStatusCode.NOT_FOUND, res);
+  // const totalDataCount =
+  //   Object.keys(query).length < 1
+  //     ? await productsModel.countDocuments({
+  //         publisherId: { $in: bookSchool?.publisherId },
+  //         type: "e-book",
+  //         ...query,
+  //       })
+  //     : await productsModel.countDocuments(query);
+
+  //TODO--CHANGED
   const totalDataCount =
     Object.keys(query).length < 1
       ? await productsModel.countDocuments({
           publisherId: { $in: bookSchool?.publisherId },
-          type: "e-book",
+          // type: "e-book", //TODO--CHANGED
+          type:"audio&ebook",
+          format: { $nin: ["audiobook", null] },
           ...query,
         })
       : await productsModel.countDocuments(query);
   const books = await productsModel
     .find({
       publisherId: { $in: bookSchool?.publisherId },
-      type: "e-book",
+      // type: "e-book", //TODO--CHANGED
+      type:"audio&ebook",
+      format: { $nin: ["audiobook", null] },
       ...query,
     })
     .sort(sort)
@@ -107,9 +121,19 @@ export const getBookSchoolsByCodeService = async (payload: any, user: any, res: 
   const publisherId = results.map((school) => school.publisherId).flat(); // Flatten the array if needed
 
   const publisherObjectIds = publisherId.map((id: any) => new mongoose.Types.ObjectId(id));
-
+//TODO--CHANGED
+  // const bookSchoolData = await productsModel
+  //   .find({ publisherId: { $in: publisherObjectIds }, type: "e-book" })
+  //   .skip(offset)
+  //   .limit(limit)
+  //   .populate([
+  //     { path: "publisherId", select: "name" },
+  //     { path: "authorId", select: "name" },
+  //     { path: "categoryId", select: "name" },
+  //     { path: "subCategoryId", select: "name" },
+  //   ]);
   const bookSchoolData = await productsModel
-    .find({ publisherId: { $in: publisherObjectIds }, type: "e-book" })
+    .find({ publisherId: { $in: publisherObjectIds }, type: "audio&ebook", format: { $nin: ["audiobook", null] } })
     .skip(offset)
     .limit(limit)
     .populate([

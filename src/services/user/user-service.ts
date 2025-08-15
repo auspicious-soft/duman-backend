@@ -266,7 +266,7 @@ export const getUserService = async (id: string, res: Response) => {
 
 	// Calculate the number of books purchased by the user
 	const booksPurchasedCount = userOrders.reduce((count, order) => {
-		return count + order.productIds.filter((product: any) => product.type === "e-book").length;
+		return count + order.productIds.filter((product: any) => product.type === "audio&ebook" && (product.format !== "audiobook" || product.format === null)).length;  //TODO--CHANGED type-ebook
 	}, 0);
 
 	// Calculate the number of courses purchased by the user
@@ -356,7 +356,7 @@ export const getUserProfileDetailService = async (id: string, payload: any, res:
 
 	const booksPurchased = filteredOrders
 		.flatMap((order) => order.productIds)
-		.filter((product: any) => product?.type === "e-book")
+		.filter((product: any) => product?.type === "audio&ebook" && (product?.format !== "audiobook"|| product?.format === null) ) //TODO--CHANGED type-ebook
 		.map((product) => product._id);
 
 	const booksPurchasedCount = booksPurchased.length;

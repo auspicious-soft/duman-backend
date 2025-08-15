@@ -174,9 +174,17 @@ export const getAllProductsForStocksTabService = async (payload: any, res: Respo
 	if (payload.orderColumn && payload.order) {
 		sort[payload.orderColumn] = payload.order === "asc" ? 1 : -1;
 	}
-
+//TODO--CHANGED
+	// const Books = await productsModel
+	// 	.find({ type: "e-book" })
+	// 	.sort(sort)
+	// 	// .skip(offset)
+	// 	.limit(4)
+	// 	.select("-__v")
+	// 	.populate([{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }])
+	// 	.lean();
 	const Books = await productsModel
-		.find({ type: "e-book" })
+		.find({ type: "audio&ebook", format: { $nin: ["audiobook", null] } })  //TODO--CHANGED   type-ebook
 		.sort(sort)
 		// .skip(offset)
 		.limit(4)
@@ -372,7 +380,9 @@ export const deleteBookService = async (id: string, res: Response) => {
 
 export const getProductsForHomePage = async () => {
 	try {
-		const books = await productsModel.find({ type: "e-book" }).limit(10);
+		//TODO--CHANGED
+		// const books = await productsModel.find({ type: "e-book" }).limit(10);
+		const books = await productsModel.find({ type: "audio&ebook", format: { $nin: ["audiobook", null] } }).limit(10);
 		const courses = await productsModel.find({ type: "course" }).limit(10);
 
 		return { books: books, courses: courses, success: true, message: "Products retrieved successfully" };
@@ -390,13 +400,15 @@ export const getBookForUserService = async (id: string, payload: any, user: any,
 		return errorResponseHandler("Book not found", httpStatusCode.NOT_FOUND, res);
 	}
 	const isFavorite = await favoritesModel.exists({ userId: user.id, productId: id });
-	const relatedBooks = await productsModel.find({ categoryId: { $in: book?.categoryId }, type: book?.type }).populate([{ path: "authorId" }]);
+	//TODO--CHANGED
+	const relatedBooks = await productsModel.find({ categoryId: { $in: book?.categoryId }, type: book?.type, _id: { $ne: id } }).populate([{ path: "authorId" }]);
 	const isPurchased = await ordersModel.find({ productIds: { $in: id }, userId: user.id, status: "Completed" });
 	const isAddedToCart = await cartModel.find({ productId: { $in: [id] }, userId: user.id, buyed: "pending" }).lean();
 
 	let language;
-
-	if (book.type === "audiobook") {
+	//TODO--CHANGED
+	// if (book.type === "audiobook") {
+	if (book.type === "audio&ebook" && book.format !== "e-book" && book.format !== null) {
 		if (payload.lang) {
 			language = payload.lang;
 		} else {
@@ -452,10 +464,13 @@ export const getNewbookForUserService = async (user: any, payload: any, res: Res
 	const page = parseInt(payload.page as string) || 1;
 	const limit = parseInt(payload.limit as string) || 0;
 	const offset = (page - 1) * 20;
-	const totalDataCount = await productsModel.countDocuments({ type: "e-book" });
+	//TODO--CHANGED
+	// const totalDataCount = await productsModel.countDocuments({ type: "e-book" });
+	const totalDataCount = await productsModel.countDocuments({ type: "audio&ebook", format: { $nin: ["audiobook", null] } });
 	const userData = await usersModel.findById(user.id);
 	let newBooks = await productsModel
-		.find({ type: "e-book" })
+		// .find({ type: "e-book" }) //TODO--CHANGED
+		.find({ type: "audio&ebook", format: { $nin: ["audiobook", null] } })
 		.sort({ createdAt: -1 })
 		.skip(offset)
 		.limit(20)
@@ -489,8 +504,18 @@ export const getAllAudioBookForUserService = async (payload: any, user: any, res
 	const limit = parseInt(payload.limit as string) || 0;
 	const offset = (page - 1) * limit;
 	const userData = await usersModel.findById(user.id);
+	// let audiobooks = await productsModel
+	// 	.find({ type: "audiobook" })
+	// 	.sort({ createdAt: -1 })
+	// 	.skip(offset)
+	// 	.limit(limit)
+	// 	.populate([
+	// 		{ path: "authorId", select: "name" },
+	// 		{ path: "categoryId", select: "name" },
+	// 	]);
+	//TODO--CHANGED
 	let audiobooks = await productsModel
-		.find({ type: "audiobook" })
+		.find({ type: "audio&ebook", format: { $nin: ["e-book", null] } })
 		.sort({ createdAt: -1 })
 		.skip(offset)
 		.limit(limit)
@@ -498,7 +523,7 @@ export const getAllAudioBookForUserService = async (payload: any, user: any, res
 			{ path: "authorId", select: "name" },
 			{ path: "categoryId", select: "name" },
 		]);
-	const totalDataCount = await productsModel.countDocuments({ type: "audiobook" });
+	const totalDataCount = await productsModel.countDocuments({ type: "audio&ebook", format: { $nin: ["e-book", null] } });
 
 	const favoriteBooks = await favoritesModel.find({ userId: user.id }).populate("productId");
 	const favoriteIds = favoriteBooks.filter((book) => book.productId && book.productId._id).map((book) => book.productId._id.toString());
@@ -602,7 +627,8 @@ export const getBookMarketForUserService = async (user: any, payload: any, res: 
 	]);
 
 	const newBooks = await productsModel
-		.find({ type: "e-book" })
+		// .find({ type: "e-book" }) //TODO--CHANGED
+		.find({ type: "audio&ebook", format: { $nin: ["audiobook", null] } })
 		.sort({ createdAt: -1 })
 		.limit(20)
 		.populate([

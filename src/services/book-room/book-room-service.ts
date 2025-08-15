@@ -18,8 +18,9 @@ export const getAllReadingBooksService = async (user: any, payload: any) => {
       path: "bookId",
       populate: [{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }],
     })
-
-  const modifiedResults = readingBooks.filter((item: any) => item.bookId.type === "e-book");
+//TODO--CHANGED
+  // const modifiedResults = readingBooks.filter((item: any) => item.bookId.type === "e-book");
+  const modifiedResults = readingBooks.filter((item: any) => item.bookId.type === "audio&ebook" && item.bookId.format !== "audiobook");
   const total = modifiedResults.length;
   const paginatedResults = modifiedResults.slice(offset, offset + limit);
 
@@ -58,8 +59,9 @@ export const getAllFinishedBooksService = async (user: any, payload: any) => {
     path: "bookId",
     populate: [{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }],
   })
-
-  const modifiedResults = finishedBooks.filter((item: any) => item.bookId.type === "e-books");
+ //TODO--CHANGED
+  // const modifiedResults = finishedBooks.filter((item: any) => item.bookId.type === "e-books");
+  const modifiedResults = finishedBooks.filter((item: any) => item.bookId.type === "audio&ebook" && item.bookId.format !== "audiobook");
   const total = modifiedResults.length;
   const paginatedResults = modifiedResults.slice(offset, offset + limit);
 
@@ -97,9 +99,12 @@ export const getAllFaviouriteBooksService = async (user: any, payload: any) => {
     path: "productId",
     populate: [{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }],
   })
-  
+  //TODO-- CHANGEDE
+  // const modifiedResults = favBooks.filter((item: any) => {
+  //   return item.productId.type === "e-book";
+  // });
   const modifiedResults = favBooks.filter((item: any) => {
-    return item.productId.type === "e-book";
+    return item.productId.type === "audio&ebook" && item.productId.format !== "audiobook";
   });
   
   const total = modifiedResults.length;
