@@ -61,7 +61,7 @@ const productsSchema = new mongoose.Schema(
 		format: {
 			type: String,
 			enum: ["e-book", "audiobook", "both"],
-      default: null,
+			default: null,
 		},
 		createdAt: { type: Date, default: Date.now },
 		averageRating: { type: Number, default: 0 },

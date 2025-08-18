@@ -406,6 +406,7 @@ export const getBookForUserService = async (id: string, payload: any, user: any,
 	const isAddedToCart = await cartModel.find({ productId: { $in: [id] }, userId: user.id, buyed: "pending" }).lean();
 
 	let language;
+	const userReadProgress = await readProgressModel.findOne({ userId: user.id, bookId: id });
 	//TODO--CHANGED
 	// if (book.type === "audiobook") {
 	if (book.type === "audio&ebook" && book.format !== "e-book" && book.format !== null) {
@@ -415,7 +416,6 @@ export const getBookForUserService = async (id: string, payload: any, user: any,
 			language = "eng";
 		}
 		const chapters = await audiobookChaptersModel.find({ productId: id, lang: language });
-		const userReadProgress = await readProgressModel.findOne({ userId: user.id, bookId: id });
 
 		// If userReadProgress exists, get readSections (array of chapter IDs)
 		const readChapters = userReadProgress?.readAudioChapter?.map((section: any) => section?.audioChapterId.toString()) || [];
@@ -440,6 +440,7 @@ export const getBookForUserService = async (id: string, payload: any, user: any,
 				isPurchased: isPurchased.length > 0 ? true : false,
 				isAddedToCart: isAddedToCart.length > 0 ? true : false,
 				favorite: isFavorite ? true : false,
+				readProgress: userReadProgress ? userReadProgress.progress : 0,
 			},
 		};
 	}
@@ -456,6 +457,7 @@ export const getBookForUserService = async (id: string, payload: any, user: any,
 			isPurchased: isPurchased.length > 0 ? true : false,
 			isAddedToCart: isAddedToCart.length > 0 ? true : false,
 			favorite: isFavorite ? true : false,
+			readProgress: userReadProgress ? userReadProgress.progress : 0,
 		},
 	};
 };
@@ -705,6 +707,7 @@ export const getChaptersByAudiobookIDForUserService = async (id: string, payload
 		message: "Audiobook retrieved successfully",
 		data: {
 			chapter: chaptersWithIsRead,
+			readProgress: userReadProgress,
 		},
 	};
 };

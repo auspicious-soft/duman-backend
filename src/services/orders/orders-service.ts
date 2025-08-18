@@ -122,6 +122,7 @@ export const getAllOrdersService = async (payload: any, res: Response) => {
 	}
 };
 
+
 export const updateOrderService = async (id: string, payload: any, res: Response) => {
 	const updatedOrder = await ordersModel.findByIdAndUpdate(id, payload, {
 		new: true,
