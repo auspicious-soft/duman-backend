@@ -16,8 +16,9 @@ export const createFAQ = async (req: Request, res: Response) => {
 export const getAllFAQ = async (req: Request, res: Response) => {
     try {
         const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
-        const response = await getAllFAQService(res, page, limit);
+        const limit = parseInt(req.query.limit as string) || 10;
+        const search = req.query.search as string | undefined;
+        const response = await getAllFAQService(res, page, limit, req.query.type as string | undefined,search);
         return res.status(httpStatusCode.OK).json(response);
     } catch (error: any) {
         const { code, message } = errorParser(error);

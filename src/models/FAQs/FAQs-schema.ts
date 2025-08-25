@@ -17,8 +17,7 @@ const faqsSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ["text", "video", "image"],
-      default: "text",
+      required: true,
     },
   },
   { timestamps: true }

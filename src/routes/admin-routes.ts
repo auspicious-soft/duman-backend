@@ -23,6 +23,7 @@ import { sendNotificationToUser, sendNotificationToUsers } from "src/controllers
 import { createCourseLesson, deleteCourseLanguage, deleteCourseLesson, deleteSubLesson, getCourseLesson, updateCourseLesson } from "src/controllers/course-lessons/course-lessons-controller";
 import { createAudiobookChapter, deleteAudiobookChapter, deleteAudiobookChaptersByProductId, getAllAudiobookChapters, getAudiobookChapter, getAudiobookChaptersByProductId, getAudiobookChaptersByProductIdForAdmin, updateAudiobookChapter, updateMultipleAudiobookChapters } from "src/controllers/audiobook-chapters/audiobook-chapters-controller";
 import { createSettings, getSettings } from "src/controllers/settings/settings-controller";
+import { createFAQ, deleteFAQ, getAllFAQ, updateFAQ } from "src/controllers/FAQs/FAQs-controller";
 
 const router = Router();
 
@@ -210,5 +211,10 @@ router.post("/send-notification-to-specific-users", sendNotificationToUser)
 //Policies route
 router.post("/policies", createSettings)
 router.get("/policies", getSettings)
+
+// FAQs route
+router.route("/faqs").get(getAllFAQ).post(createFAQ);
+router.route("/faqs/:id").delete(deleteFAQ).put(updateFAQ);
+
 
 export { router };

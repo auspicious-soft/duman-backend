@@ -144,6 +144,7 @@ import {
   removeFromCartController,
 } from "src/controllers/cart/cart-controller";
 import { getSettings } from "src/controllers/settings/settings-controller";
+import { createFAQ, deleteFAQ, getAllFAQ, updateFAQ } from "src/controllers/FAQs/FAQs-controller";
 
 const router = Router();
 
@@ -313,6 +314,9 @@ router.patch("/cart/:id", removeFromCartController);
 
 //Policies route
 router.get("/policies", getSettings)
+
+//FAQs route
+router.route("/faqs").get(getAllFAQ);
 
 
 export { router };
