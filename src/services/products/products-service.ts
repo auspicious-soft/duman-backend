@@ -31,10 +31,12 @@ export const createBookService = async (payload: any, res: Response) => {
 
 export const getBooksService = async (payload: any, id: string, res: Response) => {
 	try {
+
 		const page = parseInt(payload.page as string) || 1;
 		const limit = parseInt(payload.limit as string) || 0;
 		const offset = (page - 1) * limit;
 		let lessons, totalDataCount;
+		
 		const books = await productsModel.find({ _id: id }).populate([{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }]);
 		if (!books || books.length === 0) {
 			return errorResponseHandler("Book not found", httpStatusCode.NOT_FOUND, res);
@@ -72,11 +74,19 @@ export const getBooksService = async (payload: any, id: string, res: Response) =
 };
 
 export const getAllBooksService = async (payload: any, res: Response) => {
+	console.log('payload: ', payload);
 	const page = parseInt(payload.page as string) || 1;
 	const limit = parseInt(payload.limit as string) || 0;
 	const offset = (page - 1) * limit;
-
-	const query: any = payload.type ? { type: payload.type } : {};
+let type;
+		if(payload.type ==="audioebook"){
+			type = "audio&ebook";
+			console.log('type: ', type);
+		}
+		else{
+			type = payload.type;
+		}
+	const query: any = payload.type ? { type: type } : {};
 
 	const sort: any = {};
 	if (payload.orderColumn && payload.order) {
@@ -767,12 +777,6 @@ export const getBestSellersService = async () => {
 			},
 		},
 		{
-			$match: {
-				"book.type": "audio&ebook",
-				"book.format": { $ne: "audiobook" },
-			},
-		},
-		{
 			$project: {
 				_id: 0,
 				book: 1,
@@ -780,6 +784,68 @@ export const getBestSellersService = async () => {
 			},
 		},
 	]);
+	
+	// const bestSellers = await ordersModel.aggregate([
+	// 	{
+	// 		$unwind: "$productIds",
+	// 	},
+	// 	{
+	// 		$group: {
+	// 			_id: "$productIds",
+	// 			orderCount: { $sum: 1 },
+	// 		},
+	// 	},
+	// 	{
+	// 		$sort: { orderCount: -1 },
+	// 	},
+	// 	{
+	// 		$limit: 10,
+	// 	},
+	// 	{
+	// 		$lookup: {
+	// 			from: "products",
+	// 			localField: "_id",
+	// 			foreignField: "_id",
+	// 			as: "book",
+	// 		},
+	// 	},
+	// 	{
+	// 		$unwind: "$book",
+	// 	},
+	// 	{
+	// 		$match: {
+	// 			"book.type": "audio&ebook",
+	// 			"book.format": { $ne: "audiobook" },
+	// 		},
+	// 	},
+	// 	{
+	// 		$lookup: {
+	// 			from: "authors",
+	// 			localField: "book.authorId",
+	// 			foreignField: "_id",
+	// 			as: "book.authors",
+	// 		},
+	// 	},
+	// 	{
+	// 		$unwind: {
+	// 			path: "$book.authors",
+	// 			preserveNullAndEmptyArrays: true,
+	// 		},
+	// 	},
+	// 	{
+	// 		$match: {
+	// 			"book.type": "audio&ebook",
+	// 			"book.format": { $ne: "audiobook" },
+	// 		},
+	// 	},
+	// 	{
+	// 		$project: {
+	// 			_id: 0,
+	// 			book: 1,
+	// 			orderCount: 1,
+	// 		},
+	// 	},
+	// ]);
 	return {
 		success: true,
 		message: "Best sellers retrieved successfully",
