@@ -38,6 +38,7 @@ import {
 import {
   getAllAudioBookForUser,
   getAllBooks,
+  getBestSellers,
   getBook,
   getBookforUser,
   getBookMarketForUser,
@@ -183,6 +184,7 @@ router.get("/stories/:id", getStory);
 // books routes
 router.get("/books", getAllBooks);
 router.get("/new-books", getNewbookForUser);
+router.get("/best-sellers", getBestSellers);
 router.get("/audiobooks", getAllAudioBookForUser);
 router.get("/books/:id", getBookforUser);
 router.get("/audiobook/:id/chapters", getChaptersByAudiobookIDForUser);

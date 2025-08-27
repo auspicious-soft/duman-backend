@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { errorParser } from "../../lib/errors/error-response-handler";
 import { httpStatusCode } from "../../lib/constant";
-import { createBookService, getBooksService, updateBookService, deleteBookService, getAllBooksService, addBookToDiscountsService, removeBookFromDiscountsService, getAllDiscountedBooksService, getBookForUserService, getBookMarketForUserService, getNewbookForUserService, getAllAudioBookForUserService, getCourseForUserService, getChaptersByAudiobookIDForUserService } from "../../services/products/products-service";
+import { createBookService, getBooksService, updateBookService, deleteBookService, getAllBooksService, addBookToDiscountsService, removeBookFromDiscountsService, getAllDiscountedBooksService, getBookForUserService, getBookMarketForUserService, getNewbookForUserService, getAllAudioBookForUserService, getCourseForUserService, getChaptersByAudiobookIDForUserService, getBestSellersService } from "../../services/products/products-service";
 
 export const createBook = async (req: Request, res: Response) => {
   try {
@@ -54,6 +54,15 @@ export const getBookforUser = async (req: Request, res: Response) => {
 export const getChaptersByAudiobookIDForUser = async (req: Request, res: Response) => {
   try {
     const response = await getChaptersByAudiobookIDForUserService(req.params.id,req.query,req.user, res);
+    return res.status(httpStatusCode.OK).json(response);
+  } catch (error: any) {
+    const { code, message } = errorParser(error);
+    return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
+  }
+};
+export const getBestSellers = async (req: Request, res: Response) => {
+  try {
+    const response = await getBestSellersService();
     return res.status(httpStatusCode.OK).json(response);
   } catch (error: any) {
     const { code, message } = errorParser(error);

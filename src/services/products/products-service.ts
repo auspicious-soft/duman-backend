@@ -711,3 +711,72 @@ export const getChaptersByAudiobookIDForUserService = async (id: string, payload
 		},
 	};
 };
+
+export const getBestSellersService = async () => {
+	const bestSellers = await ordersModel.aggregate([
+		{
+			$unwind: "$productIds",
+		},
+		{
+			$group: {
+				_id: "$productIds",
+				orderCount: { $sum: 1 },
+			},
+		},
+		{
+			$sort: { orderCount: -1 },
+		},
+		{
+			$limit: 10,
+		},
+		{
+			$lookup: {
+				from: "products",
+				localField: "_id",
+				foreignField: "_id",
+				as: "book",
+			},
+		},
+		{
+			$unwind: "$book",
+		},
+		{
+			$match: {
+				"book.type": "audio&ebook",
+				"book.format": { $ne: "audiobook" },
+			},
+		},
+		{
+			$lookup: {
+				from: "authors",
+				localField: "book.authorId",
+				foreignField: "_id",
+				as: "book.authors",
+			},
+		},
+		{
+			$unwind: {
+				path: "$book.authors",
+				preserveNullAndEmptyArrays: true,
+			},
+		},
+		{
+			$match: {
+				"book.type": "audio&ebook",
+				"book.format": { $ne: "audiobook" },
+			},
+		},
+		{
+			$project: {
+				_id: 0,
+				book: 1,
+				orderCount: 1,
+			},
+		},
+	]);
+	return {
+		success: true,
+		message: "Best sellers retrieved successfully",
+		data: bestSellers,
+	};
+};
