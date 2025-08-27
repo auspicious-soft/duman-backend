@@ -606,6 +606,12 @@ export const getBookMarketForUserService = async (user: any, payload: any, res: 
 			$unwind: "$book",
 		},
 		{
+			$match: {
+				"book.type": "audio&ebook",
+				"book.format": { $ne: "audiobook" },
+			},
+		},
+		{
 			$lookup: {
 				from: "authors",
 				localField: "book.authorId",
