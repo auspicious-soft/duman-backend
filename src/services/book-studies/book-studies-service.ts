@@ -454,6 +454,9 @@ export const getBookStudyTeacherService = async (payload: any, user: any, res: R
 };
 
 export const getPopularCoursesService = async (payload: any, user: any, res: Response) => {
+  const page = parseInt(payload.page as string) || 1;
+  const limit = parseInt(payload.limit as string) || 0;
+
   const bookStudy = await bookStudiesModel.find()
   .populate({
     path: "productsId",
@@ -465,14 +468,19 @@ export const getPopularCoursesService = async (payload: any, user: any, res: Res
       { path: "publisherId" },
     ],
   })
+  .skip((page - 1) * limit)
+  .limit(limit)
   .sort({
     "productsId.averageRating": 1,
   });
   const filteredBookStudy = bookStudy.filter((study) => study.productsId !== null);
-
+ const total = filteredBookStudy.length;
   return {
     success: true,
     message: "Book study Authors retrieved successfully",
+    total,
+    page,
+    limit,
     data: { popularCourses: filteredBookStudy },
   };
 };

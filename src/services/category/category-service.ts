@@ -29,7 +29,50 @@ export const getCategoryService = async (id: string, res: Response) => {
   };
 };
 
-export const getBooksByCategoryIdService = async (id: string, user: any, payload: any, res: Response) => {
+// export const getBooksByCategoryIdService = async (id: string, user: any, payload: any, res: Response) => {
+//   const userData = await usersModel.findById(user.id);
+//   const category = await categoriesModel.findById(id);
+//   if (!category) return errorResponseHandler("Category not found", httpStatusCode.NOT_FOUND, res);
+
+//   const favoriteBooks = await favoritesModel.find({ userId: user.id }).populate("productId");
+//   const favoriteIds = favoriteBooks.map((book) => book.productId?._id.toString());
+
+//   const categoryBooks = await productsModel.find({ categoryId: id }).populate([
+//     { path: "authorId", select: "name" },
+//     { path: "categoryId", select: "name" },
+//     { path: "publisherId", select: "name" },
+//   ]);
+
+//   let categoryBooksWithFavoriteStatus = categoryBooks.map((book) => ({
+//     ...book.toObject(),
+//     isFavorite: favoriteIds.includes(book._id.toString()), // Check if the book is in the user's favorites
+//   }));
+//   const languages = toArray(payload.language);
+//   categoryBooksWithFavoriteStatus = filterBooksByLanguage(categoryBooksWithFavoriteStatus, languages);
+
+//   if (!categoryBooksWithFavoriteStatus.length) {
+//     return errorResponseHandler("No books found for the selected languages", httpStatusCode.NO_CONTENT, res);
+//   }
+
+//   // ✅ Apply Sorting Based on Payload.sorting
+//   categoryBooksWithFavoriteStatus = sortBooks(categoryBooksWithFavoriteStatus, payload.sorting, userData?.productsLanguage, userData?.language);
+//   // sortByLanguagePriority(categoryBooksWithFavoriteStatus, "file", userData?.productsLanguage || []);
+
+
+//   return {
+//     success: true,
+//     message: "Category retrieved successfully",
+//     data: { category, books: categoryBooksWithFavoriteStatus },
+//   };
+// };
+
+
+export const getBooksByCategoryIdService = async (
+  id: string,
+  user: any,
+  payload: any,
+  res: Response
+) => {
   const userData = await usersModel.findById(user.id);
   const category = await categoriesModel.findById(id);
   if (!category) return errorResponseHandler("Category not found", httpStatusCode.NOT_FOUND, res);
@@ -45,8 +88,9 @@ export const getBooksByCategoryIdService = async (id: string, user: any, payload
 
   let categoryBooksWithFavoriteStatus = categoryBooks.map((book) => ({
     ...book.toObject(),
-    isFavorite: favoriteIds.includes(book._id.toString()), // Check if the book is in the user's favorites
+    isFavorite: favoriteIds.includes(book._id.toString()),
   }));
+
   const languages = toArray(payload.language);
   categoryBooksWithFavoriteStatus = filterBooksByLanguage(categoryBooksWithFavoriteStatus, languages);
 
@@ -54,73 +98,37 @@ export const getBooksByCategoryIdService = async (id: string, user: any, payload
     return errorResponseHandler("No books found for the selected languages", httpStatusCode.NO_CONTENT, res);
   }
 
-  // ✅ Apply Sorting Based on Payload.sorting
-  categoryBooksWithFavoriteStatus = sortBooks(categoryBooksWithFavoriteStatus, payload.sorting, userData?.productsLanguage, userData?.language);
-  // sortByLanguagePriority(categoryBooksWithFavoriteStatus, "file", userData?.productsLanguage || []);
+  // ✅ Apply Sorting
+  categoryBooksWithFavoriteStatus = sortBooks(
+    categoryBooksWithFavoriteStatus,
+    payload.sorting,
+    userData?.productsLanguage,
+    userData?.language
+  );
 
-
+  // ✅ Pagination Logic
+  const page = parseInt(payload.page) || 1;
+  const limit = parseInt(payload.limit) || 10;
+  const startIndex = (page - 1) * limit;
+  const endIndex = startIndex + limit;
+  const paginatedBooks = categoryBooksWithFavoriteStatus.slice(startIndex, endIndex);
+ //TODO:ADDED PAGINATION
   return {
     success: true,
     message: "Category retrieved successfully",
-    data: { category, books: categoryBooksWithFavoriteStatus },
+    total: categoryBooksWithFavoriteStatus.length,
+    page,
+    limit,
+    // totalPages: Math.ceil(categoryBooksWithFavoriteStatus.length / limit),
+    // hasNextPage: endIndex < categoryBooksWithFavoriteStatus.length,
+    // hasPrevPage: startIndex > 0,
+    data: {
+      category,
+      books: paginatedBooks,
+    },
   };
 };
 
-// export const getBooksByCategoryIdService = async (id: string, user: any, query: any, res: Response,) => {
-//   const { language = 'eng', minRating = 0, sortBy = 'createdAt', sortOrder = 'desc' } = query;
-
-//   const category = await categoriesModel.findById(id);
-//   if (!category) return errorResponseHandler("Category not found", httpStatusCode.NOT_FOUND, res);
-
-//   // Get the user's favorite books and their IDs
-//   const favoriteBooks = await favoritesModel.find({ userId: user.id }).populate("productId");
-//   const favoriteIds = favoriteBooks.map((book) => book.productId._id.toString());
-
-//   // Fetch books by category and populate necessary fields
-//   const categoryBooks = await productsModel.find({ categoryId: id }).populate([
-//     { path: "authorId", select: "name" },
-//     { path: "categoryId", select: "name" },
-//     { path: "publisherId", select: "name" },
-//   ]);
-
-//   // Map the books and add the 'isFavorite' status
-//   const categoryBooksWithFavoriteStatus = categoryBooks.map((book) => ({
-//     ...book.toObject(),
-//     isFavorite: favoriteIds.includes(book._id.toString()), // Check if the book is in the user's favorites
-//   }));
-
-//   // Apply filters:
-
-//   let filteredBooks = categoryBooksWithFavoriteStatus;
-
-//   // 1. Filter by minimum average rating (if provided in the query)
-//   filteredBooks = filteredBooks.filter((book) => book.averageRating >= parseFloat(minRating));
-
-//   // 2. Alphabetical order of book name based on the chosen language (default 'eng')
-//   filteredBooks = filteredBooks.sort((a, b) => {
-//     const nameA = a.name[language] || a.name['eng']; // Default to 'eng' if specific language is unavailable
-//     const nameB = b.name[language] || b.name['eng'];
-//     return nameA.localeCompare(nameB);
-//   });
-
-//   // 3. Newest first (createdAt) or another field (if `sortBy` is specified in the query)
-//   filteredBooks = filteredBooks.sort((a, b) => {
-//     const dateA = new Date(a[sortBy]).getTime();
-//     const dateB = new Date(b[sortBy]).getTime();
-//     return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
-//   });
-
-//   // 4. If you want to filter based on language availability in name
-//   if (language !== 'eng') {
-//     filteredBooks = filteredBooks.filter((book) => book.name[language]); // Filter out books that don't have the required language name
-//   }
-
-//   return {
-//     success: true,
-//     message: "Category retrieved successfully",
-//     data: { category, books: filteredBooks },
-//   };
-// };
 
 export const getAllCategoriesService = async (payload: any, res: Response) => {
   const page = parseInt(payload.page as string) || 1;
