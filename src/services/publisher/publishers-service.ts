@@ -172,16 +172,26 @@ export const getAllPublishersService = async (payload: any, res: Response) => {
 
     // Execute the aggregation pipeline
     const results = await publishersModel.aggregate(pipeline);
-
+    console.log('results: ', results);
+    const publishers = results.map((publisher) => ({
+      id: publisher._id,
+      name: publisher.name,
+      bookCount: publisher.bookCount,
+      image: publisher.image,
+      role: publisher.role,
+      categoryId: publisher.categoryId,
+      email: publisher.email,
+      description: publisher.description,
+      country: publisher.country,
+      books: publisher.books,
+    }));
     return {
       page,
       limit,
       success: true,
       message: "Publishers retrieved successfully",
       total: totalDataCount,
-      data: results.map((publisher) => ({
-        publisher,
-      })),
+      data: publishers,
     };
   } catch (error: any) {
     console.error("Error in getAllPublishersService:", error.message);
