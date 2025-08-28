@@ -179,3 +179,21 @@ export const getWalletHistoryService = async (userData: any, payload: any, res: 
 		data: { wallet: user.wallet, history: walletHistory },
 	};
 };
+
+export const createFreeProductOrderService = async (payload: any, res: Response, userDetails: any) => {
+	const products = await productsModel.find({ _id: { $in: payload.productIds } });
+
+	const identifier = customAlphabet("0123456789", 5);
+	payload.identifier = identifier();
+	const newOrder = new ordersModel({ ...payload, userId: userDetails.id,status:"Completed", totalAmount:0 });
+	const savedOrder = await newOrder.save();
+	
+
+	return {
+		success: true,
+		message: "Order created successfully",
+		data: {
+			order: savedOrder,
+		},
+	};
+}; 

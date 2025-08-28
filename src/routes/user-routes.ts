@@ -132,6 +132,7 @@ import {
   getAudiobookChaptersByProductId,
 } from "src/controllers/audiobook-chapters/audiobook-chapters-controller";
 import {
+  createFreeProductOrder,
   createOrder,
   getAllOrders,
   getOrder,
@@ -304,6 +305,7 @@ router.post("/order", createOrder);
 router.get("/order", getAllOrders);
 router.get("/order/:id", getOrder);
 router.put("/order/:id", updateOrder);
+router.post("/order/free-products", createFreeProductOrder);
 router.get("/wallet-history", getWalletHistory);
 
 // certificate route
