@@ -716,17 +716,17 @@ export const getChaptersByAudiobookIDForUserService = async (id: string, payload
 
 	// If userReadProgress exists, get readSections (array of chapter IDs)
 	const readChapters = userReadProgress?.readAudioChapter?.map((section: any) => section?.audioChapterId.toString()) || [];
-
-	// Add isRead property to each chapter
 	const chaptersWithIsRead = chapters.map((chapter) => ({
 		...chapter.toObject(),
 		isRead: readChapters.includes(chapter._id.toString()),
 	}));
+	const currentIndex = chaptersWithIsRead.filter((chapter) => chapter.isRead).length;
 	return {
 		success: true,
 		message: "Audiobook retrieved successfully",
 		data: {
 			chapter: chaptersWithIsRead,
+			currentRead:currentIndex,
 			readProgress: userReadProgress,
 		},
 	};

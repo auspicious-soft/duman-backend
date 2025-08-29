@@ -60,7 +60,7 @@ const productsSchema = new mongoose.Schema(
 		},
 		format: {
 			type: String,
-			enum: ["e-book", "audiobook", "both"],
+			enum: ["e-book","audiobook", "both"],
 			default: null,
 		},
 		createdAt: { type: Date, default: Date.now },

@@ -81,7 +81,8 @@ router.delete("/course-lessons/:productId/language", deleteCourseLanguage);
 router.post("/audiobook-chapters", createAudiobookChapter);
 router.get("/audiobook-chapters", getAllAudiobookChapters);
 router.get("/audiobook-chapters/:id", getAudiobookChapter);
-router.get("/audiobook-chapters/product/:productId", getAudiobookChaptersByProductIdForAdmin);
+router.route("/audiobook-chapters/product/:productId").get(getAudiobookChaptersByProductIdForAdmin)
+// .delete(deleteAudiobookChaptersByProductId);
 router.put("/audiobook-chapters/:id", updateAudiobookChapter);
 router.put("/audiobook-chapters", updateMultipleAudiobookChapters);
 router.delete("/audiobook-chapters/:id", deleteAudiobookChapter);

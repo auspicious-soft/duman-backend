@@ -341,6 +341,7 @@ export const deleteAudiobookChapterService = async (id: string, res: Response) =
 export const deleteAudiobookChaptersByProductIdService = async (productId: string, res: Response) => {
   try {
     const chapters = await audiobookChaptersModel.find({ productId: productId });
+    console.log('chapters: ', chapters);
     if (!chapters.length) {
       return errorResponseHandler("No audiobook chapters found for this product", httpStatusCode.NOT_FOUND, res);
     }
@@ -348,17 +349,19 @@ export const deleteAudiobookChaptersByProductIdService = async (productId: strin
     // Delete all files from S3
     for (const chapter of chapters) {
       if (chapter.file) {
+        console.log('chapter.file: ', chapter.file);
         await deleteFileFromS3(chapter.file);
       }
     }
 
     // Delete all chapters from database
-    await audiobookChaptersModel.deleteMany({ productId: productId });
+    const deletedResult = await audiobookChaptersModel.deleteMany({ productId: productId });
+    console.log('deletedResult: ', deletedResult);
 
     return {
       success: true,
       message: "All audiobook chapters deleted successfully",
-      data: { deletedCount: chapters.length },
+      data: { deletedCount: deletedResult.deletedCount },
     };
   } catch (error: any) {
     return errorResponseHandler("Failed to delete audiobook chapters", httpStatusCode.INTERNAL_SERVER_ERROR, res);
