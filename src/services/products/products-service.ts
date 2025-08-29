@@ -1,5 +1,4 @@
 import { Response } from "express";
-import mongoose from "mongoose";
 import { errorResponseHandler } from "../../lib/errors/error-response-handler";
 import { httpStatusCode } from "../../lib/constant";
 import { productsModel } from "../../models/products/products-schema";
@@ -8,7 +7,6 @@ import { deleteFileFromS3 } from "src/config/s3";
 import { productRatingsModel } from "src/models/ratings/ratings-schema";
 import { ordersModel } from "src/models/orders/orders-schema";
 import { favoritesModel } from "src/models/product-favorites/product-favorites-schema";
-import { collectionsModel } from "src/models/collections/collections-schema";
 import { categoriesModel } from "src/models/categories/categroies-schema";
 import { readProgressModel } from "src/models/user-reads/read-progress-schema";
 import { publishersModel } from "src/models/publishers/publishers-schema";
@@ -18,7 +16,6 @@ import { usersModel } from "src/models/user/user-schema";
 import { getAllCollectionsWithBooksService } from "../collections/collections-service";
 import { audiobookChaptersModel } from "src/models/audiobook-chapters/audiobook-chapters-schema";
 import { cartModel } from "src/models/cart/cart-schema";
-import { format } from "path";
 
 export const createBookService = async (payload: any, res: Response) => {
 	const newBook = new productsModel(payload);
@@ -83,18 +80,17 @@ export const getAllBooksService = async (payload: any, res: Response) => {
 	type = payload.type;
 	if (payload.type === "audioebook") {
 		type = "audio&ebook";
-		console.log("type: ", type);
 	} else if (payload.type === "e-book") {
 		type = "audio&ebook";
-		format = "e-book";
+		format = ["e-book", "both"];
 		console.log("type: ", type);
 	} else if (payload.type === "audiobook") {
 		type = "audio&ebook";
-		format = "audiobook";
+		format = ["audiobook", "both"];
 	} else {
 		type = payload.type;
 	}
-	const query: any = payload.type ? { type: type, ...(format && { format }) } : {};
+	const query: any = payload.type ? { type: type, ...(format && { format: { $in: format } }) } : {};
 
 	const sort: any = {};
 	if (payload.orderColumn && payload.order) {

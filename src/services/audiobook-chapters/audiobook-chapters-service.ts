@@ -179,7 +179,6 @@ export const getAudiobookChaptersByProductIdForAdminService = async (payload: an
 
 
 export const getAudiobookChaptersByProductIdService = async (user: any, payload: any, productId: string) => {
-  console.log('productId: ', productId);
   const page = parseInt(payload.page as string) || 1;
   const limit = parseInt(payload.limit as string) || 0;
   const offset = (page - 1) * limit;
