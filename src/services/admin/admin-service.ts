@@ -238,7 +238,7 @@ export const getDashboardStatsService = async (payload: any, res: Response) => {
     const newUsersCount = await usersModel.countDocuments(overviewDate ? { createdAt: { $gte: overviewDate } } : {});
     const eventsCount = await eventsModel.countDocuments(overviewDate ? { createdAt: { $gte: overviewDate } } : {});
     const newBooks = await productsModel.countDocuments(overviewDate ? { createdAt: { $gte: overviewDate } } : {});
-    const totalRevenueResult = await ordersModel.aggregate([{ $match: overviewDate ? { createdAt: { $gte: overviewDate } } : {} }, { $group: { _id: null, totalRevenue: { $sum: "$totalAmount" } } }]);
+    const totalRevenueResult = await ordersModel.aggregate([{ $match: overviewDate ? { createdAt: { $gte: overviewDate }, status: "Completed" } : {} }, { $group: { _id: null, totalRevenue: { $sum: "$totalAmount" } } }]);
 
     const totalRevenue = totalRevenueResult.length > 0 ? totalRevenueResult[0].totalRevenue : 0;
 

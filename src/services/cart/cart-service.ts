@@ -4,6 +4,7 @@ import { Response } from "express";
 import { errorResponseHandler } from "src/lib/errors/error-response-handler";
 import { httpStatusCode } from "src/lib/constant";
 import { cartModel } from "src/models/cart/cart-schema";
+import { usersModel } from "src/models/user/user-schema";
 
 // Create or Add to Existing Pending Cart
 export const createOrAddToCartService = async (user: any, body: any, res: Response) => {
@@ -58,11 +59,12 @@ export const getUserCartService = async (user: any) => {
       { path: "authorId" },
     ],
   });
-
+ const balance = await usersModel.findById(user.id).select("wallet");
   return {
     success: true,
     message: "Cart fetched successfully",
     data: cart,
+    balance,
   };
 };
 

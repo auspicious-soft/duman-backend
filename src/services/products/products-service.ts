@@ -48,7 +48,7 @@ export const getBooksService = async (payload: any, id: string, res: Response) =
 			return errorResponseHandler("Book price not available", httpStatusCode.NOT_FOUND, res);
 		}
 
-		const orders = await ordersModel.find({ productIds: id });
+		const orders = await ordersModel.find({ productIds: id, status:"Completed"});
 		const totalBookSold = orders.length;
 		const totalRevenue = totalBookSold * bookPrice;
 
