@@ -18,6 +18,7 @@ import { usersModel } from "src/models/user/user-schema";
 import { getAllCollectionsWithBooksService } from "../collections/collections-service";
 import { audiobookChaptersModel } from "src/models/audiobook-chapters/audiobook-chapters-schema";
 import { cartModel } from "src/models/cart/cart-schema";
+import { format } from "path";
 
 export const createBookService = async (payload: any, res: Response) => {
 	const newBook = new productsModel(payload);
@@ -31,12 +32,11 @@ export const createBookService = async (payload: any, res: Response) => {
 
 export const getBooksService = async (payload: any, id: string, res: Response) => {
 	try {
-
 		const page = parseInt(payload.page as string) || 1;
 		const limit = parseInt(payload.limit as string) || 0;
 		const offset = (page - 1) * limit;
 		let lessons, totalDataCount;
-		
+
 		const books = await productsModel.find({ _id: id }).populate([{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }]);
 		if (!books || books.length === 0) {
 			return errorResponseHandler("Book not found", httpStatusCode.NOT_FOUND, res);
@@ -74,19 +74,27 @@ export const getBooksService = async (payload: any, id: string, res: Response) =
 };
 
 export const getAllBooksService = async (payload: any, res: Response) => {
-	console.log('payload: ', payload);
+	console.log("payload: ", payload);
 	const page = parseInt(payload.page as string) || 1;
 	const limit = parseInt(payload.limit as string) || 0;
 	const offset = (page - 1) * limit;
-let type;
-		if(payload.type ==="audioebook"){
-			type = "audio&ebook";
-			console.log('type: ', type);
-		}
-		else{
-			type = payload.type;
-		}
-	const query: any = payload.type ? { type: type } : {};
+	let type;
+	let format = null;
+	type = payload.type;
+	if (payload.type === "audioebook") {
+		type = "audio&ebook";
+		console.log("type: ", type);
+	} else if (payload.type === "e-book") {
+		type = "audio&ebook";
+		format = "e-book";
+		console.log("type: ", type);
+	} else if (payload.type === "audiobook") {
+		type = "audio&ebook";
+		format = "audiobook";
+	} else {
+		type = payload.type;
+	}
+	const query: any = payload.type ? { type: type, ...(format && { format }) } : {};
 
 	const sort: any = {};
 	if (payload.orderColumn && payload.order) {
@@ -184,7 +192,7 @@ export const getAllProductsForStocksTabService = async (payload: any, res: Respo
 	if (payload.orderColumn && payload.order) {
 		sort[payload.orderColumn] = payload.order === "asc" ? 1 : -1;
 	}
-//TODO--CHANGED
+	//TODO--CHANGED
 	// const Books = await productsModel
 	// 	.find({ type: "e-book" })
 	// 	.sort(sort)
@@ -194,7 +202,7 @@ export const getAllProductsForStocksTabService = async (payload: any, res: Respo
 	// 	.populate([{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }])
 	// 	.lean();
 	const Books = await productsModel
-		.find({ type: "audio&ebook", format: { $nin: ["audiobook", null] } })  //TODO--CHANGED   type-ebook
+		.find({ type: "audio&ebook", format: { $nin: ["audiobook", null] } }) //TODO--CHANGED   type-ebook
 		.sort(sort)
 		// .skip(offset)
 		.limit(4)
@@ -784,7 +792,7 @@ export const getBestSellersService = async () => {
 			},
 		},
 	]);
-	
+
 	// const bestSellers = await ordersModel.aggregate([
 	// 	{
 	// 		$unwind: "$productIds",
