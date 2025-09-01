@@ -39,22 +39,26 @@ const usersSchema = new mongoose.Schema(
       type: Object,
       // requried: true,
       trim: true,
+      default: null,
     },
     firstName: {
       type: Object,
       // requried: true,
       trim: true,
+      default: null,
     },
     lastName: {
       type: Object,
       // requried: true,
       trim: true,
+      default: null,
     },
     email: {
       type: String,
       // required: true,
       // unique: true,
       lowercase: true,
+      default: null,
     },
     password: {
       type: String,
