@@ -164,3 +164,179 @@ export const convertToBoolean = (value: string) => {
 export const increaseReferredCountAndCredits = async (id: mongoose.Types.ObjectId) => {
   await usersModel.findByIdAndUpdate(id, { $inc: { referredCount: 1, creditsLeft: 10 } });
 };
+
+
+export const notificationMessages: any = {
+  eng: {
+    TASK_COMPLETED: {
+      title: "Task Completed",
+      description: "You’ve unlocked a new task. Keep going!",
+    },
+    TASK_REJECTED: {
+      title: "Task Rejected",
+      description: "Your submitted task did not pass. Please try again.",
+    },
+    JOB_SHORTLISTED: {
+      title: "Job Shortlisted",
+      description: "Congratulations! Your application has been shortlisted.",
+    },
+    JOB_REJECTED: {
+      title: "Job Rejected",
+      description: "Unfortunately, your job application was not successful.",
+    },
+    JOB_ALERT: {
+      title: "New Job Alert",
+      description: "New job opportunities are available. Check them out!",
+    },
+    MILESTONE_UNLOCKED: {
+      title: "Milestone Unlocked",
+      description: "Great work! You’ve unlocked a new milestone.",
+    },
+    SUBSCRIPTION_STARTED: {
+      title: "Subscription Started",
+      description: "Your subscription is now active. Enjoy the benefits!",
+    },
+    SUBSCRIPTION_RENEWED: {
+      title: "Subscription Renewed",
+      description: "Your subscription has been successfully renewed.",
+    },
+    SUBSCRIPTION_FAILED: {
+      title: "Payment Failed",
+      description: "Your subscription payment could not be processed.",
+    },
+    SUBSCRIPTION_CANCELLED: {
+      title: "Subscription Cancelled",
+      description: "Your subscription has been cancelled.",
+    },
+  },
+  kaz: {
+    TASK_COMPLETED: {
+      title: "Taak Voltooid",
+      description: "Je hebt een nieuwe taak ontgrendeld. Ga zo door!",
+    },
+    TASK_REJECTED: {
+      title: "Taak Afgewezen",
+      description:
+        "Je ingediende taak is niet goedgekeurd. Probeer het opnieuw.",
+    },
+    JOB_SHORTLISTED: {
+      title: "Vacature Geselecteerd",
+      description: "Gefeliciteerd! Je sollicitatie is geselecteerd.",
+    },
+    JOB_REJECTED: {
+      title: "Vacature Afgewezen",
+      description: "Helaas is je sollicitatie niet succesvol geweest.",
+    },
+    JOB_ALERT: {
+      title: "Nieuwe Vacature",
+      description: "Nieuwe vacatures zijn beschikbaar. Bekijk ze nu!",
+    },
+    MILESTONE_UNLOCKED: {
+      title: "Mijlpaal Behaald",
+      description: "Goed gedaan! Je hebt een nieuwe mijlpaal behaald.",
+    },
+    SUBSCRIPTION_STARTED: {
+      title: "Abonnement Gestart",
+      description: "Je abonnement is nu actief. Veel plezier!",
+    },
+    SUBSCRIPTION_RENEWED: {
+      title: "Abonnement Vernieuwd",
+      description: "Je abonnement is succesvol verlengd.",
+    },
+    SUBSCRIPTION_FAILED: {
+      title: "Betaling Mislukt",
+      description: "Je abonnementsbetaling kon niet worden verwerkt.",
+    },
+    SUBSCRIPTION_CANCELLED: {
+      title: "Abonnement Geannuleerd",
+      description: "Je abonnement is geannuleerd.",
+    },
+  },
+  rus: {
+    TASK_COMPLETED: {
+      title: "Задача Завершена",
+      description:
+        "Вы разблокировали новую задачу. Продолжайте в том же духе!",
+    },
+    TASK_REJECTED: {
+      title: "Задача Отклонена",
+      description: "Ваша задача не была принята. Попробуйте еще раз.",
+    },
+    JOB_SHORTLISTED: {
+      title: "Кандидатура Отобрана",
+      description: "Поздравляем! Ваша кандидатура была отобрана.",
+    },
+    JOB_REJECTED: {
+      title: "Кандидатура Отклонена",
+      description: "К сожалению, ваша кандидатура не была принята.",
+    },
+    JOB_ALERT: {
+      title: "Новая Вакансия",
+      description:
+        "Доступны новые вакансии. Ознакомьтесь с ними!",
+    },
+    MILESTONE_UNLOCKED: {
+      title: "Этап Достигнут",
+      description: "Поздравляем! Вы достигли нового этапа.",
+    },
+    SUBSCRIPTION_STARTED: {
+      title: "Подписка Начата",
+      description: "Ваша подписка теперь активна. Наслаждайтесь преимуществами!",
+    },
+    SUBSCRIPTION_RENEWED: {
+      title: "Подписка Продлена",
+      description: "Ваша подписка была успешно продлена.",
+    },
+    SUBSCRIPTION_FAILED: {
+      title: "Paiement Échoué",
+      description: "Votre paiement d’abonnement n’a pas pu être traité.",
+    },
+    SUBSCRIPTION_CANCELLED: {
+      title: "Abonnement Annulé",
+      description: "Votre abonnement a été annulé.",
+    },
+  },
+  es: {
+    TASK_COMPLETED: {
+      title: "Tarea Completada",
+      description: "Has desbloqueado una nueva tarea. ¡Sigue así!",
+    },
+    TASK_REJECTED: {
+      title: "Tarea Rechazada",
+      description: "Tu tarea enviada no fue aprobada. Intenta de nuevo.",
+    },
+    JOB_SHORTLISTED: {
+      title: "Solicitud Seleccionada",
+      description: "¡Felicidades! Tu solicitud ha sido preseleccionada.",
+    },
+    JOB_REJECTED: {
+      title: "Solicitud Rechazada",
+      description: "Desafortunadamente, tu solicitud no fue aceptada.",
+    },
+    JOB_ALERT: {
+      title: "Nueva Oferta de Trabajo",
+      description:
+        "Hay nuevas oportunidades de empleo disponibles. ¡Revisa ahora!",
+    },
+    MILESTONE_UNLOCKED: {
+      title: "Hito Alcanzado",
+      description: "¡Bien hecho! Has alcanzado un nuevo hito.",
+    },
+    SUBSCRIPTION_STARTED: {
+      title: "Suscripción Iniciada",
+      description: "Tu suscripción está activa. ¡Disfruta los beneficios!",
+    },
+    SUBSCRIPTION_RENEWED: {
+      title: "Suscripción Renovada",
+      description: "Tu suscripción se ha renovado con éxito.",
+    },
+    SUBSCRIPTION_FAILED: {
+      title: "Pago Fallido",
+      description: "No se pudo procesar el pago de tu suscripción.",
+    },
+    SUBSCRIPTION_CANCELLED: {
+      title: "Suscripción Cancelada",
+      description: "Tu suscripción ha sido cancelada.",
+    },
+  },
+};

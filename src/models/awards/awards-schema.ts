@@ -7,14 +7,13 @@ const awardsSchema = new mongoose.Schema(
       ref: "users",
       required: true,
     },
-
     badge: {
       type: String,
       enum: ["Saint", "Hakim", "Genius", "Teacher", "Sufi", "Expert", "Commentator", "Dervish", "Murid"],
     },
     level: {
       type: Number,
-      requried: true,
+      required: true,
       enum: [1, 2, 3, 4, 5, 6, 7, 8, 9],
     },
     achievedAt: { type: Date, default: Date.now },

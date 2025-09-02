@@ -1,4 +1,4 @@
-import { Schema, model } from 'mongoose';
+import { Schema, Types, model } from 'mongoose';
 
 const notificationsSchema = new Schema({
     userIds: {
@@ -13,7 +13,7 @@ const notificationsSchema = new Schema({
         type: Object,
         required: true
     },
-    read: {
+    isRead: {
         type: Boolean,
         default: false
     },
@@ -21,6 +21,18 @@ const notificationsSchema = new Schema({
         type: Date,
         default: Date.now
     },
+    type: {
+        type: String,
+        required: true,
+        enum: ["admin", "user", "system"]
+    },
+    // language: { type: String, enum: ["eng", "kaz", "rus"], default: "eng" },
+    // metadata: { type: Schema.Types.Mixed },
+    // referenceId: {
+    //   publisherId: { type: Schema.Types.ObjectId, ref: "publishers" },
+    //   authorId: { type: Schema.Types.ObjectId, ref: "authors" },
+    // //   subscriptionId: { type: Schema.Types.ObjectId, ref: "subscription" },
+    // },
 },
     { timestamps: true }
 )

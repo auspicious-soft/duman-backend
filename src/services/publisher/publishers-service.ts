@@ -11,13 +11,24 @@ import { ordersModel } from "src/models/orders/orders-schema";
 import { addedUserCreds } from "src/utils/mails/mail";
 import { hashPasswordIfEmailAuth } from "src/utils/userAuth/signUpAuth";
 import { favoritesModel } from "src/models/product-favorites/product-favorites-schema";
+import { usersModel } from "src/models/user/user-schema";
+import { sendNotification } from "src/utils/FCM/FCM";
 
 export const createPublisherService = async (payload: any, res: Response) => {
 	const newPublisher = new publishersModel(payload);
 	await addedUserCreds(newPublisher);
 	newPublisher.password = await hashPasswordIfEmailAuth(payload, "Email");
-
+    
 	const savedPublisher = await newPublisher.save();
+	  const users = await usersModel.find().select('fcmToken');
+			if (!users.length) return errorResponseHandler("No users found", httpStatusCode.NO_CONTENT, res);
+	
+			const fcmPromises = users.map(user => {
+				const userIds = [user._id];
+				return sendNotification(userIds, "PUBLISHER_CREATED");
+			});
+	
+			await Promise.all(fcmPromises);
 	return {
 		success: true,
 		message: "Publisher created successfully",

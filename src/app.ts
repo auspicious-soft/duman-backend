@@ -12,6 +12,7 @@ import { login, newPassswordAfterOTPVerified } from "./controllers/admin/admin-c
 import { forgotPassword } from "./controllers/admin/admin-controller"
 import {  verifyOtpPasswordReset, forgotPasswordUser, newPassswordAfterOTPVerifiedUser,verifyOTP, resendOTP, loginUser, userSignup, WhatsapploginUser, forgotPasswordResendOTP } from "./controllers/user/user-controller";
 import { checkAuth,checkPublisherAuth } from "./middleware/check-auth"
+import { initializeFirebase } from "./utils/FCM/FCM"
 
 // Create __dirname equivalent for ES modules
 const __filename = fileURLToPath(import.meta.url) // <-- Define __filename
@@ -32,9 +33,9 @@ app.use(bodyParser.json({
 // app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-// admin.initializeApp({
-//   credential: admin.credential.cert(serviceAccount),
-// });
+
+
+initializeFirebase();
 
 app.use(
     cors({

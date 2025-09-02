@@ -3,28 +3,26 @@ import { httpStatusCode } from "src/lib/constant";
 import { errorResponseHandler } from "src/lib/errors/error-response-handler";
 import { notificationsModel } from "src/models/notifications/notification-schema";
 import { usersModel } from "src/models/user/user-schema";
-import { NotificationPayload, sendNotification } from "src/utils/FCM/FCM";
+import {  sendNotification } from "src/utils/FCM/FCM";
 
-export const sendNotificationToUsersService = async (payload: NotificationPayload, res: Response) => {
+export const sendNotificationToUsersService = async (payload: any, res: Response) => {
     try {
         const users = await usersModel.find().select('fcmToken');
         if (!users.length) return errorResponseHandler("No users found", httpStatusCode.NO_CONTENT, res);
 
-        const notifications = users.map(user => ({
-            userIds: user._id,
-            title: payload.title,
-            description: payload.description
-        }));
+        // const notifications = users.map(user => ({
+        //     userIds: user._id,
+        //     title: payload.title,
+        //     description: payload.description
+        // }));
 
-        // Save notifications to database
-        await notificationsModel.insertMany(notifications);
+        // // Save notifications to database
+        // await notificationsModel.insertMany(notifications);
 
         // Send FCM notifications to all users
         const fcmPromises = users.map(user => {
-            if (user.fcmToken) {
-                return sendNotification(user.fcmToken, payload.title, payload.description);
-            }
-            return Promise.resolve();
+            const userIds = [user._id];
+            return sendNotification(userIds, payload.type, payload.title, payload.description);
         });
 
         await Promise.all(fcmPromises);
@@ -36,7 +34,7 @@ export const sendNotificationToUsersService = async (payload: NotificationPayloa
     }
 };
 
-export const sendNotificationToUserService = async (payload: NotificationPayload, res: Response) => {
+export const sendNotificationToUserService = async (payload: any, res: Response) => {
     try {
         const { title, description, userIds } = payload;
         if (!userIds) {
@@ -46,24 +44,25 @@ export const sendNotificationToUserService = async (payload: NotificationPayload
         const users = await usersModel.find({ _id: { $in: userIds } }).select('fcmToken');
         if (!users.length) return errorResponseHandler("No users found", httpStatusCode.NO_CONTENT, res);
 
-        const notifications = users.map(user => ({
-            userIds: user._id,
-            title,
-            description
-        }));
+        // const notifications = users.map(user => ({
+        //     userIds: user._id,
+        //     title,
+        //     description
+        // }));
 
-        // Save notifications to database
-        await notificationsModel.insertMany(notifications);
+        // // Save notifications to database
+        // const savedNotifications = await notificationsModel.insertMany(notifications);
+        // console.log('savedNotifications: ', savedNotifications);
 
         // Send FCM notifications to specific users
-        const fcmPromises = users.map(user => {
-            if (user.fcmToken) {
-                return sendNotification(user.fcmToken, title, description);
-            }
-            return Promise.resolve();
-        });
-
-        await Promise.all(fcmPromises);
+        // const fcmPromises = users.map(user => {
+            // if (user.fcmToken) {
+                // return sendNotification( title, description,userIds);
+            // }
+            // return Promise.resolve();
+        // });
+        const fcmPromises = await sendNotification(userIds,payload.type, title, description);
+        // await Promise.all(fcmPromises);
 
         return { success: true, message: "Notification sent successfully" };
     } catch (error) {

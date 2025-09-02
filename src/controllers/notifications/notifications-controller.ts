@@ -19,8 +19,8 @@ export const sendNotificationToUsers = async (req: Request, res: Response) => {
 
 
 export const sendNotificationToUser = async (req: Request, res: Response) => {
-    const validation = sendNotificationToUserSchema.safeParse(req.body)
-    if (!validation.success) return res.status(httpStatusCode.BAD_REQUEST).json({ success: false, message: formatZodErrors(validation.error) })
+    // const validation = sendNotificationToUserSchema.safeParse(req.body)
+    // if (!validation.success) return res.status(httpStatusCode.BAD_REQUEST).json({ success: false, message: formatZodErrors(validation.error) })
     try {
         const response = await sendNotificationToUserService(req.body, res)
         return res.status(httpStatusCode.CREATED).json(response)
