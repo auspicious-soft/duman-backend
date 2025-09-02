@@ -21,6 +21,7 @@ export interface UserDocument extends Document {
   authType?: string;
   schoolVoucher?: string;
   wallet?:number;
+  fcmToken?:string;
 }
 const usersSchema = new mongoose.Schema(
   {

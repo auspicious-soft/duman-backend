@@ -58,7 +58,9 @@ export const loginUserService = async (userData: UserDocument, authType: string,
 	}
 
 	user.token = generateUserToken(user as any);
-
+    (user as any).fcmToken = userData.fcmToken;
+	console.log('userData.fcmToken: ', userData.fcmToken);
+	console.log('user.fcmToken: ', user.fcmToken);
 	await user.save();
 	return {
 		success: true,
