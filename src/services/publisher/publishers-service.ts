@@ -376,6 +376,9 @@ export const getBookByIdPublisherService = async (bookId: string, payload: any, 
 
 export const publisherDashboardService = async (payload: any, currentUser: string, res: Response) => {
 	try {
+    // const page = payload?.page ? parseInt(payload.page as string, 10) : 1;
+    // const limit = payload?.limit ? parseInt(payload.limit as string, 10) : 5;
+
 		const publisherId = new mongoose.Types.ObjectId(currentUser); // Convert to ObjectId
 		const selectedYear = payload?.year ? parseInt(payload.year as string, 10) : new Date().getFullYear();
 		const currentYear = new Date().getFullYear();
@@ -384,7 +387,7 @@ export const publisherDashboardService = async (payload: any, currentUser: strin
 
 		const Books = await productsModel.find({ publisherId }).populate([{ path: "authorId", select: "name" }]);
 		const NewBooks = await productsModel.find({ publisherId, createdAt: { $gte: overviewDate } }).countDocuments();
-		const TotalBooksCount = Books.length;
+		const TotalBooksCount = await productsModel.find({ publisherId }).countDocuments();
 
 		const averageRating: number = Books.reduce((acc: number, rating: any) => acc + (rating.averageRating || 0), 0) / Books.length;
 
