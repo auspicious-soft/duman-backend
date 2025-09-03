@@ -39,7 +39,7 @@ export const getAvailableProductsService = async (res: Response) => {
 
     const availableProducts = await productsModel.find({
       _id: { $nin: bookMasterProductIds },
-      type: "course",
+      type: "video-lecture",
     });
 
     return {

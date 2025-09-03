@@ -407,10 +407,8 @@ export const getProductsForHomePage = async () => {
 };
 
 
-
 export const getBookForUserService = async (id: string, payload: any, user: any, res: Response) => {
 	const book = await productsModel.findById(id).populate([{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }]);
-	console.log('book: ', book);
 
 	const readers = await readProgressModel.countDocuments({ bookId: id });
 	if (!book) {
