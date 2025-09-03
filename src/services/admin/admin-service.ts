@@ -14,6 +14,7 @@ import { ordersModel } from "src/models/orders/orders-schema";
 import { publishersModel } from "src/models/publishers/publishers-schema";
 import { awardsModel } from "src/models/awards/awards-schema";
 import { customAlphabet } from "nanoid";
+import { employeesModel } from "src/models/employee/employee-schema";
 
 export const loginService = async (payload: any, res: Response) => {
   const { username, password } = payload;
@@ -26,7 +27,11 @@ export const loginService = async (payload: any, res: Response) => {
     user = await adminModel.findOne({ email: username }).select("+password");
     if (!user) {
       user = await publishersModel.findOne({ email: username }).select("+password");
+      if (!user) {
+        user = await employeesModel.findOne({ email: username }).select("+password");
+      }
     }
+
   }
 
 

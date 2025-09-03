@@ -446,7 +446,12 @@ export const updateSubCategoryService = async (id: string, payload: any, res: Re
 
 export const deleteSubCategoryService = async (id: string, res: Response) => {
   const books = await productsModel.find({ subCategoryId: id });
-  if (books.length > 0) return errorResponseHandler("Sub-category cannot be deleted because it has books", httpStatusCode.BAD_REQUEST, res);
+  if (books.length > 0){
+    return{
+      success:false,
+      message: "Sub-category cannot be deleted because it has books",
+    }
+  }
 
   const deletedSubCategory = await subCategoriesModel.findByIdAndDelete(id).populate("categoryId");
   if (!deletedSubCategory) return errorResponseHandler("Sub-category not found", httpStatusCode.NOT_FOUND, res);

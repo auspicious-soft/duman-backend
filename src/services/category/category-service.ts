@@ -177,10 +177,18 @@ export const deleteCategoryService = async (id: string, res: Response) => {
   const subCategories = await subCategoriesModel.find({ categoryId: id });
   const books = await productsModel.find({ categoryId: id });
   if (subCategories.length > 0) {
-    return errorResponseHandler("Cannot delete category with existing sub-categories", httpStatusCode.BAD_REQUEST, res);
+    // return errorResponseHandler("Cannot delete category with existing sub-categories", httpStatusCode.BAD_REQUEST, res);
+    return{
+      success:false,
+      message: "Cannot delete category with existing sub-categories",
+    }
   }
   if (books.length > 0) {
-    return errorResponseHandler("Cannot delete category with existing books", httpStatusCode.BAD_REQUEST, res);
+    // return errorResponseHandler("Cannot delete category with existing books", httpStatusCode.BAD_REQUEST, res);
+    return{
+      success:false,
+      message: "Cannot delete category with existing books",
+    }
   }
   const deletedCategory = await categoriesModel.findByIdAndDelete(id);
   if (!deletedCategory) return errorResponseHandler("Category not found", httpStatusCode.NOT_FOUND, res);
