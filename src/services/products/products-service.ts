@@ -406,8 +406,11 @@ export const getProductsForHomePage = async () => {
 	}
 };
 
+
+
 export const getBookForUserService = async (id: string, payload: any, user: any, res: Response) => {
 	const book = await productsModel.findById(id).populate([{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }]);
+	console.log('book: ', book);
 
 	const readers = await readProgressModel.countDocuments({ bookId: id });
 	if (!book) {
@@ -421,6 +424,9 @@ export const getBookForUserService = async (id: string, payload: any, user: any,
 
 	let language;
 	const userReadProgress = await readProgressModel.findOne({ userId: user.id, bookId: id });
+	 // Convert the Map to a plain object
+  const bookObject:any = book.toObject();
+  bookObject.file = Object.fromEntries(book.file);
 	//TODO--CHANGED
 	// if (book.type === "audiobook") {
 	if (book.type === "audio&ebook" && book.format !== "e-book" && book.format !== null) {
@@ -444,8 +450,7 @@ export const getBookForUserService = async (id: string, payload: any, user: any,
 			message: "Audiobook retrieved successfully",
 			data: {
 				book: {
-					...book.toObject(),
-					// favorite: isFavorite ? true : false,
+					...bookObject,
 					readers: readers > 0 ? readers : 0,
 					chapters: chaptersWithIsRead,
 					language,
@@ -463,7 +468,8 @@ export const getBookForUserService = async (id: string, payload: any, user: any,
 		message: "Book retrieved successfully",
 		data: {
 			book: {
-				...book.toObject(),
+				...bookObject,
+				// book,
 				// favorite: isFavorite ? true : false,
 				readers: readers > 0 ? readers : 0,
 			},
