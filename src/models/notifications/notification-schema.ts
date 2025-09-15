@@ -24,15 +24,15 @@ const notificationsSchema = new Schema({
     type: {
         type: String,
         required: true,
-        enum: ["admin", "user", "system"]
+        enum: ["admin", "user", "Author_Created"]
     },
-    // language: { type: String, enum: ["eng", "kaz", "rus"], default: "eng" },
-    // metadata: { type: Schema.Types.Mixed },
-    // referenceId: {
-    //   publisherId: { type: Schema.Types.ObjectId, ref: "publishers" },
-    //   authorId: { type: Schema.Types.ObjectId, ref: "authors" },
-    // //   subscriptionId: { type: Schema.Types.ObjectId, ref: "subscription" },
-    // },
+    language: { type: String, enum: ["eng", "kaz", "rus"], default: "eng" },
+    metadata: { type: Schema.Types.Mixed },
+    referenceId: {
+      publisherId: { type: Schema.Types.ObjectId, ref: "publishers" },
+      authorId: { type: Schema.Types.ObjectId, ref: "authors" },
+    //   subscriptionId: { type: Schema.Types.ObjectId, ref: "subscription" },
+    },
 },
     { timestamps: true }
 )

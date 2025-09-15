@@ -40,15 +40,29 @@ export const initializeFirebase = () => {
  * @param language language code (default: 'en')
  * @param referenceId optional reference ids (bookingId, jobId, etc.)
  */
-export const sendNotification = async (userIds: any[], type: string, adminTitle?: any, adminDescription?: any) => {
+interface SendNotificationParams {
+  userIds: any[];
+  type: string;
+  adminTitle?: any;
+  adminDescription?: any;
+  referenceId?: any;
+}
+
+export const sendNotification = async ({
+  userIds,
+  type,
+  adminTitle,
+  adminDescription,
+  referenceId
+}: SendNotificationParams) => {
+// export const sendNotification = async (userIds: any[], type: string, adminTitle?: any, adminDescription?: any, referenceId?: any) => {
+
 	try {
 		// pick message template
 
-		const notifications: any[] = [];
+		const notifications: any[] = [];   
 
-		console.log("userIds: ", userIds);
 		for (const userId of userIds) {
-			console.log("userId: ", userId);
 			const userData = await usersModel.findById(userId).select("fcmToken language");
 
       
@@ -59,10 +73,7 @@ export const sendNotification = async (userIds: any[], type: string, adminTitle?
           console.error(`❌ User not found for FCM token for ${userId}`);
           return;
         }
-        console.log('userData: ', userData);
         const userLanguage = userData?.language ?? "eng";
-        console.log('userData?.language: ', userData?.language);
-        // const messageTemplate = notificationMessages[userLanguage as string]?.[type];
 
 
 			let finalTitle: string | undefined;
@@ -81,7 +92,7 @@ export const sendNotification = async (userIds: any[], type: string, adminTitle?
 				// Use regular notification template
 				const messageTemplate = notificationMessages[userLanguage]?.[type];
 				finalTitle =  messageTemplate?.title;
-				finalDescription = messageTemplate?.body;
+				finalDescription = messageTemplate?.description;
 			}
 
 			// Save notification in DB
@@ -90,11 +101,11 @@ export const sendNotification = async (userIds: any[], type: string, adminTitle?
 				title: finalTitle,
 				description: finalDescription,
 				isRead: false,
-        type: type,
+                type: type,
+				referenceId:referenceId
 			});
      
 
-			console.log("notificationDoc: ", notificationDoc);
 			notifications.push(notificationDoc);
 			console.log("notifications: ", notifications);
 

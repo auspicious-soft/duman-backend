@@ -168,9 +168,9 @@ export const increaseReferredCountAndCredits = async (id: mongoose.Types.ObjectI
 
 export const notificationMessages: any = {
   eng: {
-    TASK_COMPLETED: {
-      title: "Task Completed",
-      description: "You’ve unlocked a new task. Keep going!",
+    Author_Created: {
+      title: "Author Created",
+      description: "A new author has been created successfully.",
     },
     TASK_REJECTED: {
       title: "Task Rejected",
@@ -210,9 +210,9 @@ export const notificationMessages: any = {
     },
   },
   kaz: {
-    TASK_COMPLETED: {
-      title: "Taak Voltooid",
-      description: "Je hebt een nieuwe taak ontgrendeld. Ga zo door!",
+    Author_Created: {
+      title: "Автор Создан",
+      description: "Новый автор был успешно создан.",
     },
     TASK_REJECTED: {
       title: "Taak Afgewezen",
@@ -253,10 +253,9 @@ export const notificationMessages: any = {
     },
   },
   rus: {
-    TASK_COMPLETED: {
-      title: "Задача Завершена",
-      description:
-        "Вы разблокировали новую задачу. Продолжайте в том же духе!",
+    Author_Created: {
+      title: "Автор Создан",
+      description: "Новый автор был успешно создан.",
     },
     TASK_REJECTED: {
       title: "Задача Отклонена",

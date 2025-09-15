@@ -40,7 +40,10 @@ export const getAllSummariesService = async (payload: any, res: Response) => {
   const results = await summariesModel.find(query).sort({
     createdAt: -1,  
     ...sort,
-  }).skip(offset).limit(limit).select("-__v");
+  }).skip(offset).limit(limit).select("-__v").populate({
+    path: "booksId",
+    populate: { path: "authorId" },
+  });
   if (results.length)
     return {
       page,

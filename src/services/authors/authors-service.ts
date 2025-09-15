@@ -9,10 +9,21 @@ import { publishersModel } from "../../models/publishers/publishers-schema";
 import { authorsModel } from "../../models/authors/authors-schema";
 import { deleteFileFromS3 } from "src/config/s3";
 import { authorFavoritesModel } from "src/models/author-favorites/author-favorites-schema";
+import { sendNotification } from "src/utils/FCM/FCM";
+import { usersModel } from "src/models/user/user-schema";
 
 export const createAuthorService = async (payload: any, res: Response) => {
   const newAuthor = new authorsModel(payload);
   const savedAuthor = await newAuthor.save();
+  const users = await usersModel.find().select('fcmToken');
+          if (!users.length) return errorResponseHandler("No users found", httpStatusCode.NO_CONTENT, res);
+          const referenceId = { authorId: savedAuthor._id };
+          const fcmPromises = users.map(user => {
+              const userIds = [user._id];
+              return sendNotification({userIds, type: "Author_Created",  referenceId});
+          });
+  
+          await Promise.all(fcmPromises);
   return {
     success: true,
     message: "Author created successfully",
