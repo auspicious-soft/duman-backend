@@ -40,10 +40,12 @@ export const getAllSummariesService = async (payload: any, res: Response) => {
   const results = await summariesModel.find(query).sort({
     createdAt: -1,  
     ...sort,
-  }).skip(offset).limit(limit).select("-__v").populate({
-    path: "booksId",
-    populate: { path: "authorId" },
-  });
+  }).skip(offset).limit(limit).select("-__v").populate([
+  { path: "booksId", populate: { path: "authorId" } },
+  { path: "booksId", populate: { path: "categoryId" } },
+  { path: "booksId", populate: { path: "subCategoryId" } },
+  { path: "booksId", populate: { path: "publisherId" } },
+]);
   if (results.length)
     return {
       page,
