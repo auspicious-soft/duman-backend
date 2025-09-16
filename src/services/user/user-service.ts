@@ -306,18 +306,32 @@ export const updateUserService = async (id: string, payload: any, res: Response)
 	};
 };
 
-export const deleteUserService = async (id: string, res: Response) => {
-	const user = await usersModel.findById(id);
+export const deleteUserService = async (userData: any, res: Response) => {
+	const user = await usersModel.findById(userData.id);
 	if (!user) return errorResponseHandler("User not found", httpStatusCode.NOT_FOUND, res);
 
-	const deletedUser = await usersModel.findByIdAndDelete(id);
+	const deletedUser = await usersModel.findByIdAndDelete(userData.id);
 	if (deletedUser?.profilePic) {
 		await deleteFileFromS3(deletedUser?.profilePic);
 	}
 	return {
 		success: true,
-		message: "User Deleted successfully",
+		message: "Account Deleted successfully",
 		data: deletedUser,
+	};
+};
+export const logoutUserService = async (userData: any, res: Response) => {
+	const user = await usersModel.findById(userData.id);
+	if (!user) return errorResponseHandler("User not found", httpStatusCode.NOT_FOUND, res);
+	if (user.fcmToken) {
+		await usersModel.findByIdAndUpdate(userData.id, { fcmToken: null }, {
+			new: true,
+		});
+	}
+	return {
+		success: true,
+		message: "User logged out successfully",
+		data: null,
 	};
 };
 

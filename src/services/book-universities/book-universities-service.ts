@@ -666,7 +666,7 @@ export const getBookUniversityReadProgressService = async (user: any, payload: a
 		.find({
 			userId: user.id,
 			bookId: { $in: bookIds },
-		})
+		})  
 		.populate({
 			path: "bookId",
 			populate: [{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }],

@@ -583,6 +583,7 @@ export const getBookMarketForUserService = async (user: any, payload: any, res: 
 	const author = await authorsModel.find().limit(10);
 	const readProgress = await readProgressModel
 		.find({ userId: user.id })
+		.limit(2)
 		.populate({
 			path: "bookId",
 			select: "_id name type image",

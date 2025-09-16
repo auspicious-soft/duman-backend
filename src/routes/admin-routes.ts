@@ -100,7 +100,7 @@ router.post("/users", createNewUser);
 router.get("/users", getAllUser);
 router.get("/users/:id", getUser);
 router.put("/users/:id", updateUser);
-router.delete("/users/:id", deleteUser);
+// router.delete("/users/:id", deleteUser);
 
 // order route
 router.post("/order", createOrder);

@@ -37,6 +37,7 @@ export const getCourseCertificateService = async (readProgressId: string, userId
 	};
 };
 
+
 export const updateReadProgress = async (readProgressId: string, readProgressData: any, user: any, res: Response) => {
 	if (readProgressData.progress < 0 || readProgressData.progress > 100) {
 		return errorResponseHandler("Progress must be between 0 and 100", httpStatusCode.BAD_REQUEST, res);
@@ -44,26 +45,52 @@ export const updateReadProgress = async (readProgressId: string, readProgressDat
 	const userId = user.id;
 	let updatedBadge = null;
 
-	const updateData: any = { progress: readProgressData.progress };
+	const existingProgress = await readProgressModel.findOne({ userId, bookId: readProgressId });
+
+	if (existingProgress && readProgressData.progress < existingProgress.progress) {
+		return errorResponseHandler("Progress cannot be decreased", httpStatusCode.BAD_REQUEST, res);
+	}
+
+	const updateData: any = { progress: readProgressData.progress, audiobookProgress: readProgressData.audiobookProgress || existingProgress?.audiobookProgress || 0 };
 	if (readProgressData.courseLessonId && readProgressData.sectionId) {
 		updateData.$push = { readSections: { courseLessonId: readProgressData.courseLessonId, sectionId: readProgressData.sectionId } };
 	}
 	if (readProgressData.readAudioChapter) {
 		updateData.$push = { readAudioChapter: { audioChapterId: readProgressData.readAudioChapter } };
 	}
-
-	const ReadProgress = await readProgressModel.findOneAndUpdate({ userId, bookId: readProgressId }, updateData, { new: true, upsert: true }).populate("bookId");
+    
+	const ReadProgress = await readProgressModel.findOneAndUpdate(
+		{ userId, bookId: readProgressId }, 
+		updateData, 
+		{ new: true, upsert: true }
+	).populate("bookId");
 
 	if (!ReadProgress) {
 		return errorResponseHandler("Read Progress not found", httpStatusCode.NOT_FOUND, res);
 	}
 
-	if (readProgressData.progress === 100) {
-		const bookRead = await readProgressModel.countDocuments({ userId, progress: 100 });
+	if (readProgressData.progress === 100 || ReadProgress.audiobookProgress === 100) {
+		const bookRead = await readProgressModel.countDocuments({ 
+			userId, 
+			$or: [
+				{ progress: 100 },
+				{ audiobookProgress: 100 }
+			]
+		});
+		await readProgressModel.findOneAndUpdate(
+			{ userId, bookId: readProgressId }, 
+			{ isCompleted: true }, 
+			{ new: true }
+		);
+		//TODO: check that the badge will be considered for books only or all?
 		const awardedBadge = badges.find(({ count }) => bookRead === count);
 
 		if (awardedBadge) {
-			updatedBadge = await awardsModel.findOneAndUpdate({ userId }, { level: awardedBadge.level, badge: awardedBadge.badge }, { new: true, upsert: true });
+			updatedBadge = await awardsModel.findOneAndUpdate(
+				{ userId }, 
+				{ level: awardedBadge.level, badge: awardedBadge.badge }, 
+				{ new: true, upsert: true }
+			);
 		}
 	}
 
@@ -73,6 +100,102 @@ export const updateReadProgress = async (readProgressId: string, readProgressDat
 		data: { ReadProgress, updatedBadge },
 	};
 };
+
+// export const updateReadProgress = async (readProgressId: string, readProgressData: any, user: any, res: Response) => {
+// 	if (readProgressData.progress < 0 || readProgressData.progress > 100) {
+// 		return errorResponseHandler("Progress must be between 0 and 100", httpStatusCode.BAD_REQUEST, res);
+// 	}
+// 	const userId = user.id;
+// 	let updatedBadge = null;
+
+// 	const existingProgress = await readProgressModel.findOne({ userId, bookId: readProgressId });
+
+// 	if (existingProgress && readProgressData.progress < existingProgress.progress) {
+// 		return errorResponseHandler("Progress cannot be decreased", httpStatusCode.BAD_REQUEST, res);
+// 	}
+
+// 	const updateData: any = { progress: readProgressData.progress, audiobookProgress: readProgressData.audiobookProgress || existingProgress?.audiobookProgress || 0 };
+// 	if (readProgressData.courseLessonId && readProgressData.sectionId) {
+// 		updateData.$push = { readSections: { courseLessonId: readProgressData.courseLessonId, sectionId: readProgressData.sectionId } };
+// 	}
+// 	if (readProgressData.readAudioChapter) {
+// 		updateData.$push = { readAudioChapter: { audioChapterId: readProgressData.readAudioChapter } };
+// 	}
+    
+// 	const ReadProgress = await readProgressModel.findOneAndUpdate(
+// 		{ userId, bookId: readProgressId }, 
+// 		updateData, 
+// 		{ new: true, upsert: true }
+// 	).populate("bookId");
+
+// 	if (!ReadProgress) {
+// 		return errorResponseHandler("Read Progress not found", httpStatusCode.NOT_FOUND, res);
+// 	}
+
+// 	if (readProgressData.progress === 100) {
+// 		const bookRead = await readProgressModel.countDocuments({ userId, progress: 100 });
+// 		await readProgressModel.findOneAndUpdate(
+// 		{ userId, bookId: readProgressId }, 
+// 		{ isCompleted: true }, 
+// 		{ new: true }
+// 	);
+// 	//TODO: check that the badge will be considered for books only or all?
+// 		const awardedBadge = badges.find(({ count }) => bookRead === count);
+
+// 		if (awardedBadge) {
+// 			updatedBadge = await awardsModel.findOneAndUpdate(
+// 				{ userId }, 
+// 				{ level: awardedBadge.level, badge: awardedBadge.badge }, 
+// 				{ new: true, upsert: true }
+// 			);
+// 		}
+// 	}
+
+// 	return {
+// 		success: true,
+// 		message: "Read Progress updated successfully",
+// 		data: { ReadProgress, updatedBadge },
+// 	};
+// };
+
+
+
+// export const updateReadProgress = async (readProgressId: string, readProgressData: any, user: any, res: Response) => {
+// 	if (readProgressData.progress < 0 || readProgressData.progress > 100) {
+// 		return errorResponseHandler("Progress must be between 0 and 100", httpStatusCode.BAD_REQUEST, res);
+// 	}
+// 	const userId = user.id;
+// 	let updatedBadge = null;
+
+// 	const updateData: any = { progress: readProgressData.progress };
+// 	if (readProgressData.courseLessonId && readProgressData.sectionId) {
+// 		updateData.$push = { readSections: { courseLessonId: readProgressData.courseLessonId, sectionId: readProgressData.sectionId } };
+// 	}
+// 	if (readProgressData.readAudioChapter) {
+// 		updateData.$push = { readAudioChapter: { audioChapterId: readProgressData.readAudioChapter } };
+// 	}
+    
+// 	const ReadProgress = await readProgressModel.findOneAndUpdate({ userId, bookId: readProgressId }, updateData, { new: true, upsert: true }).populate("bookId");
+
+// 	if (!ReadProgress) {
+// 		return errorResponseHandler("Read Progress not found", httpStatusCode.NOT_FOUND, res);
+// 	}
+
+// 	if (readProgressData.progress === 100) {
+// 		const bookRead = await readProgressModel.countDocuments({ userId, progress: 100 });
+// 		const awardedBadge = badges.find(({ count }) => bookRead === count);
+
+// 		if (awardedBadge) {
+// 			updatedBadge = await awardsModel.findOneAndUpdate({ userId }, { level: awardedBadge.level, badge: awardedBadge.badge }, { new: true, upsert: true });
+// 		}
+// 	}
+
+// 	return {
+// 		success: true,
+// 		message: "Read Progress updated successfully",
+// 		data: { ReadProgress, updatedBadge },
+// 	};
+// };
 
 export const getAllReadProgress = async (payload: any, user: any) => {
 	const page = parseInt(payload.page as string) || 1;

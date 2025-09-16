@@ -742,7 +742,7 @@ export const getBookMasterReadProgressService = async (user: any, payload: any, 
 };
 
 export const getBookMastersForUserService = async (user: any, payload: any, res: Response) => {
-  const readProgress = await getBookMasterReadProgressService(user, payload, res);
+  // const readProgress = await getBookMasterReadProgressService(user, payload, res);
   const newBook = await getBookMasterNewbookService(user, payload, res);
 
   const teachers = await getBookMasterTeacherService(payload, user, res);
@@ -755,7 +755,7 @@ export const getBookMastersForUserService = async (user: any, payload: any, res:
     success: true,
     message: "Book Master retrieved successfully",
     data: {
-      readBooks: readProgress.data.readBooks,
+      // readBooks: readProgress.data.readBooks,
       newBooks: newBook.data.newBooks,
       teachers: teachers.data.teachers,
       categories: categories.data.categories,

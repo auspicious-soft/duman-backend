@@ -77,9 +77,11 @@ import {
 } from "src/controllers/user-home-page/user-home-page-controller";
 import {
   changePasswordUser,
+  deleteUser,
   getCurrentUserDetails,
   getUserBadge,
   getUserDashboardStats,
+  logoutUser,
   updateCurrentUserDetails,
   updateCurrentUserLanguage,
   uploadUserImageController,
@@ -151,6 +153,8 @@ import { createFAQ, deleteFAQ, getAllFAQ, updateFAQ } from "src/controllers/FAQs
 const router = Router();
 
 router.get("/dashboard/:id", getUserDashboardStats);
+router.delete("/delete-account", deleteUser);
+router.put("/logout", logoutUser);
 
 //book-events routes
 router.get("/events", getAllEventsHandlerForUser);
