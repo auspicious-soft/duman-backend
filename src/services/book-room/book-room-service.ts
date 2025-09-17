@@ -3,6 +3,7 @@ import { favoritesModel } from "src/models/product-favorites/product-favorites-s
 import { query } from "express";
 
 export const getAllReadingBooksService = async (user: any, payload: any) => {
+	console.log('user: ', user);
 	const page = parseInt(payload.page as string) || 1;
 	const limit = parseInt(payload.limit as string) || 10;
 	const offset = (page - 1) * limit;
@@ -18,7 +19,8 @@ export const getAllReadingBooksService = async (user: any, payload: any) => {
 		});
 	//TODO--CHANGED
 	// const modifiedResults = readingBooks.filter((item: any) => item.bookId.type === "e-book");
-	const modifiedResults = readingBooks.filter((item: any) => item.bookId.type === "audio&ebook" && item.bookId.format !== "audiobook");
+	console.log('readingBooks: ', readingBooks);
+	const modifiedResults = readingBooks.filter((item: any) => item?.bookId?.type === "audio&ebook" && item?.bookId?.format !== "audiobook");
 	const total = modifiedResults.length;
 	const paginatedResults = modifiedResults.slice(offset, offset + limit);
 
