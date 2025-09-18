@@ -145,7 +145,7 @@ export const getCoursesBookRoomService = async (user: any, payload: any) => {
 				populate: [{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }],
 			});
 
-			const filteredCourses = favCourses.filter((item: any) => item.productId.type === "course");
+			const filteredCourses = favCourses.filter((item: any) => item?.productId?.type === "course");
 			results = filteredCourses.map((book) => ({
 				...book.toObject(),
 				isFavorite: true,
@@ -155,23 +155,21 @@ export const getCoursesBookRoomService = async (user: any, payload: any) => {
 		case "completed":
 			const completedCourses = await readProgressModel.find({ userId: user.id, progress: 100 }).populate("bookId");
 			results = completedCourses.filter((item: any) => {
-				item.bookId.type === "course";
+				item?.bookId?.type === "course";
 			});
 
 			break;
 
 		case "studying":
 			const studyingCourses = await readProgressModel.find({ userId: user.id, progress: { $ne: 100 } }).populate("bookId");
-			results = studyingCourses.filter((item: any) => item.bookId.type === "course");
+			results = studyingCourses.filter((item: any) => item?.bookId?.type === "course");
 
 			break;
 
 		case "certificate":
 			const certCourses = await readProgressModel.find({ userId: user.id, progress: 100 }).populate("bookId");
-			const certFilteredCourses = certCourses.filter((item: any) => item.bookId.type === "course" && item.certificatePng !== null && item.certificatePdf !== null);
-			console.log("certCourses: ", certCourses);
-			console.log("certFilteredCourses: ", certFilteredCourses);
-			const certificates = certFilteredCourses.map((item: any) => ({ certificatePng: item.certificatePng, certificatePdf: item.certificatePdf }));
+			const certFilteredCourses = certCourses.filter((item: any) => item?.bookId?.type === "course" && item?.certificatePng !== null && item.certificatePdf !== null);
+			const certificates = certFilteredCourses.map((item: any) => ({ certificatePng: item.certificatePng, certificatePdf: item.certificatePdf,bookData: item.bookId }));
 			return { success: true, message: "Certificate action logged", data: certificates };
 
 		default:
