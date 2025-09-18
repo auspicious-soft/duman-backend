@@ -5,7 +5,7 @@ import { getHomePageService, getproductsTabService } from 'src/services/userHome
 
 export const getHomePageHandler = async (req: Request, res: Response) => {
     try {
-      const response = await getHomePageService(req.query,res)
+      const response = await getHomePageService(req.user,req.query,res)
       return res.status(httpStatusCode.OK).json(response)
   } catch (error: any) {
       const { code, message } = errorParser(error)

@@ -165,11 +165,13 @@ export const getBookSchoolsByCodeService = async (payload: any, user: any, res: 
   }
 };
 export const verifyBookSchoolsByCodeService = async (payload: any, userData: any, res: Response) => {
+  console.log('payload: ', payload);
   const { query } = queryBuilder(payload, ["couponCode"]);
   const page = parseInt(payload.page as string) || 1;
   const limit = parseInt(payload.limit as string) || 0;
   const totalDataCount = Object.keys(query).length < 1 ? await bookSchoolsModel.countDocuments() : await bookSchoolsModel.countDocuments(query);
   const bookSchool = await bookSchoolsModel.find({ couponCode: payload.couponCode }).populate([{ path: "publisherId" }]);
+  console.log('bookSchool: ', bookSchool);
   const bookSchoolId = bookSchool.map((school) => school._id);
   let userQuery;
   if (userData.email) {

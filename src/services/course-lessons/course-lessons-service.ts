@@ -222,9 +222,13 @@ export const getCourseLessonByIdForUserService = async (user: any, payload: any,
 		return {
 			...lesson,
 			isOpen,
-			subLessons: lesson.subLessons.map((subLessons) => ({
-				...subLessons,
-				isDone: subLessons.file === null ? true : readSectionIds.has(subLessons._id.toString()),
+			// subLessons: lesson.subLessons.map((subLessons) => ({
+			// 	...subLessons,
+			// 	isDone: subLessons.file === null  ? true : readSectionIds.has(subLessons._id.toString()),
+			// })),
+			subLessons: lesson.subLessons.map((subLesson) => ({
+				...subLesson,
+				isDone: !isOpen ? false : subLesson.file === null ? true : readSectionIds.has(subLesson._id.toString()),
 			})),
 		};
 	});

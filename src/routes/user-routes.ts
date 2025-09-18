@@ -169,7 +169,7 @@ router.put("/books/rating/:id", AddBookRating);
 router.get("/books/rating/:id", getRating);
 
 //coupon route
-router.get("/book-schools/verify", verifyBookSchoolsByCode);
+router.post("/book-schools/verify", verifyBookSchoolsByCode);
 router.get("/book-schools/books", getBookSchoolsByCode);
 
 //notifications route
