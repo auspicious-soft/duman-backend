@@ -60,9 +60,9 @@ export const getAllFinishedBooksService = async (user: any, payload: any) => {
 		});
 	//TODO--CHANGED
 	// const modifiedResults = finishedBooks.filter((item: any) => item.bookId.type === "e-books");
-	const modifiedResults = finishedBooks.filter((item: any) => item.bookId.type === "audio&ebook" && item.bookId.format !== "audiobook");
-	const total = modifiedResults.length;
-	const paginatedResults = modifiedResults.slice(offset, offset + limit);
+	const modifiedResults = finishedBooks?.filter((item: any) => item?.bookId?.type === "audio&ebook" && item?.bookId?.format !== "audiobook");
+	const total = modifiedResults?.length;
+	const paginatedResults = modifiedResults?.slice(offset, offset + limit);
 
 	if (paginatedResults.length > 0) {
 		return {
@@ -103,7 +103,7 @@ export const getAllFaviouriteBooksService = async (user: any, payload: any) => {
 	//   return item.productId.type === "e-book";
 	// });
 	const modifiedResults = favBooks.filter((item: any) => {
-		return item.productId.type === "audio&ebook" && item.productId.format !== "audiobook";
+		return item?.productId?.type === "audio&ebook" && item?.productId?.format !== "audiobook";
 	});
 
 	const total = modifiedResults.length;
@@ -138,7 +138,7 @@ export const getCoursesBookRoomService = async (user: any, payload: any) => {
 	let results: any[] = [];
 	let total = 0;
 
-	switch (payload.type) {
+	switch (payload?.type) {
 		case "fav":
 			const favCourses = await favoritesModel.find({ userId: user.id }).populate({
 				path: "productId",
@@ -153,16 +153,22 @@ export const getCoursesBookRoomService = async (user: any, payload: any) => {
 			break;
 
 		case "completed":
-			const completedCourses = await readProgressModel.find({ userId: user.id, progress: 100 }).populate("bookId");
-			results = completedCourses.filter((item: any) => {
-				item?.bookId?.type === "course";
+			const completedCourses = await readProgressModel.find({ userId: user.id, progress: 100, isCompleted: true }).populate("bookId");
+			console.log('completedCourses: ', completedCourses);
+			results = completedCourses?.filter((item: any) => {
+				return item?.bookId?.type === 'course';
 			});
+			console.log('results: ', results);
 
 			break;
 
 		case "studying":
 			const studyingCourses = await readProgressModel.find({ userId: user.id, progress: { $ne: 100 } }).populate("bookId");
-			results = studyingCourses.filter((item: any) => item?.bookId?.type === "course");
+			console.log('studyingCourses: ', studyingCourses);
+			results = studyingCourses?.filter((item: any) => {
+				return item?.bookId?.type === "course";
+			});
+			console.log('results: ', results);
 
 			break;
 

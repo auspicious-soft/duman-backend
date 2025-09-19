@@ -13,7 +13,7 @@ export const getHomePageService = async (userData: any, payload: any, res: Respo
 		const bannersResponse = await getAllBannersService(payload, res);
 		const storiesResponse = await getAllStoriesService(payload, res);
 		const readProgress = await readProgressModel
-			.find({ userId: userData.id })
+			.find({ userId: userData.id, isCompleted: false, progress: { $lt: 100 } })
       .sort({ updatedAt: -1 })
 			.limit(5)
 			.populate({
