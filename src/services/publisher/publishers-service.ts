@@ -25,7 +25,8 @@ export const createPublisherService = async (payload: any, res: Response) => {
 	
 			const fcmPromises = users.map(user => {
 				const userIds = [user._id];
-				return sendNotification(userIds, "PUBLISHER_CREATED");
+				return  sendNotification({userIds, type: "Publisher_Created",  referenceId: savedPublisher._id});
+
 			});
 	
 			await Promise.all(fcmPromises);
@@ -56,6 +57,7 @@ export const getPublisherService = async (id: string, res: Response) => {
 };
 export const getPublisherForUserService = async (id: string, user: any, res: Response) => {
 	const publisher = await publishersModel.findById(id).populate("categoryId");
+	console.log('publisher: ', publisher);
 	if (!publisher) return errorResponseHandler("Publisher not found", httpStatusCode.NOT_FOUND, res);
 
 	const favoriteBooks = await favoritesModel.find({ userId: user.id }).populate("productId");
