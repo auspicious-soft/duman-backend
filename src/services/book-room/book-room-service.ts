@@ -198,7 +198,7 @@ export const getCoursesBookRoomService = async (user: any, payload: any) => {
 		case "certificate":
 			const certCourses = await readProgressModel.find({ userId: user.id, progress: 100 }).populate("bookId");
 			const certFilteredCourses = certCourses.filter((item: any) => item?.bookId?.type === "course" && item?.certificatePng !== null && item.certificatePdf !== null);
-			const certificates = certFilteredCourses.map((item: any) => ({ certificatePng: item.certificatePng, certificatePdf: item.certificatePdf, bookData: item.bookId }));
+			const certificates = certFilteredCourses.map((item: any) => ({ certificatePng: item.certificatePng, certificatePdf: item.certificatePdf, bookId: item.bookId }));
 			return { success: true, message: "Certificate action logged", data: certificates };
 
 		default:
