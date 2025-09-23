@@ -154,6 +154,7 @@ export const getBookSchoolsByCodeService = async (payload: any, user: any, res: 
   let newBooksWithFavoriteStatus = bookSchoolData.map((book) => ({
     ...book.toObject(),
     isFavorite: favoriteIds.includes(book._id.toString()),
+    isPurchased: true,
   }));
   if (results.length)
     return {
