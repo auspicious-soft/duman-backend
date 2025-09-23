@@ -108,8 +108,8 @@ const usersSchema = new mongoose.Schema(
         type: mongoose.Schema.Types.ObjectId,
         ref: "bookSchools",
       },
-      createdAt: { type: Date, default: Date.now },
-      expiredAt: { type: Date, default: () => new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) },
+      createdAt: { type: Date, default: null },
+      expiredAt: { type: Date, default:null },
     },
     fcmToken: {
       type: String,

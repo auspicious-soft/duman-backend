@@ -170,6 +170,7 @@ export const verifyBookSchoolsByCodeService = async (payload: any, userData: any
   const page = parseInt(payload.page as string) || 1;
   const limit = parseInt(payload.limit as string) || 0;
   const totalDataCount = Object.keys(query).length < 1 ? await bookSchoolsModel.countDocuments() : await bookSchoolsModel.countDocuments(query);
+  console.log('totalDataCount: ', totalDataCount);
   const bookSchool = await bookSchoolsModel.find({ couponCode: payload.couponCode }).populate([{ path: "publisherId" }]);
   console.log('bookSchool: ', bookSchool);
   const bookSchoolId = bookSchool.map((school) => school._id);
@@ -184,6 +185,8 @@ export const verifyBookSchoolsByCodeService = async (payload: any, userData: any
 
   if (user && user.schoolVoucher) {
     user.schoolVoucher.voucherId = bookSchoolId[0];
+    user.schoolVoucher.createdAt = new Date();
+    user.schoolVoucher.expiredAt = new Date(new Date().setFullYear(new Date().getFullYear() + 1));
     await user.save();
     if (bookSchool.length > 0 && bookSchool[0].allowedActivation > bookSchool[0].codeActivated) {
       for (const school of bookSchool) {

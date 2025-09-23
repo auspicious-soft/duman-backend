@@ -7,14 +7,15 @@ import { getAllCollectionsService, getAllCollectionsWithBooksService } from "../
 import { getAllBookLivesWithBlogsService } from "../book-lives/book-lives-service";
 import { getAllBooksService, getAllProductsForStocksTabService } from "../products/products-service";
 import { readProgressModel } from "src/models/user-reads/read-progress-schema";
+import { usersModel } from "src/models/user/user-schema";
 
 export const getHomePageService = async (userData: any, payload: any, res: Response) => {
 	try {
-		const bannersResponse = await getAllBannersService(payload, res);
-		const storiesResponse = await getAllStoriesService(payload, res);
+		const bannersResponse: any = await getAllBannersService(payload, res);
+		const storiesResponse: any = await getAllStoriesService(payload, res);
 		const readProgress = await readProgressModel
 			.find({ userId: userData.id, isCompleted: false, progress: { $lt: 100 } })
-      .sort({ updatedAt: -1 })
+			.sort({ updatedAt: -1 })
 			.limit(5)
 			.populate({
 				path: "bookId",
@@ -24,6 +25,8 @@ export const getHomePageService = async (userData: any, payload: any, res: Respo
 			.select("-certificate -createdAt -readSections -updatedAt -__v");
 		const banners = bannersResponse?.data?.length ? bannersResponse.data : [];
 		const stories = storiesResponse?.data?.length ? storiesResponse.data : [];
+		const userdetails = await usersModel.findById(userData.id).select("schoolVoucher");
+        const userSchoolVoucher = userdetails?.schoolVoucher?.voucherId ? true : false;
 
 		if (!banners.length && !stories.length && !readProgress.length) {
 			return {
@@ -32,7 +35,7 @@ export const getHomePageService = async (userData: any, payload: any, res: Respo
 				data: {
 					banners: [],
 					stories: [],
-          readProgress: [],
+					readProgress: [],
 				},
 			};
 		}
@@ -43,7 +46,8 @@ export const getHomePageService = async (userData: any, payload: any, res: Respo
 			data: {
 				banners,
 				stories,
-        readProgress,
+				readProgress,
+				userSchoolVoucher,
 			},
 		};
 	} catch (error: any) {
