@@ -548,7 +548,7 @@ const __dirname = path.dirname(__filename);
 
 // Define image paths once at top
 // const LogoPath = path.resolve(__dirname, "../../assets/logo.png");
-const LogoPath = path.resolve(__dirname, "../assets/Logo.png");
+const LogoPath = path.resolve(__dirname, "../../assets/Logo.png");
 const CEOPath = path.resolve(__dirname, "../../assets/newbookstagramlogo.png");
 const StampPath = path.resolve(__dirname, "../../assets/Bookstagramstamp.png");
 
