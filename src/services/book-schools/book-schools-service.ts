@@ -151,7 +151,7 @@ export const getBookSchoolsByCodeService = async (payload: any, user: any, res: 
       message: "Book schools retrieved successfully",
       success: true,
       total: total,
-      data: bookSchoolData,
+      data: {productId: bookSchoolData},
     };
   else {
     return {
