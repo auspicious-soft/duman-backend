@@ -6,6 +6,7 @@ import { productsModel } from "src/models/products/products-schema";
 import { usersModel } from "src/models/user/user-schema";
 import { bookSchoolsModel } from "./../../models/book-schools/book-schools-schema";
 import mongoose from "mongoose";
+import { favoritesModel } from "src/models/product-favorites/product-favorites-schema";
 
 export const createBookSchoolService = async (payload: any, res: Response) => {
   const newBookSchool = new bookSchoolsModel(payload);
@@ -121,6 +122,7 @@ export const getBookSchoolsByCodeService = async (payload: any, user: any, res: 
   const publisherId = results.map((school) => school.publisherId).flat(); // Flatten the array if needed
 
   const publisherObjectIds = publisherId.map((id: any) => new mongoose.Types.ObjectId(id));
+
 //TODO--CHANGED
   // const bookSchoolData = await productsModel
   //   .find({ publisherId: { $in: publisherObjectIds }, type: "e-book" })
@@ -144,6 +146,15 @@ export const getBookSchoolsByCodeService = async (payload: any, user: any, res: 
     ]);
 
   const total = bookSchoolData.length;
+    const favoriteBooks = await favoritesModel.find({ userId: user.id }).populate("productId");
+  const favoriteIds = favoriteBooks
+    .filter((book) => book.productId && book.productId._id)
+    .map((book) => book.productId._id.toString());
+
+  let newBooksWithFavoriteStatus = bookSchoolData.map((book) => ({
+    ...book.toObject(),
+    isFavorite: favoriteIds.includes(book._id.toString()),
+  }));
   if (results.length)
     return {
       page,
@@ -151,8 +162,9 @@ export const getBookSchoolsByCodeService = async (payload: any, user: any, res: 
       message: "Book schools retrieved successfully",
       success: true,
       total: total,
-      data: bookSchoolData,
+      data: newBooksWithFavoriteStatus,
     };
+    
   else {
     return {
       data: [],
