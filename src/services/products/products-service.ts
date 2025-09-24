@@ -48,7 +48,7 @@ export const getBooksService = async (payload: any, id: string, res: Response) =
 			return errorResponseHandler("Book price not available", httpStatusCode.NOT_FOUND, res);
 		}
 
-		const orders = await ordersModel.find({ productIds: id, status:"Completed"});
+		const orders = await ordersModel.find({ productIds: id, status: "Completed" });
 		const totalBookSold = orders.length;
 		const totalRevenue = totalBookSold * bookPrice;
 
@@ -406,8 +406,16 @@ export const getProductsForHomePage = async () => {
 	}
 };
 
-
 export const getBookForUserService = async (id: string, payload: any, user: any, res: Response) => {
+	console.log('payload: ', payload);
+	let isPurchased;
+	if (payload.bookSchool === 'true') {
+	 isPurchased = true;
+	 console.log('isPurchased: ', isPurchased);
+	} else {
+		isPurchased = await ordersModel.find({ productIds: { $in: id }, userId: user.id, status: "Completed" });
+	}
+
 	const book = await productsModel.findById(id).populate([{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }]);
 
 	const readers = await readProgressModel.countDocuments({ bookId: id });
@@ -417,14 +425,15 @@ export const getBookForUserService = async (id: string, payload: any, user: any,
 	const isFavorite = await favoritesModel.exists({ userId: user.id, productId: id });
 	//TODO--CHANGED
 	const relatedBooks = await productsModel.find({ categoryId: { $in: book?.categoryId }, type: book?.type, _id: { $ne: id } }).populate([{ path: "authorId" }]);
-	const isPurchased = await ordersModel.find({ productIds: { $in: id }, userId: user.id, status: "Completed" });
 	const isAddedToCart = await cartModel.find({ productId: { $in: [id] }, userId: user.id, buyed: "pending" }).lean();
+	const purchaseFlag = isPurchased === true || (Array.isArray(isPurchased) && isPurchased.length > 0) ? true : false;
+	console.log('purchaseFlag: ', purchaseFlag);
 
 	let language;
 	const userReadProgress = await readProgressModel.findOne({ userId: user.id, bookId: id });
-	 // Convert the Map to a plain object
-  const bookObject:any = book.toObject();
-  bookObject.file = Object.fromEntries(book.file);
+	// Convert the Map to a plain object
+	const bookObject: any = book.toObject();
+	bookObject.file = Object.fromEntries(book.file);
 	//TODO--CHANGED
 	// if (book.type === "audiobook") {
 	if (book.type === "audio&ebook" && book.format !== "e-book" && book.format !== null) {
@@ -437,7 +446,6 @@ export const getBookForUserService = async (id: string, payload: any, user: any,
 
 		// If userReadProgress exists, get readSections (array of chapter IDs)
 		const readChapters = userReadProgress?.readAudioChapter?.map((section: any) => section?.audioChapterId.toString()) || [];
-
 		// Add isRead property to each chapter
 		const chaptersWithIsRead = chapters.map((chapter) => ({
 			...chapter.toObject(),
@@ -454,7 +462,7 @@ export const getBookForUserService = async (id: string, payload: any, user: any,
 					language,
 				},
 				relatedBooks: relatedBooks,
-				isPurchased: isPurchased.length > 0 ? true : false,
+				isPurchased: isPurchased === true || (Array.isArray(isPurchased) && isPurchased.length > 0) ? true : false,
 				isAddedToCart: isAddedToCart.length > 0 ? true : false,
 				favorite: isFavorite ? true : false,
 				readProgress: userReadProgress ? userReadProgress.progress : 0,
@@ -472,7 +480,7 @@ export const getBookForUserService = async (id: string, payload: any, user: any,
 				readers: readers > 0 ? readers : 0,
 			},
 			relatedBooks: relatedBooks,
-			isPurchased: isPurchased.length > 0 ? true : false,
+			isPurchased: purchaseFlag,
 			isAddedToCart: isAddedToCart.length > 0 ? true : false,
 			favorite: isFavorite ? true : false,
 			readProgress: userReadProgress ? userReadProgress.progress : 0,
@@ -731,7 +739,7 @@ export const getChaptersByAudiobookIDForUserService = async (id: string, payload
 		message: "Audiobook retrieved successfully",
 		data: {
 			chapter: chaptersWithIsRead,
-			currentRead:currentIndex,
+			currentRead: currentIndex,
 			readProgress: userReadProgress,
 		},
 	};
