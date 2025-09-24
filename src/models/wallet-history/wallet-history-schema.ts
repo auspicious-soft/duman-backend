@@ -9,7 +9,7 @@ const walletHistorySchema = new mongoose.Schema(
     },
     orderId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "products",
+      ref: "orders",
       // type: String,
       required: false,
     },

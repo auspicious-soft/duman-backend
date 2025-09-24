@@ -171,7 +171,7 @@ export const getWalletHistoryService = async (userData: any, payload: any, res: 
 
 	const walletHistory = await walletHistoryModel
 		.find(filter)
-		.populate("orderId");
+		.populate("orderId", "-paymentGatewayResponse");
 
 	return {
 		success: true,
