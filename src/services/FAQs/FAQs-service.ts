@@ -19,34 +19,86 @@ export const createFAQService = async (payload: any, res: Response) => {
 
 
 // Get Single FAQ
-export const getAllFAQService = async (res: Response, page: number = 1, limit: number = 10, type: string | undefined, search: string | undefined) => {
-	// Convert page and limit to integers and ensure they are positive
+// export const getAllFAQService = async (res: Response, page: number = 1, limit: number = 10, type: string | undefined, search: string | undefined) => {
+// 	// Convert page and limit to integers and ensure they are positive
+// 	const currentPage = Math.max(1, parseInt(page.toString(), 10));
+// 	const itemsPerPage = Math.max(1, parseInt(limit.toString(), 10));
+
+
+// 	let faqs 
+//     if (search) {
+//         const searchRegex = new RegExp(search, 'i'); // Case-insensitive regex for searching
+//         faqs = await faqsModel.find({
+//             $or: [
+//                 { question: { $regex: searchRegex } },
+//                 { answer: { $regex: searchRegex } }
+//             ]
+//         }).sort({ createdAt: -1 }).exec();
+//     } else {
+//         faqs = await faqsModel.find().sort({ createdAt: -1 }).exec();
+//     }
+// 	const types = [...new Set(faqs.map((faq) => faq.type))];
+// 	const filteredFaqs = type ? faqs.filter((faq) => faq.type === type) : faqs;
+
+// 	return {
+// 		success: true,
+// 		message: "FAQs fetched successfully",
+// 		types,
+// 		data: filteredFaqs,
+// 	};
+// };
+
+
+export const getAllFAQService = async (
+	res: Response,
+	page: number = 1,
+	limit: number = 10,
+	type: string | undefined,
+	search: string | undefined
+) => {
+	// Ensure valid page and limit
 	const currentPage = Math.max(1, parseInt(page.toString(), 10));
 	const itemsPerPage = Math.max(1, parseInt(limit.toString(), 10));
 
+	let faqs;
 
-	let faqs 
-    if (search) {
-        const searchRegex = new RegExp(search, 'i'); // Case-insensitive regex for searching
-        faqs = await faqsModel.find({
-            $or: [
-                { question: { $regex: searchRegex } },
-                { answer: { $regex: searchRegex } }
-            ]
-        }).sort({ createdAt: -1 }).exec();
-    } else {
-        faqs = await faqsModel.find().sort({ createdAt: -1 }).exec();
-    }
-	const types = [...new Set(faqs.map((faq) => faq.type))];
-	const filteredFaqs = type ? faqs.filter((faq) => faq.type === type) : faqs;
+	if (search) {
+		const searchRegex = new RegExp(search, 'i');
+		faqs = await faqsModel.find({
+			$or: [
+				{ question: { $regex: searchRegex } },
+				{ answer: { $regex: searchRegex } }
+			]
+		}).sort({ createdAt: -1 }).exec();
+	} else {
+		faqs = await faqsModel.find().sort({ createdAt: -1 }).exec();
+	}
+
+	// Get all available types from fetched FAQs (after search or full fetch)
+	const types = [...new Set(faqs.map(faq => faq.type))];
+
+	// If no type is provided, default to the first available type
+	const selectedType = type || types[0];
+
+	// Filter by selected type
+	const filteredFaqs = faqs.filter(faq => faq.type === selectedType);
+
+	// Apply pagination
+	const startIndex = (currentPage - 1) * itemsPerPage;
+	const paginatedFaqs = filteredFaqs.slice(startIndex, startIndex + itemsPerPage);
 
 	return {
 		success: true,
 		message: "FAQs fetched successfully",
-		types,
-		data: filteredFaqs,
+		total: filteredFaqs.length,
+		page: currentPage,
+		limit: itemsPerPage,
+		types, // All available types (not filtered by type)
+		data: paginatedFaqs,
+		// selectedType,
 	};
 };
+
 
 export const getFAQByIdService = async (id: string, res: Response) => {
 	try {
