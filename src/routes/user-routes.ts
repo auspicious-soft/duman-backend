@@ -34,6 +34,7 @@ import {
 import {
   getAllNotificationsOfUser,
   markAllNotificationsAsRead,
+  markNotificationsAsRead,
 } from "src/controllers/notifications/notifications-controller";
 import {
   getAllAudioBookForUser,
@@ -177,7 +178,7 @@ router
   .route("/notifications")
   .get(getAllNotificationsOfUser)
   .put(markAllNotificationsAsRead);
-
+router.put("/notifications/:id", markNotificationsAsRead);
 //home-page  route
 router.route("/home-page").get(getHomePageHandler);
 router.get("/home-page/products", getproductsTabHandler);

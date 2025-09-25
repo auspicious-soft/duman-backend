@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { httpStatusCode } from "src/lib/constant";
 import { errorParser } from "src/lib/errors/error-response-handler";
-import { getAllNotificationsOfUserService, markAllNotificationsAsReadService, sendNotificationToUserService, sendNotificationToUsersService } from "src/services/notifications/notifications-service";
+import { getAllNotificationsOfUserService, markAllNotificationsAsReadService, markNotificationsAsReadService, sendNotificationToUserService, sendNotificationToUsersService } from "src/services/notifications/notifications-service";
 import { sendNotificationToUserSchema, } from "src/validation/admin-user";
 import { formatZodErrors } from "src/validation/format-zod-errors";
 
@@ -43,6 +43,15 @@ export const getAllNotificationsOfUser = async (req: Request, res: Response) => 
 export const markAllNotificationsAsRead = async (req: Request, res: Response) => {
     try {
         const response = await markAllNotificationsAsReadService(req.user, res)
+        return res.status(httpStatusCode.OK).json(response)
+    } catch (error: any) {
+        const { code, message } = errorParser(error)
+        return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" })
+    }
+}
+export const markNotificationsAsRead = async (req: Request, res: Response) => {
+    try {
+        const response = await markNotificationsAsReadService(req.user, req.params.id, res)
         return res.status(httpStatusCode.OK).json(response)
     } catch (error: any) {
         const { code, message } = errorParser(error)
