@@ -635,7 +635,8 @@ export const updateCurrentUserLanguageService = async (userData: any, query: any
 		updatedUser = await usersModel
 			.findByIdAndUpdate(
 				userData.id,
-				{ $set: { language: payload.language, productsLanguage: payload.productsLanguage } },
+				{ $set: { language: payload.language } },
+				// { $set: { language: payload.language, productsLanguage: payload.productsLanguage } },
 				{
 					new: true,
 				}
@@ -646,7 +647,8 @@ export const updateCurrentUserLanguageService = async (userData: any, query: any
 		updatedUser = await usersModel
 			.findByIdAndUpdate(
 				userData.id,
-				{ $set: { language: payload.language, productsLanguage: payload.productsLanguage } },
+				// { $set: { language: payload.language, productsLanguage: payload.productsLanguage } },
+				{ $set: {  productsLanguage: payload.productsLanguage } },
 				{
 					new: true,
 				}
