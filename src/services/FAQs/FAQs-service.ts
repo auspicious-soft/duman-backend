@@ -61,7 +61,7 @@ export const getAllFAQService = async (
 	const itemsPerPage = Math.max(1, parseInt(limit.toString(), 10));
 
 	let faqs;
-
+    const types = await faqsModel.distinct("type").exec();
 	if (search) {
 		const searchRegex = new RegExp(search, 'i');
 		faqs = await faqsModel.find({
@@ -75,7 +75,7 @@ export const getAllFAQService = async (
 	}
 
 	// Get all available types from fetched FAQs (after search or full fetch)
-	const types = [...new Set(faqs.map(faq => faq.type))];
+	// const types = [...new Set(faqTypes.map(faq => faq.type))];
 
 	// If no type is provided, default to the first available type
 	const selectedType = type || types[0];
