@@ -95,9 +95,10 @@ export const getAllFAQService = async (
 		limit: itemsPerPage,
 		types, // All available types (not filtered by type)
 		data: paginatedFaqs,
-		// selectedType,
+		selectedType,
 	};
 };
+
 
 
 export const getFAQByIdService = async (id: string, res: Response) => {
