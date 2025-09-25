@@ -32,7 +32,7 @@ export const sendNotificationToUser = async (req: Request, res: Response) => {
 
 export const getAllNotificationsOfUser = async (req: Request, res: Response) => {
     try {
-        const response = await getAllNotificationsOfUserService(req.params.id, res)
+        const response = await getAllNotificationsOfUserService(req.user, res)
         return res.status(httpStatusCode.OK).json(response)
     } catch (error: any) {
         const { code, message } = errorParser(error)
@@ -42,7 +42,7 @@ export const getAllNotificationsOfUser = async (req: Request, res: Response) => 
 
 export const markAllNotificationsAsRead = async (req: Request, res: Response) => {
     try {
-        const response = await markAllNotificationsAsReadService(req.params.id, res)
+        const response = await markAllNotificationsAsReadService(req.user, res)
         return res.status(httpStatusCode.OK).json(response)
     } catch (error: any) {
         const { code, message } = errorParser(error)

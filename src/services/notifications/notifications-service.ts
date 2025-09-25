@@ -81,12 +81,12 @@ export const sendNotificationToUserService = async (payload: any, res: Response)
 	}
 };
 
-export const getAllNotificationsOfUserService = async (id: string, res: Response) => {
+export const getAllNotificationsOfUserService = async (userData: any, res: Response) => {
 	try {
-		const user = await usersModel.findById(id);
+		const user = await usersModel.findById(userData.id);
 		if (!user) return errorResponseHandler("User not found", httpStatusCode.NOT_FOUND, res);
 
-		const results = await notificationsModel.find({ userIds: id }).sort({ createdAt: -1 }).select("-__v -userId");
+		const results = await notificationsModel.find({ userIds: userData.id }).sort({ createdAt: -1 }).select("-__v -userId");
 
 		return { success: true, message: "Notifications fetched successfully", data: results };
 	} catch (error) {
@@ -95,18 +95,19 @@ export const getAllNotificationsOfUserService = async (id: string, res: Response
 	}
 };
 
-export const markAllNotificationsAsReadService = async (id: string, res: Response) => {
+export const markAllNotificationsAsReadService = async (userData: any, res: Response) => {
 	try {
-		const user = await usersModel.findById(id);
+		const user = await usersModel.findById(userData.id);
 		if (!user) return errorResponseHandler("User not found", httpStatusCode.NOT_FOUND, res);
 
-		const notifications = await notificationsModel.find({ userIds: id, read: false }).select("-__v -userId");
+		const notifications = await notificationsModel.find({ userIds: userData.id, isRead: false }).select("-__v -userId");
+		console.log('notifications: ', notifications);
 
 		if (!notifications.length) {
 			return errorResponseHandler("No notifications found", httpStatusCode.NO_CONTENT, res);
 		}
 
-		await notificationsModel.updateMany({ userIds: id, read: false }, { $set: { read: true } });
+		await notificationsModel.updateMany({ userIds: userData.id, isRead: false }, { $set: { isRead: true } });
 
 		return { success: true, message: "Notifications marked as read successfully" };
 	} catch (error) {

@@ -174,7 +174,7 @@ router.get("/book-schools/books", getBookSchoolsByCode);
 
 //notifications route
 router
-  .route("/:id/notifications")
+  .route("/notifications")
   .get(getAllNotificationsOfUser)
   .put(markAllNotificationsAsRead);
 
