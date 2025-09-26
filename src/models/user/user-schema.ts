@@ -22,6 +22,7 @@ export interface UserDocument extends Document {
   schoolVoucher?: string;
   wallet?:number;
   fcmToken?:string;
+  appleToken?:string;
 }
 const usersSchema = new mongoose.Schema(
   {
@@ -133,6 +134,14 @@ const usersSchema = new mongoose.Schema(
     notificationAllowed: {
       type: Boolean,
       default: true,
+    },
+    appleToken: {
+      type: String,
+      default: null,
+    },
+    c_hash: {
+      type: String,
+      default: null,
     },
   },
   { timestamps: true }

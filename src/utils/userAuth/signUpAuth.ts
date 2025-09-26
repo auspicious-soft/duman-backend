@@ -6,6 +6,8 @@ import { Response } from "express";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { configDotenv } from "dotenv";
+import { verifyAppleToken } from "..";
+import { OAuth2Client } from "google-auth-library";
 configDotenv();
 
 export const generateUserToken = (user: UserDocument) => {
@@ -19,12 +21,40 @@ export const generateUserToken = (user: UserDocument) => {
   return jwt.sign(tokenPayload, process.env.AUTH_SECRET as string);
 };
 
-export const getSignUpQueryByAuthType = (userData: UserDocument, authType: string) => {
-  if (["Email", "Google", "Apple", "Facebook"].includes(authType)) {
+export const getSignUpQueryByAuthType = async (userData: UserDocument, authType: string) => {
+  if (["Email", "Google",  "Facebook"].includes(authType)) {
     return { email: userData.email?.toLowerCase() };
   } else if (authType === "Whatsapp") {
     return { phoneNumber: userData.phoneNumber };
-  }
+  } else if (authType === "Apple") {
+    // const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID_IOS);
+    // const ticket = await client.verifyIdToken({
+    //     idToken: userData.appleToken,
+    //     audience:
+    //       deviceType === "IOS"
+    //         ? process.env.GOOGLE_CLIENT_ID_IOS
+    //         : process.env.GOOGLE_CLIENT_ID,
+    //   });
+    const appleData = await verifyAppleToken(userData.appleToken as string);
+    console.log('appleData: ', appleData);
+    let email, fullName, profilePic;
+    email = appleData?.email || `${appleData?.sub}@appleId.com`;
+    if (fullName) {
+      fullName = fullName;
+    } else if (appleData?.fullName) {
+        fullName = `${appleData.fullName.givenName || ""} ${" "} ${
+          appleData.fullName.familyName || ""
+        }`.trim();
+      } else {
+        fullName = "Apple User";
+      }
+      profilePic = null; // Apple does not provide profile image in token
+      return { email: email.toLowerCase() };
+    } 
+    // else {
+    //   throw new Error("Unsupported auth type");
+    // }
+  
   return {};
 };
 

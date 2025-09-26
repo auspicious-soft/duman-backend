@@ -3,6 +3,8 @@ import { configDotenv } from "dotenv";
 import { Request, Response } from "express";
 import mongoose, { SortOrder } from "mongoose";
 import { usersModel } from "src/models/user/user-schema";
+import jwt from "jsonwebtoken";
+import jwkToPem  from 'jwk-to-pem';
 configDotenv();
 
 const { AWS_REGION, AWS_BUCKET_NAME } = process.env;
@@ -12,6 +14,23 @@ export const checkValidAdminRole = (req: Request, res: Response, next: any) => {
   if (role !== "admin") return res.status(403).json({ success: false, message: "Invalid role" });
   else return next();
 };
+export async function verifyAppleToken(idToken: string) {
+  const appleKeys = await axios.get("https://appleid.apple.com/auth/keys");
+  const decodedHeader: any = jwt.decode(idToken, { complete: true })?.header;
+  const key = appleKeys.data.keys.find((k: any) => k.kid === decodedHeader.kid);
+  if (!key) throw new Error("Apple public key not found");
+ 
+  const pubKey = jwkToPem(key);
+  const payload: any = jwt.verify(idToken, pubKey, {
+    algorithms: ["RS256"],
+  });
+ 
+  if (payload.iss !== "https://appleid.apple.com") {
+    throw new Error("Invalid Apple token issuer");
+  }
+ 
+  return payload;
+}
 
 export const checkValidPublisherRole = (req: Request, res: Response, next: any) => {
   const { role } = req.headers;

@@ -39,11 +39,25 @@ const sanitizeUser = (user: any): UserDocument => {
 };
 
 export const loginUserService = async (userData: UserDocument, authType: string, res: Response) => {
-	console.log('userData: ', userData);
-	let query = getSignUpQueryByAuthType(userData, authType);
+	console.log("userData: ", userData);
+	let query = await getSignUpQueryByAuthType(userData, authType);
+	console.log("query: ", query);
 
 	let user: any = await usersModel.findOne(query);
+	console.log('user: ', user);
+	if (authType === "Apple") {
+		userData.email = query.email;
+		// (userData as any).appleToken = query.appleToken;
+		// if (userData.fullName && typeof userData.fullName === "object" && "eng" in userData.fullName ) {
+		// 	(userData as any).fullName.eng = query.fullName;
+		// 	(userData as any).fullName.kaz = null;
+		// 	(userData as any).fullName.rus = null;
 
+		// }
+		// (userData as any).firstName = userData.fullName;
+		// (userData as any).lastName = { eng: null ,kaz: null, rus: null};
+	}
+	console.log("userData: ", userData);
 	if (!user && (authType === "Google" || authType === "Apple" || authType === "Facebook")) {
 		user = await createNewUser(userData, authType); // You should implement the createNewUser function as per your needs
 	}
@@ -58,9 +72,9 @@ export const loginUserService = async (userData: UserDocument, authType: string,
 	}
 
 	user.token = generateUserToken(user as any);
-    (user as any).fcmToken = userData.fcmToken;
-	console.log('userData.fcmToken: ', userData.fcmToken);
-	console.log('user.fcmToken: ', user.fcmToken);
+	(user as any).fcmToken = userData.fcmToken;
+	console.log("userData.fcmToken: ", userData.fcmToken);
+	console.log("user.fcmToken: ", user.fcmToken);
 	await user.save();
 	return {
 		success: true,
@@ -80,6 +94,8 @@ const createNewUser = async (userData: any, authType: string) => {
 		profilePic: userData.profilePic,
 		password: null,
 		token: generateUserToken(userData),
+		// appleToken: userData.appleToken,
+		c_hash: userData.c_hash,
 	});
 
 	await newUser.save();
@@ -88,8 +104,8 @@ const createNewUser = async (userData: any, authType: string) => {
 };
 
 export const signUpService = async (userData: UserDocument, authType: string, res: Response) => {
-	console.log('authType: ', authType);
-	console.log('userData: ', userData);
+	console.log("authType: ", authType);
+	console.log("userData: ", userData);
 	if (!authType) {
 		return errorResponseHandler("Auth type is required", httpStatusCode.BAD_REQUEST, res);
 	}
@@ -100,7 +116,8 @@ export const signUpService = async (userData: UserDocument, authType: string, re
 	// if(userData.firstName && userData.lastName){
 	// 	userData.fullName = `${userData.firstName?.eng} ${userData.lastName}`
 	// }
-	const query = getSignUpQueryByAuthType(userData, authType);
+	const query = await getSignUpQueryByAuthType(userData, authType);
+	console.log("query: ", query);
 	const existingUser = await usersModel.findOne(query);
 	const existingUserResponse = existingUser ? handleExistingUser(existingUser as any, authType, res) : null;
 	if (existingUserResponse) return existingUserResponse;
@@ -268,7 +285,7 @@ export const getUserService = async (id: string, res: Response) => {
 
 	// Calculate the number of books purchased by the user
 	const booksPurchasedCount = userOrders.reduce((count, order) => {
-		return count + order.productIds.filter((product: any) => product.type === "audio&ebook" && (product.format !== "audiobook" || product.format === null)).length;  //TODO--CHANGED type-ebook
+		return count + order.productIds.filter((product: any) => product.type === "audio&ebook" && (product.format !== "audiobook" || product.format === null)).length; //TODO--CHANGED type-ebook
 	}, 0);
 
 	// Calculate the number of courses purchased by the user
@@ -324,9 +341,13 @@ export const logoutUserService = async (userData: any, res: Response) => {
 	const user = await usersModel.findById(userData.id);
 	if (!user) return errorResponseHandler("User not found", httpStatusCode.NOT_FOUND, res);
 	if (user.fcmToken) {
-		await usersModel.findByIdAndUpdate(userData.id, { fcmToken: null }, {
-			new: true,
-		});
+		await usersModel.findByIdAndUpdate(
+			userData.id,
+			{ fcmToken: null },
+			{
+				new: true,
+			}
+		);
 	}
 	return {
 		success: true,
@@ -372,7 +393,7 @@ export const getUserProfileDetailService = async (id: string, payload: any, res:
 
 	const booksPurchased = filteredOrders
 		.flatMap((order) => order.productIds)
-		.filter((product: any) => product?.type === "audio&ebook" && (product?.format !== "audiobook"|| product?.format === null) ) //TODO--CHANGED type-ebook
+		.filter((product: any) => product?.type === "audio&ebook" && (product?.format !== "audiobook" || product?.format === null)) //TODO--CHANGED type-ebook
 		.map((product) => product._id);
 
 	const booksPurchasedCount = booksPurchased.length;
@@ -608,7 +629,7 @@ export const updateCurrentUserDetailsService = async (userData: any, payload: an
 	const updatedUser = await usersModel
 		.findByIdAndUpdate(
 			userData.id,
-			{ $set: { email: payload.email, phoneNumber: payload.phoneNumber, firstName: payload.firstName,fullName:payload.fullName, profilePic: payload.profilePic, country: payload.country } },
+			{ $set: { email: payload.email, phoneNumber: payload.phoneNumber, firstName: payload.firstName, fullName: payload.fullName, profilePic: payload.profilePic, country: payload.country } },
 			{
 				new: true,
 			}
@@ -648,7 +669,7 @@ export const updateCurrentUserLanguageService = async (userData: any, query: any
 			.findByIdAndUpdate(
 				userData.id,
 				// { $set: { language: payload.language, productsLanguage: payload.productsLanguage } },
-				{ $set: {  productsLanguage: payload.productsLanguage } },
+				{ $set: { productsLanguage: payload.productsLanguage } },
 				{
 					new: true,
 				}
@@ -659,7 +680,7 @@ export const updateCurrentUserLanguageService = async (userData: any, query: any
 		updatedUser = await usersModel
 			.findByIdAndUpdate(
 				userData.id,
-				{ $set: { notificationAllowed: payload.notificationAllowed  } },
+				{ $set: { notificationAllowed: payload.notificationAllowed } },
 				{
 					new: true,
 				}
