@@ -61,8 +61,9 @@ export const getChaptersByAudiobookIDForUser = async (req: Request, res: Respons
   }
 };
 export const getBestSellers = async (req: Request, res: Response) => {
+  console.log('req: ', req);
   try {
-    const response = await getBestSellersService();
+    const response = await getBestSellersService(req.user,req.query, res);
     return res.status(httpStatusCode.OK).json(response);
   } catch (error: any) {
     const { code, message } = errorParser(error);

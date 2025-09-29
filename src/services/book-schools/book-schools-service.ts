@@ -1,7 +1,7 @@
 import { Response } from "express";
 import { errorResponseHandler } from "../../lib/errors/error-response-handler";
 import { httpStatusCode } from "../../lib/constant";
-import { nestedQueryBuilder, queryBuilder } from "src/utils";
+import { filterBooksByLanguage, nestedQueryBuilder, queryBuilder, sortBooks, toArray } from "src/utils";
 import { productsModel } from "src/models/products/products-schema";
 import { usersModel } from "src/models/user/user-schema";
 import { bookSchoolsModel } from "./../../models/book-schools/book-schools-schema";
@@ -108,11 +108,13 @@ export const getAllBookSchoolsService = async (payload: any, res: Response) => {
   }
 };
 export const getBookSchoolsByCodeService = async (payload: any, user: any, res: Response) => {
+  console.log('user: ', user);
   const page = parseInt(payload.page as string) || 1;
   const limit = parseInt(payload.limit as string) || 0;
   const offset = (page - 1) * limit;
   const userId = user.id;
   const schoolVoucher = (await usersModel.findById(userId))?.schoolVoucher;
+  console.log('schoolVoucher: ', schoolVoucher);
 
   let results: any[] = [];
   if (schoolVoucher) {
@@ -145,7 +147,7 @@ export const getBookSchoolsByCodeService = async (payload: any, user: any, res: 
       { path: "subCategoryId", select: "name" },
     ]);
 
-  const total = bookSchoolData.length;
+  // const total = bookSchoolData.length;
     const favoriteBooks = await favoritesModel.find({ userId: user.id }).populate("productId");
   const favoriteIds = favoriteBooks
     .filter((book) => book.productId && book.productId._id)
@@ -156,6 +158,12 @@ export const getBookSchoolsByCodeService = async (payload: any, user: any, res: 
     isFavorite: favoriteIds.includes(book._id.toString()),
     isPurchased: true,
   }));
+  const languages = toArray(payload.language);
+  const filteredResult = filterBooksByLanguage(newBooksWithFavoriteStatus, languages);
+  const sortedResult = sortBooks(filteredResult, payload.sorting, user?.productsLanguage, user?.language);
+  const total = sortedResult.length;
+  const paginatedResults = sortedResult.slice(offset, offset + limit);
+
   if (results.length)
     return {
       page,
@@ -163,7 +171,8 @@ export const getBookSchoolsByCodeService = async (payload: any, user: any, res: 
       message: "Book schools retrieved successfully",
       success: true,
       total: total,
-      data: newBooksWithFavoriteStatus,
+      // data: newBooksWithFavoriteStatus,
+      data: paginatedResults,
     };
     
   else {

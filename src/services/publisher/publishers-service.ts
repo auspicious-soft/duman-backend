@@ -18,18 +18,17 @@ export const createPublisherService = async (payload: any, res: Response) => {
 	const newPublisher = new publishersModel(payload);
 	await addedUserCreds(newPublisher);
 	newPublisher.password = await hashPasswordIfEmailAuth(payload, "Email");
-    
-	const savedPublisher = await newPublisher.save();
-	  const users = await usersModel.find().select('fcmToken');
-			if (!users.length) return errorResponseHandler("No users found", httpStatusCode.NO_CONTENT, res);
-	
-			const fcmPromises = users.map(user => {
-				const userIds = [user._id];
-				return  sendNotification({userIds, type: "Publisher_Created",  referenceId: savedPublisher._id});
 
-			});
-	
-			await Promise.all(fcmPromises);
+	const savedPublisher = await newPublisher.save();
+	const users = await usersModel.find().select("fcmToken");
+	if (!users.length) return errorResponseHandler("No users found", httpStatusCode.NO_CONTENT, res);
+
+	const fcmPromises = users.map((user) => {
+		const userIds = [user._id];
+		return sendNotification({ userIds, type: "Publisher_Created", referenceId: savedPublisher._id });
+	});
+
+	await Promise.all(fcmPromises);
 	return {
 		success: true,
 		message: "Publisher created successfully",
@@ -72,17 +71,15 @@ export const getPublisherForUserService = async (id: string, user: any, res: Res
 		])
 		.limit(5);
 
-
 	const publisherBooksWithFavoriteStatus = publisherBooks.map((book) => {
 		const bookObj = book.toObject();
 
-
 		let convertedFile;
-		
+
 		// Try multiple conversion approaches
 		if (book.file instanceof Map) {
 			convertedFile = Object.fromEntries(book.file);
-		} else if (bookObj.file && typeof bookObj.file === 'object') {
+		} else if (bookObj.file && typeof bookObj.file === "object") {
 			convertedFile = bookObj.file;
 		} else {
 			convertedFile = {};
@@ -107,7 +104,6 @@ export const getPublisherForUserService = async (id: string, user: any, res: Res
 		},
 	};
 };
-
 
 // export const getPublisherForUserService = async (id: string, user: any, res: Response) => {
 // 	const publisher = await publishersModel.findById(id).populate("categoryId");
@@ -153,7 +149,6 @@ export const getPublisherForUserService = async (id: string, user: any, res: Res
 // 		},
 // 	};
 // };
-
 
 // export const getPublisherWorkService = async (id: string, user: any, res: Response) => {
 //   const publisher = await publishersModel.findById(id);
@@ -455,8 +450,8 @@ export const getBookByIdPublisherService = async (bookId: string, payload: any, 
 
 export const publisherDashboardService = async (payload: any, currentUser: string, res: Response) => {
 	try {
-    // const page = payload?.page ? parseInt(payload.page as string, 10) : 1;
-    // const limit = payload?.limit ? parseInt(payload.limit as string, 10) : 5;
+		// const page = payload?.page ? parseInt(payload.page as string, 10) : 1;
+		// const limit = payload?.limit ? parseInt(payload.limit as string, 10) : 5;
 
 		const publisherId = new mongoose.Types.ObjectId(currentUser); // Convert to ObjectId
 		const selectedYear = payload?.year ? parseInt(payload.year as string, 10) : new Date().getFullYear();

@@ -4,6 +4,7 @@ import { httpStatusCode } from "../../lib/constant";
 import { queryBuilder } from "src/utils";
 import { discountVouchersModel } from "../../models/discount-vouchers/discount-vouchers-schema";
 import { PipelineStage } from "mongoose";
+import { productsModel } from "src/models/products/products-schema";
 
 
 export const createDiscountVoucherService = async (payload: any, res: Response) => {
@@ -25,15 +26,19 @@ export const getDiscountVoucherService = async (id: string, res: Response) => {
     data: voucher,
   };
 };
-export const verifyDiscountVoucherService = async (id: string, res: Response) => {
+export const verifyDiscountVoucherService = async (id: string,payload: any, res: Response) => {
 const voucher = await discountVouchersModel.findOne({ couponCode: id });
   if (!voucher) return errorResponseHandler("Coupon not found", httpStatusCode.NOT_FOUND, res);
+    const products = await productsModel.find({ _id: { $in: payload.productIds } });
+      const hasDiscountedProduct = products.some((product) => product.isDiscounted);
+  
+      if (hasDiscountedProduct && payload.voucherId) {
+        return errorResponseHandler("Voucher cannot be applied to discounted products", httpStatusCode.BAD_REQUEST, res);
+      }
   if (voucher.codeActivated >= voucher.activationAllowed) {
     return errorResponseHandler("Coupon limit exceeded", httpStatusCode.BAD_REQUEST, res);
-  } else {
-    voucher.codeActivated += 1;
-    await voucher.save();
-  }
+  } 
+
   return {
     success: true,
     message: "Discount voucher retrieved successfully",

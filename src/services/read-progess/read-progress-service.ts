@@ -16,6 +16,7 @@ import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { createCanvas, loadImage } from "canvas";
 import { usersModel } from "src/models/user/user-schema";
 import { courseLessonsModel } from "src/models/course-lessons/course-lessons-schema";
+import { sendNotification } from "src/utils/FCM/FCM";
 
 // Resolve __filename and __dirname for ESM
 const __filename = fileURLToPath(import.meta.url);
@@ -617,7 +618,16 @@ export const getReadProgressById = async (readProgressId: string, userId: string
 
 export const getCourseCertificateService = async (readProgressId: string, userId: string) => {
 	const certificate = await readProgressModel.findOne({ userId, bookId: readProgressId }).select("certificatePdf certificatePng");
-	return {
+	  const users = await usersModel.find({_id:userId}).select("fcmToken");
+    if (!users.length) return errorResponseHandler("No users found", httpStatusCode.NO_CONTENT, res);
+  
+    const fcmPromises = users.map((user) => {
+      const userIds = [user._id];
+      return sendNotification({ userIds, type: "Publisher_Created" });
+    });
+  
+    await Promise.all(fcmPromises);
+  return {
 		success: true,
 		message: "Course certificate retrieved successfully",
 		data: certificate,

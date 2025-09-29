@@ -10,6 +10,7 @@ import { usersModel } from "../../models/user/user-schema";
 import { walletHistoryModel } from "src/models/wallet-history/wallet-history-schema";
 import { cartModel } from "src/models/cart/cart-schema";
 import mongoose from "mongoose";
+import { discountVouchersModel } from "src/models/discount-vouchers/discount-vouchers-schema";
 
 // export const createOrderService = async (payload: any, res: Response, userDetails: any, userInfo?: any) => {
 // 	console.log('userInfo: ', userInfo);
@@ -96,7 +97,7 @@ export const createOrderService = async (payload: any, res: Response, userDetail
 			session.endSession();
 			return errorResponseHandler("Voucher cannot be applied to discounted products", httpStatusCode.BAD_REQUEST, res);
 		}
-
+        await discountVouchersModel.findByIdAndUpdate(payload.voucherId, { $inc: { codeActivated: 1 } }).session(session);
 		const identifier = customAlphabet("0123456789", 5);
 		payload.identifier = identifier();
 

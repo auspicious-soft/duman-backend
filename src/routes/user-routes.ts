@@ -216,7 +216,7 @@ router.get("/author-favourites/:id", getAuthorFavorite);
 router.put("/author-favourites", updateAuthorFavorite);
 
 //voucher route
-router.get("/vouchers/:id", verifyDiscountVoucher);
+router.post("/vouchers/:id", verifyDiscountVoucher);
 
 //book-masters route
 router.get("/book-market", getBookMarketForUser);

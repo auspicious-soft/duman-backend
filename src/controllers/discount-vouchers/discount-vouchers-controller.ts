@@ -85,7 +85,7 @@ export const getDiscountVoucher = async (req: Request, res: Response) => {
 };
 export const verifyDiscountVoucher = async (req: Request, res: Response) => {
     try {
-        const response = await verifyDiscountVoucherService(req.params.id, res);
+        const response = await verifyDiscountVoucherService(req.params.id, req.body, res);
         return res.status(httpStatusCode.OK).json(response);
     } catch (error: any) {
         const { code, message } = errorParser(error);

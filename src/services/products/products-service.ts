@@ -16,10 +16,19 @@ import { usersModel } from "src/models/user/user-schema";
 import { getAllCollectionsWithBooksService } from "../collections/collections-service";
 import { audiobookChaptersModel } from "src/models/audiobook-chapters/audiobook-chapters-schema";
 import { cartModel } from "src/models/cart/cart-schema";
+import { sendNotification } from "src/utils/FCM/FCM";
 
 export const createBookService = async (payload: any, res: Response) => {
 	const newBook = new productsModel(payload);
 	const savedBook = await newBook.save();
+		const users = await usersModel.find().select("fcmToken");
+		if (!users.length) return errorResponseHandler("No users found", httpStatusCode.NO_CONTENT, res);
+		const fcmPromises = users.map((user) => {
+			const userIds = [user._id];
+			return sendNotification({ userIds, type: "Product_Created", referenceId: savedBook._id });
+		});
+	
+		await Promise.all(fcmPromises);
 	return {
 		success: true,
 		message: "Book created successfully",
@@ -113,7 +122,9 @@ export const getAllBooksService = async (payload: any, res: Response) => {
 	totalDataCount = await productsModel.countDocuments(query);
 	if (payload.description) {
 		const searchQuery = typeof payload.description === "string" ? payload.description.toLowerCase() : "";
+		console.log('searchQuery: ', searchQuery);
 		const searchLanguage = payload.language && ["eng", "kaz", "rus"].includes(payload.language) ? payload.language : null;
+		console.log('searchLanguage: ', searchLanguage);
 
 		filteredResults = results.filter((book) => {
 			try {
@@ -176,6 +187,121 @@ export const getAllBooksService = async (payload: any, res: Response) => {
 		data: filteredResults,
 	};
 };
+
+
+
+export const getBookMarketForUserService = async (user: any, payload: any, res: Response) => {
+	console.log("user: ", user);
+	console.log("payload: ", payload);
+	const categories = await categoriesModel.find();
+	// const collections = await collectionsModel
+	//   .find()
+	//   .limit(5)
+	//   .populate({
+	//     path: "booksId",
+	//     populate: [{ path: "authorId", select: "name" }],
+	//   });
+	const collections = await getAllCollectionsWithBooksService({}, res);
+	const publisher = await publishersModel.find().limit(10);
+	const author = await authorsModel.find().limit(10);
+	const readProgress = await readProgressModel
+		.find({ userId: user.id })
+		.limit(2)
+		.populate({
+			path: "bookId",
+			select: "_id name type image",
+			populate: [{ path: "authorId", select: "name" }],
+		})
+		.select("-certificate -createdAt -readSections -updatedAt -__v");
+	const audiobooks = await audiobookChaptersModel
+		.find({ lang: payload.lang })
+		.limit(1)
+		.populate({
+			path: "productId",
+			populate: [{ path: "authorId", select: "_id name" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }],
+		});
+	const bestSellers = await ordersModel.aggregate([
+		{
+			$unwind: "$productIds",
+		},
+		{
+			$group: {
+				_id: "$productIds",
+				orderCount: { $sum: 1 },
+			},
+		},
+		{
+			$sort: { orderCount: -1 },
+		},
+		{
+			$limit: 10,
+		},
+		{
+			$lookup: {
+				from: "products",
+				localField: "_id",
+				foreignField: "_id",
+				as: "book",
+			},
+		},
+		{
+			$unwind: "$book",
+		},
+		{
+			$match: {
+				"book.type": "audio&ebook",
+				"book.format": { $ne: "audiobook" },
+			},
+		},
+		{
+			$lookup: {
+				from: "authors",
+				localField: "book.authorId",
+				foreignField: "_id",
+				as: "book.authors",
+			},
+		},
+		{
+			$unwind: {
+				path: "$book.authors",
+				preserveNullAndEmptyArrays: true,
+			},
+		},
+		{
+			$project: {
+				_id: 0,
+				book: 1,
+				orderCount: 1,
+			},
+		},
+	]);
+
+	const newBooks = await productsModel
+		// .find({ type: "e-book" }) //TODO--CHANGED
+		.find({ type: "audio&ebook", format: { $nin: ["audiobook", null] } })
+		.sort({ createdAt: -1 })
+		.limit(20)
+		.populate([
+			{ path: "authorId", select: "name" },
+			{ path: "categoryId", select: "name" },
+		]);
+
+	return {
+		success: true,
+		message: "Book retrieved successfully",
+		data: {
+			readProgress: readProgress,
+			audiobooks: audiobooks,
+			categories: categories,
+			collections: collections,
+			publisher: publisher,
+			author: author,
+			newBooks: newBooks,
+			bestSellers: bestSellers,
+		},
+	};
+};
+
 
 export const getAllProductsForStocksTabService = async (payload: any, res: Response) => {
 	// const page = parseInt(payload.page as string) || 1;
@@ -575,117 +701,117 @@ export const getAllAudioBookForUserService = async (payload: any, user: any, res
 	};
 };
 
-export const getBookMarketForUserService = async (user: any, payload: any, res: Response) => {
-	console.log("user: ", user);
-	console.log("payload: ", payload);
-	const categories = await categoriesModel.find();
-	// const collections = await collectionsModel
-	//   .find()
-	//   .limit(5)
-	//   .populate({
-	//     path: "booksId",
-	//     populate: [{ path: "authorId", select: "name" }],
-	//   });
-	const collections = await getAllCollectionsWithBooksService({}, res);
-	const publisher = await publishersModel.find().limit(10);
-	const author = await authorsModel.find().limit(10);
-	const readProgress = await readProgressModel
-		.find({ userId: user.id })
-		.limit(2)
-		.populate({
-			path: "bookId",
-			select: "_id name type image",
-			populate: [{ path: "authorId", select: "name" }],
-		})
-		.select("-certificate -createdAt -readSections -updatedAt -__v");
-	const audiobooks = await audiobookChaptersModel
-		.find({ lang: payload.lang })
-		.limit(1)
-		.populate({
-			path: "productId",
-			populate: [{ path: "authorId", select: "_id name" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }],
-		});
-	const bestSellers = await ordersModel.aggregate([
-		{
-			$unwind: "$productIds",
-		},
-		{
-			$group: {
-				_id: "$productIds",
-				orderCount: { $sum: 1 },
-			},
-		},
-		{
-			$sort: { orderCount: -1 },
-		},
-		{
-			$limit: 10,
-		},
-		{
-			$lookup: {
-				from: "products",
-				localField: "_id",
-				foreignField: "_id",
-				as: "book",
-			},
-		},
-		{
-			$unwind: "$book",
-		},
-		{
-			$match: {
-				"book.type": "audio&ebook",
-				"book.format": { $ne: "audiobook" },
-			},
-		},
-		{
-			$lookup: {
-				from: "authors",
-				localField: "book.authorId",
-				foreignField: "_id",
-				as: "book.authors",
-			},
-		},
-		{
-			$unwind: {
-				path: "$book.authors",
-				preserveNullAndEmptyArrays: true,
-			},
-		},
-		{
-			$project: {
-				_id: 0,
-				book: 1,
-				orderCount: 1,
-			},
-		},
-	]);
+// export const getBookMarketForUserService = async (user: any, payload: any, res: Response) => {
+// 	console.log("user: ", user);
+// 	console.log("payload: ", payload);
+// 	const categories = await categoriesModel.find();
+// 	// const collections = await collectionsModel
+// 	//   .find()
+// 	//   .limit(5)
+// 	//   .populate({
+// 	//     path: "booksId",
+// 	//     populate: [{ path: "authorId", select: "name" }],
+// 	//   });
+// 	const collections = await getAllCollectionsWithBooksService({}, res);
+// 	const publisher = await publishersModel.find().limit(10);
+// 	const author = await authorsModel.find().limit(10);
+// 	const readProgress = await readProgressModel
+// 		.find({ userId: user.id })
+// 		.limit(2)
+// 		.populate({
+// 			path: "bookId",
+// 			select: "_id name type image",
+// 			populate: [{ path: "authorId", select: "name" }],
+// 		})
+// 		.select("-certificate -createdAt -readSections -updatedAt -__v");
+// 	const audiobooks = await audiobookChaptersModel
+// 		.find({ lang: payload.lang })
+// 		.limit(1)
+// 		.populate({
+// 			path: "productId",
+// 			populate: [{ path: "authorId", select: "_id name" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }],
+// 		});
+// 	const bestSellers = await ordersModel.aggregate([
+// 		{
+// 			$unwind: "$productIds",
+// 		},
+// 		{
+// 			$group: {
+// 				_id: "$productIds",
+// 				orderCount: { $sum: 1 },
+// 			},
+// 		},
+// 		{
+// 			$sort: { orderCount: -1 },
+// 		},
+// 		{
+// 			$limit: 10,
+// 		},
+// 		{
+// 			$lookup: {
+// 				from: "products",
+// 				localField: "_id",
+// 				foreignField: "_id",
+// 				as: "book",
+// 			},
+// 		},
+// 		{
+// 			$unwind: "$book",
+// 		},
+// 		{
+// 			$match: {
+// 				"book.type": "audio&ebook",
+// 				"book.format": { $ne: "audiobook" },
+// 			},
+// 		},
+// 		{
+// 			$lookup: {
+// 				from: "authors",
+// 				localField: "book.authorId",
+// 				foreignField: "_id",
+// 				as: "book.authors",
+// 			},
+// 		},
+// 		{
+// 			$unwind: {
+// 				path: "$book.authors",
+// 				preserveNullAndEmptyArrays: true,
+// 			},
+// 		},
+// 		{
+// 			$project: {
+// 				_id: 0,
+// 				book: 1,
+// 				orderCount: 1,
+// 			},
+// 		},
+// 	]);
 
-	const newBooks = await productsModel
-		// .find({ type: "e-book" }) //TODO--CHANGED
-		.find({ type: "audio&ebook", format: { $nin: ["audiobook", null] } })
-		.sort({ createdAt: -1 })
-		.limit(20)
-		.populate([
-			{ path: "authorId", select: "name" },
-			{ path: "categoryId", select: "name" },
-		]);
+// 	const newBooks = await productsModel
+// 		// .find({ type: "e-book" }) //TODO--CHANGED
+// 		.find({ type: "audio&ebook", format: { $nin: ["audiobook", null] } })
+// 		.sort({ createdAt: -1 })
+// 		.limit(20)
+// 		.populate([
+// 			{ path: "authorId", select: "name" },
+// 			{ path: "categoryId", select: "name" },
+// 		]);
 
-	return {
-		success: true,
-		message: "Book retrieved successfully",
-		data: {
-			readProgress: readProgress,
-			audiobooks: audiobooks,
-			categories: categories,
-			collections: collections,
-			publisher: publisher,
-			author: author,
-			newBooks: newBooks,
-			bestSellers: bestSellers,
-		},
-	};
-};
+// 	return {
+// 		success: true,
+// 		message: "Book retrieved successfully",
+// 		data: {
+// 			readProgress: readProgress,
+// 			audiobooks: audiobooks,
+// 			categories: categories,
+// 			collections: collections,
+// 			publisher: publisher,
+// 			author: author,
+// 			newBooks: newBooks,
+// 			bestSellers: bestSellers,
+// 		},
+// 	};
+// };
 
 export const getCourseForUserService = async (id: string, user: any, res: Response) => {
 	const course = await productsModel.findById(id).populate([{ path: "authorId" }, { path: "categoryId", select: "name" }, { path: "subCategoryId", select: "name" }, { path: "publisherId", select: "name" }]);
@@ -745,7 +871,12 @@ export const getChaptersByAudiobookIDForUserService = async (id: string, payload
 	};
 };
 
-export const getBestSellersService = async () => {
+export const getBestSellersService = async (userData: any,payload: any, res: Response) => {
+	console.log('payload: ', payload);
+	console.log('userData: ', userData);
+	const page = parseInt(payload.page as string) || 1;
+	const limit = parseInt(payload.limit as string) || 10;
+	const offset = (page - 1) * limit;
 	const bestSellers = await ordersModel.aggregate([
 		{
 			$unwind: "$productIds",
@@ -801,68 +932,11 @@ export const getBestSellersService = async () => {
 			},
 		},
 	]);
-
-	// const bestSellers = await ordersModel.aggregate([
-	// 	{
-	// 		$unwind: "$productIds",
-	// 	},
-	// 	{
-	// 		$group: {
-	// 			_id: "$productIds",
-	// 			orderCount: { $sum: 1 },
-	// 		},
-	// 	},
-	// 	{
-	// 		$sort: { orderCount: -1 },
-	// 	},
-	// 	{
-	// 		$limit: 10,
-	// 	},
-	// 	{
-	// 		$lookup: {
-	// 			from: "products",
-	// 			localField: "_id",
-	// 			foreignField: "_id",
-	// 			as: "book",
-	// 		},
-	// 	},
-	// 	{
-	// 		$unwind: "$book",
-	// 	},
-	// 	{
-	// 		$match: {
-	// 			"book.type": "audio&ebook",
-	// 			"book.format": { $ne: "audiobook" },
-	// 		},
-	// 	},
-	// 	{
-	// 		$lookup: {
-	// 			from: "authors",
-	// 			localField: "book.authorId",
-	// 			foreignField: "_id",
-	// 			as: "book.authors",
-	// 		},
-	// 	},
-	// 	{
-	// 		$unwind: {
-	// 			path: "$book.authors",
-	// 			preserveNullAndEmptyArrays: true,
-	// 		},
-	// 	},
-	// 	{
-	// 		$match: {
-	// 			"book.type": "audio&ebook",
-	// 			"book.format": { $ne: "audiobook" },
-	// 		},
-	// 	},
-	// 	{
-	// 		$project: {
-	// 			_id: 0,
-	// 			book: 1,
-	// 			orderCount: 1,
-	// 		},
-	// 	},
-	// ]);
+    const languages = toArray(payload.language);
+	const filteredResult = filterBooksByLanguage(bestSellers, languages);
+	const sortedResult = sortBooks(filteredResult, payload.sorting, userData?.productsLanguage, userData?.language);
+	const total = sortedResult.length;
+	const paginatedResults = sortedResult.slice(offset, offset + limit);
 	return {
 		success: true,
 		message: "Best sellers retrieved successfully",
