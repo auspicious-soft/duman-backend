@@ -178,12 +178,55 @@ export const getCourseLessonByIdForUserService = async (user: any, payload: any,
 	// Fetch user data and course
 	const userData = await usersModel.findById(user.id).lean();
 	const course = await productsModel.findById(productId).lean();
+	console.log('course: ', course);
 
 	const availableLanguages = ["eng", "kaz", "rus"];
-	let courseLessons;
+	let courseLessons = [];
 	const reviewCount = await productRatingsModel.countDocuments({ productId: productId });
 	const readProgress = await readProgressModel.findOne({ userId: user.id, bookId: productId });
+	
+	
+	// if (course?.type === "video-lecture" || course?.type === "podcast") {
+	// 	if (course?.file instanceof Map) {
+	// 		const fileForLang = course.file.get(language);
+	// 		if (fileForLang) {
+	// 			courseLessons.push({ ...fileForLang });
+	// 		}
+	// 	}
+	// 	console.log('courseLessons: ', courseLessons);
+	// }
+	if (course?.type === "video-lecture" || course?.type === "podcast") {
+	const fileForLang = course?.file?.[language];
 
+	// Fallback if the specific language file is null
+	// const fallbackLang = ["eng", "kaz", "rus"].find((lang) => course.file?.[lang]);
+	const finalFile = fileForLang 
+	// || (fallbackLang ? course.file[fallbackLang] : null);
+
+	if (finalFile) {
+		courseLessons.push({
+			_id: `${course._id}`, // or use a unique ID
+			lang: language,
+			name: course.name?.[language] || course.name?.eng || "Course Content",
+			productId: productId,
+			srNo: 1,
+			subLessons: [
+				{
+					_id: `${course._id}`, // unique subLesson ID
+					name: course.name?.[language] || course.name?.eng || "Course Content",
+					description: course.description?.[language] || course.description?.eng || "",
+					additionalFiles: [],
+					links: [],
+					file: finalFile,
+					isDone: readProgress?.isCompleted || false,
+				},
+			],
+		});
+	}
+}
+
+	else {
+	
 	courseLessons = await courseLessonsModel.find({ productId: productId, lang: language }).sort({ srNo: 1 }).lean();
 	const courseReadProgress = await readProgressModel.findOne({ bookId: productId, userId: user.id }).lean();
 
@@ -195,10 +238,7 @@ export const getCourseLessonByIdForUserService = async (user: any, payload: any,
 		}
 	}
 
-	const isFavorite = await favoritesModel.exists({ userId: user.id, productId: productId });
-	const isPurchased = await ordersModel.find({ productIds: { $in: productId }, userId: user.id, status: "Completed" }).lean();
-	const isAddedToCart = await cartModel.find({ productId: { $in: [productId] }, userId: user.id, buyed: "pending" }).lean();
-
+	
 	if (courseLessons.length === 0) {
 		return {
 			success: false,
@@ -233,8 +273,12 @@ export const getCourseLessonByIdForUserService = async (user: any, payload: any,
 		};
 	});
 
-	// Check if all lessons and sublessons are completed for certificate availability
 	const certificateAvailable = courseLessons.every((lesson) => lesson.subLessons.every((subLesson) => subLesson.isDone));
+	// Check if all lessons and sublessons are completed for certificate availability
+}
+	const isFavorite = await favoritesModel.exists({ userId: user.id, productId: productId });
+	const isPurchased = await ordersModel.find({ productIds: { $in: productId }, userId: user.id, status: "Completed" }).lean();
+	const isAddedToCart = await cartModel.find({ productId: { $in: [productId] }, userId: user.id, buyed: "pending" }).lean();
 
 	return {
 		success: true,
@@ -246,7 +290,7 @@ export const getCourseLessonByIdForUserService = async (user: any, payload: any,
 			isFavorite: !!isFavorite,
 			isPurchased: isPurchased.length > 0,
 			isAddedToCart: isAddedToCart.length > 0,
-			certificateAvailable,
+			// certificateAvailable,
 		},
 	};
 };
