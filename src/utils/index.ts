@@ -81,7 +81,7 @@ export const toArray = (input: string | string[] | undefined, delimiter: string 
 };
 
 export const filterBooksByLanguage = (books: any[], languages: string[]): any[] => {
-=
+
   if (!Array.isArray(books) || books.length === 0) return [];
   if (!Array.isArray(languages) || languages.length === 0) return books; // Return all books if no language filter
 
