@@ -81,12 +81,17 @@ export const toArray = (input: string | string[] | undefined, delimiter: string 
 };
 
 export const filterBooksByLanguage = (books: any[], languages: string[]): any[] => {
+=
   if (!Array.isArray(books) || books.length === 0) return [];
   if (!Array.isArray(languages) || languages.length === 0) return books; // Return all books if no language filter
 
-  return books.filter((book) => {
+  // return books.filter((book) => {
+  //   if (book.file instanceof Map) {
+  //     return languages.some((lang) => book.file.has(lang));
+  //   }
+ return books.filter((book) => {
     if (book.file instanceof Map) {
-      return languages.some((lang) => book.file.has(lang));
+      return languages.some((lang) => book.file.has(lang) && book.file.get(lang));
     }
     return false;
   });

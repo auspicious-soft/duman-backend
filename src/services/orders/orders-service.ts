@@ -8,6 +8,7 @@ import { productsModel } from "../../models/products/products-schema";
 import { initializePayment } from "../payment/freedompay-service";
 import { usersModel } from "../../models/user/user-schema";
 import { walletHistoryModel } from "src/models/wallet-history/wallet-history-schema";
+import { cartModel } from "src/models/cart/cart-schema";
 
 export const createOrderService = async (payload: any, res: Response, userDetails: any, userInfo?: any) => {
 	const products = await productsModel.find({ _id: { $in: payload.productIds } });
@@ -188,6 +189,7 @@ export const createFreeProductOrderService = async (payload: any, res: Response,
 	const newOrder = new ordersModel({ ...payload, userId: userDetails.id,status:"Completed", totalAmount:0 });
 	const savedOrder = await newOrder.save();
 	
+	const cart = await cartModel.findOneAndDelete({ userId: savedOrder.userId }); 
 
 	return {
 		success: true,

@@ -125,19 +125,21 @@ export const getSummaryForUserService = async (payload: any, user: any, id: stri
   }
 
   let updatedBooks = summary.booksId
-    .map((book: any) => {
-      if (!book || !book._id) {
-        return null; 
-      }
-
-      return {
-        ...book.toObject(), 
-        isFavorite: favoriteIds.includes(book._id.toString()), 
-      };
-    })
-    .filter((book) => book !== null); 
-  const languages = toArray(payload.language);
+  .map((book: any) => {
+    if (!book || !book._id) {
+      return null; 
+    }
+    
+    return {
+      ...book.toObject(), 
+      isFavorite: favoriteIds.includes(book._id.toString()), 
+    };
+  })
+  .filter((book) => book !== null);
+const languages = toArray(payload.language);
+if (languages.length > 0) {
   updatedBooks = filterBooksByLanguage(updatedBooks, languages);
+}
   updatedBooks = sortBooks(updatedBooks, payload.sorting, userData?.productsLanguage, userData?.language);
   return {
     success: true,
