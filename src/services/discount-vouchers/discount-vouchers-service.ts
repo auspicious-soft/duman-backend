@@ -26,11 +26,11 @@ export const getDiscountVoucherService = async (id: string, res: Response) => {
   };
 };
 export const verifyDiscountVoucherService = async (id: string, res: Response) => {
-  const voucher = await discountVouchersModel.findById(id);
+const voucher = await discountVouchersModel.findOne({ couponCode: id });
   if (!voucher) return errorResponseHandler("Coupon not found", httpStatusCode.NOT_FOUND, res);
-  if(voucher.codeActivated >= voucher.activationAllowed){
+  if (voucher.codeActivated >= voucher.activationAllowed) {
     return errorResponseHandler("Coupon limit exceeded", httpStatusCode.BAD_REQUEST, res);
-  }else{
+  } else {
     voucher.codeActivated += 1;
     await voucher.save();
   }

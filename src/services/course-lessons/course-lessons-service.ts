@@ -273,9 +273,9 @@ export const getCourseLessonByIdForUserService = async (user: any, payload: any,
 		};
 	});
 
-	const certificateAvailable = courseLessons.every((lesson) => lesson.subLessons.every((subLesson) => subLesson.isDone));
 	// Check if all lessons and sublessons are completed for certificate availability
 }
+const certificateAvailable = courseLessons.every((lesson) => lesson.subLessons.every((subLesson) => subLesson.isDone));
 	const isFavorite = await favoritesModel.exists({ userId: user.id, productId: productId });
 	const isPurchased = await ordersModel.find({ productIds: { $in: productId }, userId: user.id, status: "Completed" }).lean();
 	const isAddedToCart = await cartModel.find({ productId: { $in: [productId] }, userId: user.id, buyed: "pending" }).lean();
@@ -290,7 +290,7 @@ export const getCourseLessonByIdForUserService = async (user: any, payload: any,
 			isFavorite: !!isFavorite,
 			isPurchased: isPurchased.length > 0,
 			isAddedToCart: isAddedToCart.length > 0,
-			// certificateAvailable,
+			 certificateAvailable: course && course.type === "course" ? certificateAvailable : false,
 		},
 	};
 };
