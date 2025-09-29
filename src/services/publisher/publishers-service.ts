@@ -55,15 +55,14 @@ export const getPublisherService = async (id: string, res: Response) => {
 		},
 	};
 };
+
 export const getPublisherForUserService = async (id: string, user: any, res: Response) => {
 	const publisher = await publishersModel.findById(id).populate("categoryId");
-	console.log('publisher: ', publisher);
 	if (!publisher) return errorResponseHandler("Publisher not found", httpStatusCode.NOT_FOUND, res);
 
 	const favoriteBooks = await favoritesModel.find({ userId: user.id }).populate("productId");
 	const favoriteIds = favoriteBooks.map((book) => book.productId._id.toString());
 
-	// Map the `isFavorite` to each book in `publisherBooks`
 	const publisherBooks = await productsModel
 		.find({ publisherId: id })
 		.populate([
@@ -72,10 +71,29 @@ export const getPublisherForUserService = async (id: string, user: any, res: Res
 			{ path: "subCategoryId", select: "name" },
 		])
 		.limit(5);
-	const publisherBooksWithFavoriteStatus = publisherBooks.map((book) => ({
-		...book.toObject(),
-		isFavorite: favoriteIds.includes(book._id.toString()), // Check if the book is in the user's favorites
-	}));
+
+
+	const publisherBooksWithFavoriteStatus = publisherBooks.map((book) => {
+		const bookObj = book.toObject();
+
+
+		let convertedFile;
+		
+		// Try multiple conversion approaches
+		if (book.file instanceof Map) {
+			convertedFile = Object.fromEntries(book.file);
+		} else if (bookObj.file && typeof bookObj.file === 'object') {
+			convertedFile = bookObj.file;
+		} else {
+			convertedFile = {};
+		}
+
+		return {
+			...bookObj,
+			file: convertedFile,
+			isFavorite: favoriteIds.includes(book._id.toString()),
+		};
+	});
 
 	const booksCount = await productsModel.countDocuments({ publisherId: id });
 
@@ -89,6 +107,54 @@ export const getPublisherForUserService = async (id: string, user: any, res: Res
 		},
 	};
 };
+
+
+// export const getPublisherForUserService = async (id: string, user: any, res: Response) => {
+// 	const publisher = await publishersModel.findById(id).populate("categoryId");
+// 	console.log('publisher: ', publisher);
+// 	if (!publisher) return errorResponseHandler("Publisher not found", httpStatusCode.NOT_FOUND, res);
+
+// 	const favoriteBooks = await favoritesModel.find({ userId: user.id }).populate("productId");
+// 	const favoriteIds = favoriteBooks.map((book) => book.productId._id.toString());
+
+// 	// Map the `isFavorite` to each book in `publisherBooks`
+// 	const publisherBooks = await productsModel
+// 		.find({ publisherId: id })
+// 		.populate([
+// 			{ path: "authorId", select: "name" },
+// 			{ path: "categoryId", select: "name" },
+// 			{ path: "subCategoryId", select: "name" },
+// 		])
+// 		.limit(5);
+// 	const publisherBooksWithFavoriteStatus = publisherBooks.map((book) => ({
+// 		...book.toObject(),
+// 		isFavorite: favoriteIds.includes(book._id.toString()), // Check if the book is in the user's favorites
+// 	}));
+// // 	const publisherBooksWithFavoriteStatus = publisherBooks.map((book) => ({
+// // 	...book.toObject({
+// // 		transform: function(doc, ret) {
+// // 			if (ret.file instanceof Map) {
+// // 				ret.file = Object.fromEntries(ret.file);
+// // 			}
+// // 			return ret;
+// // 		}
+// // 	}),
+// // 	isFavorite: favoriteIds.includes(book._id.toString()),
+// // }));
+// 	const booksCount = await productsModel.countDocuments({ publisherId: id });
+
+// 	return {
+// 		success: true,
+// 		message: "Publisher retrieved successfully",
+// 		data: {
+// 			publisher,
+// 			booksCount,
+// 			publisherBooks: publisherBooksWithFavoriteStatus,
+// 		},
+// 	};
+// };
+
+
 // export const getPublisherWorkService = async (id: string, user: any, res: Response) => {
 //   const publisher = await publishersModel.findById(id);
 //   if (!publisher) return errorResponseHandler("Publisher not found", httpStatusCode.NOT_FOUND, res);

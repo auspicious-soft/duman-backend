@@ -9,68 +9,178 @@ import { initializePayment } from "../payment/freedompay-service";
 import { usersModel } from "../../models/user/user-schema";
 import { walletHistoryModel } from "src/models/wallet-history/wallet-history-schema";
 import { cartModel } from "src/models/cart/cart-schema";
+import mongoose from "mongoose";
+
+// export const createOrderService = async (payload: any, res: Response, userDetails: any, userInfo?: any) => {
+// 	console.log('userInfo: ', userInfo);
+// 	console.log('payload: ', payload);
+// 	console.log('userDetails: ', userDetails);
+// 	const products = await productsModel.find({ _id: { $in: payload.productIds } });
+// 	const hasDiscountedProduct = products.some((product) => product.isDiscounted);
+
+// 	if (hasDiscountedProduct && payload.voucherId) {
+// 		return errorResponseHandler("Voucher cannot be applied to discounted products", httpStatusCode.BAD_REQUEST, res);
+// 	}
+
+// 	const identifier = customAlphabet("0123456789", 5);
+// 	payload.identifier = identifier();
+// 	const newOrder = new ordersModel({ ...payload, userId: userInfo.id });
+// 	const savedOrder = await newOrder.save();
+// 	if (payload.redeemPoints) {
+// 		await usersModel.findByIdAndUpdate(userInfo.id, { $inc: { wallet: -payload.redeemPoints } });
+// 		await walletHistoryModel.create({ orderId: savedOrder._id, userId: userInfo.id, type: "redeem", points: payload.redeemPoints });
+// 	}
+// 	// Automatically initialize payment after order creation
+// 	let paymentData = null;
+// 	try {
+// 		console.log(`Order ${savedOrder.identifier} created successfully. Initializing payment...`);
+
+// 		// Get user information for payment initialization
+// 		let userPhone, userEmail;
+// 		if (userInfo && userInfo.phoneNumber && userInfo.email) {
+// 			// If userInfo is provided directly with phone and email
+// 			userPhone = userInfo.phoneNumber;
+// 			userEmail = userInfo.email;
+// 		} else {
+// 			// Fetch user details from database
+// 			const userId = userDetails.id;
+// 			if (userId) {
+// 				const user = await usersModel.findById(userId);
+// 				if (user) {
+// 					userPhone = user.phoneNumber;
+// 					userEmail = user.email;
+// 				}
+// 			}
+// 		}
+
+// 		// Initialize payment with FreedomPay
+// 		// const paymentResponse = await initializePayment(savedOrder.identifier, (savedOrder.totalAmount - payload.redeemPoints) / 100, `Payment for order ${savedOrder.identifier}`, userPhone, userEmail);
+// 		const modifiedAmount = payload.redeemPoints ? savedOrder.totalAmount - payload.redeemPoints : savedOrder.totalAmount;
+
+// 		const paymentResponse = await initializePayment(savedOrder.identifier as string, modifiedAmount / 100, `Payment for order ${savedOrder.identifier}`, userPhone, userEmail);
+// 		paymentData = paymentResponse;
+// 		console.log(`Payment initialized successfully for order ${savedOrder.identifier}`);
+// 	} catch (paymentError) {
+// 		console.error(`Failed to initialize payment for order ${savedOrder.identifier}:`, paymentError);
+// 		// Don't fail the order creation if payment initialization fails
+// 		// Just log the error and continue
+// 	}
+
+// 	return {
+// 		success: true,
+// 		message: "Order created successfully",
+// 		data: {
+// 			order: savedOrder,
+// 			payment: paymentData,
+// 		},
+// 	};
+// };
+
 
 export const createOrderService = async (payload: any, res: Response, userDetails: any, userInfo?: any) => {
-	const products = await productsModel.find({ _id: { $in: payload.productIds } });
-	const hasDiscountedProduct = products.some((product) => product.isDiscounted);
+	console.log('userInfo: ', userInfo);
+	console.log('payload: ', payload);
+	console.log('userDetails: ', userDetails);
 
-	if (hasDiscountedProduct && payload.voucherId) {
-		return errorResponseHandler("Voucher cannot be applied to discounted products", httpStatusCode.BAD_REQUEST, res);
-	}
+	// Start a session
+	const session = await mongoose.startSession();
 
-	const identifier = customAlphabet("0123456789", 5);
-	payload.identifier = identifier();
-	const newOrder = new ordersModel({ ...payload, userId: userDetails.id });
-	const savedOrder = await newOrder.save();
-	if (payload.redeemPoints) {
-		await usersModel.findByIdAndUpdate(payload.userId, { $inc: { wallet: -payload.redeemPoints } });
-		await walletHistoryModel.create({ orderId: savedOrder.identifier, userId: payload.userId, type: "redeem", points: payload.redeemPoints });
-	}
-	// Automatically initialize payment after order creation
-	let paymentData = null;
 	try {
-		console.log(`Order ${savedOrder.identifier} created successfully. Initializing payment...`);
+		session.startTransaction();
 
-		// Get user information for payment initialization
-		let userPhone, userEmail;
-		if (userInfo && userInfo.phoneNumber && userInfo.email) {
-			// If userInfo is provided directly with phone and email
-			userPhone = userInfo.phoneNumber;
-			userEmail = userInfo.email;
-		} else {
-			// Fetch user details from database
-			const userId = userDetails.id;
-			if (userId) {
-				const user = await usersModel.findById(userId);
-				if (user) {
-					userPhone = user.phoneNumber;
-					userEmail = user.email;
-				}
-			}
+		const products = await productsModel.find({ _id: { $in: payload.productIds } }).session(session);
+		const hasDiscountedProduct = products.some((product) => product.isDiscounted);
+
+		if (hasDiscountedProduct && payload.voucherId) {
+			await session.abortTransaction();
+			session.endSession();
+			return errorResponseHandler("Voucher cannot be applied to discounted products", httpStatusCode.BAD_REQUEST, res);
 		}
 
-		// Initialize payment with FreedomPay
-		// const paymentResponse = await initializePayment(savedOrder.identifier, (savedOrder.totalAmount - payload.redeemPoints) / 100, `Payment for order ${savedOrder.identifier}`, userPhone, userEmail);
-		const modifiedAmount = payload.redeemPoints ? savedOrder.totalAmount - payload.redeemPoints : savedOrder.totalAmount;
+		const identifier = customAlphabet("0123456789", 5);
+		payload.identifier = identifier();
 
-		const paymentResponse = await initializePayment(savedOrder.identifier as string, modifiedAmount / 100, `Payment for order ${savedOrder.identifier}`, userPhone, userEmail);
-		paymentData = paymentResponse;
-		console.log(`Payment initialized successfully for order ${savedOrder.identifier}`);
-	} catch (paymentError) {
-		console.error(`Failed to initialize payment for order ${savedOrder.identifier}:`, paymentError);
-		// Don't fail the order creation if payment initialization fails
-		// Just log the error and continue
+		const newOrder = new ordersModel({ ...payload, userId: userInfo.id });
+		const savedOrder = await newOrder.save({ session });
+
+		if (payload.redeemPoints) {
+			await usersModel.findByIdAndUpdate(
+				userInfo.id,
+				{ $inc: { wallet: -payload.redeemPoints } },
+				{ session }
+			);
+
+			await walletHistoryModel.create(
+				[{
+					orderId: savedOrder._id,
+					userId: userInfo.id,
+					type: "redeem",
+					points: payload.redeemPoints,
+				}],
+				{ session }
+			);
+		}
+
+		// Commit the transaction
+		await session.commitTransaction();
+		session.endSession();
+
+		// Payment initialization - OUTSIDE the transaction
+		let paymentData = null;
+		try {
+			console.log(`Order ${savedOrder.identifier} created successfully. Initializing payment...`);
+
+			let userPhone, userEmail;
+			if (userInfo && userInfo.phoneNumber && userInfo.email) {
+				userPhone = userInfo.phoneNumber;
+				userEmail = userInfo.email;
+			} else {
+				const userId = userDetails.id;
+				if (userId) {
+					const user = await usersModel.findById(userId);
+					if (user) {
+						userPhone = user.phoneNumber;
+						userEmail = user.email;
+					}
+				}
+			}
+
+			const modifiedAmount = payload.redeemPoints
+				? savedOrder.totalAmount - payload.redeemPoints
+				: savedOrder.totalAmount;
+
+			const paymentResponse = await initializePayment(
+				savedOrder.identifier as string,
+				modifiedAmount / 100,
+				`Payment for order ${savedOrder.identifier}`,
+				userPhone,
+				userEmail
+			);
+
+			paymentData = paymentResponse;
+			console.log(`Payment initialized successfully for order ${savedOrder.identifier}`);
+		} catch (paymentError) {
+			console.error(`Failed to initialize payment for order ${savedOrder.identifier}:`, paymentError);
+		}
+
+		return {
+			success: true,
+			message: "Order created successfully",
+			data: {
+				order: savedOrder,
+				payment: paymentData,
+			},
+		};
+	} catch (err) {
+		await session.abortTransaction();
+		session.endSession();
+		console.error("Transaction failed:", err);
+		throw err; // Will be caught by the calling function (controller)
 	}
-
-	return {
-		success: true,
-		message: "Order created successfully",
-		data: {
-			order: savedOrder,
-			payment: paymentData,
-		},
-	};
 };
+
+
+
 
 export const getOrderService = async (id: any, res: Response) => {
 	const order = await ordersModel.findById(id);
