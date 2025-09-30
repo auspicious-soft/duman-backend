@@ -24,7 +24,7 @@ const notificationsSchema = new Schema({
     type: {
         type: String,
         required: true,
-        enum: ["admin", "user", "Author_Created"]
+        enum: ["admin", "user", "Author_Created","Product_Created","Publisher_Created"]
     },
     language: { type: String, enum: ["eng", "kaz", "rus"], default: "eng" },
     metadata: { type: Schema.Types.Mixed },
