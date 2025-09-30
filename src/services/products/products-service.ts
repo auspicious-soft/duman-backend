@@ -22,13 +22,15 @@ export const createBookService = async (payload: any, res: Response) => {
 	const newBook = new productsModel(payload);
 	const savedBook = await newBook.save();
 		const users = await usersModel.find().select("fcmToken");
-		if (!users.length) return errorResponseHandler("No users found", httpStatusCode.NO_CONTENT, res);
-		const fcmPromises = users.map((user) => {
-			const userIds = [user._id];
-			return sendNotification({ userIds, type: "Product_Created", referenceId: savedBook._id });
-		});
+		if (users.length > 0) {
+			const referenceId = { productId: savedBook._id };
+			const fcmPromises = users.map((user) => {
+				const userIds = [user._id];
+				return sendNotification({ userIds, type: "Product_Created", referenceId });
+			});
+			await Promise.all(fcmPromises);
+		}
 	
-		await Promise.all(fcmPromises);
 	return {
 		success: true,
 		message: "Book created successfully",
