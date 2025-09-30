@@ -27,7 +27,7 @@ export const getReadProgressByIdHandler = async (req: Request, res: Response) =>
 export const getCourseCertificateHandler = async (req: Request, res: Response) => {
   try {
     const userId: JwtPayload = req?.user as JwtPayload;
-    const response = await getCourseCertificateService(req.params.id, userId.id);
+    const response = await getCourseCertificateService(req.params.id, userId.id,res);
     return res.status(httpStatusCode.OK).json(response);
   } catch (error: any) {
     const { code, message } = errorParser(error);

@@ -616,10 +616,10 @@ export const getReadProgressById = async (readProgressId: string, userId: string
 	return await readProgressModel.findOne({ userId, bookId: readProgressId }).populate([{ path: "bookId" }, { path: "readSections.sectionId" }]);
 };
 
-export const getCourseCertificateService = async (readProgressId: string, userId: string) => {
+export const getCourseCertificateService = async (readProgressId: string, userId: string,res:Response) => {
 	const certificate = await readProgressModel.findOne({ userId, bookId: readProgressId }).select("certificatePdf certificatePng");
 	  const users = await usersModel.find({_id:userId}).select("fcmToken");
-    if (!users.length) return errorResponseHandler("No users found", httpStatusCode.NO_CONTENT, res);
+    if (!users.length) return errorResponseHandler("No users found", httpStatusCode.NO_CONTENT,res);
   
     const fcmPromises = users.map((user) => {
       const userIds = [user._id];
