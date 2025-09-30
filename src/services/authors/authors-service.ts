@@ -16,14 +16,15 @@ export const createAuthorService = async (payload: any, res: Response) => {
   const newAuthor = new authorsModel(payload);
   const savedAuthor = await newAuthor.save();
   const users = await usersModel.find().select('fcmToken');
-          if (!users.length) return errorResponseHandler("No users found", httpStatusCode.NO_CONTENT, res);
-          const referenceId = { authorId: savedAuthor._id };
-          const fcmPromises = users.map(user => {
-              const userIds = [user._id];
-              return sendNotification({userIds, type: "Author_Created",  referenceId});
-          });
+          if (users.length > 0) {
+              const referenceId = { authorId: savedAuthor._id };
+              const fcmPromises = users.map(user => {
+                  const userIds = [user._id];
+                  return sendNotification({userIds, type: "Author_Created",  referenceId});
+              });
+              await Promise.all(fcmPromises);
+          }
   
-          await Promise.all(fcmPromises);
   return {
     success: true,
     message: "Author created successfully",

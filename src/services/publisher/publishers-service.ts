@@ -21,14 +21,16 @@ export const createPublisherService = async (payload: any, res: Response) => {
 
 	const savedPublisher = await newPublisher.save();
 	const users = await usersModel.find().select("fcmToken");
-	if (!users.length) return errorResponseHandler("No users found", httpStatusCode.NO_CONTENT, res);
+	if (users.length > 0) {
 
-	const fcmPromises = users.map((user) => {
-		const userIds = [user._id];
-		return sendNotification({ userIds, type: "Publisher_Created", referenceId: savedPublisher._id });
-	});
+		const fcmPromises = users.map((user) => {
+			const userIds = [user._id];
+			return sendNotification({ userIds, type: "Publisher_Created", referenceId: savedPublisher._id });
+		});
+	
+		await Promise.all(fcmPromises);
+	}
 
-	await Promise.all(fcmPromises);
 	return {
 		success: true,
 		message: "Publisher created successfully",
