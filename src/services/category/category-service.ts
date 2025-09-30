@@ -94,9 +94,7 @@ export const getBooksByCategoryIdService = async (
   const languages = toArray(payload.language);
   categoryBooksWithFavoriteStatus = filterBooksByLanguage(categoryBooksWithFavoriteStatus, languages);
 
-  if (!categoryBooksWithFavoriteStatus.length) {
-    return errorResponseHandler("No books found for the selected languages", httpStatusCode.NO_CONTENT, res);
-  }
+  if (!categoryBooksWithFavoriteStatus.length) return errorResponseHandler("No books found", httpStatusCode.NOT_FOUND, res);
 
   // ✅ Apply Sorting
   categoryBooksWithFavoriteStatus = sortBooks(
