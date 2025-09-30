@@ -193,19 +193,57 @@ export const getAllBooksService = async (payload: any, res: Response) => {
 export const getBookMarketForUserService = async (user: any, payload: any, res: Response) => {
 	console.log("user: ", user);
 	console.log("payload: ", payload);
-	const categories = await categoriesModel.find();
-	// const collections = await collectionsModel
-	//   .find()
-	//   .limit(5)
-	//   .populate({
-	//     path: "booksId",
-	//     populate: [{ path: "authorId", select: "name" }],
-	//   });
-	const collections = await getAllCollectionsWithBooksService({}, res);
-	const publisher = await publishersModel.find().limit(10);
-	const author = await authorsModel.find().limit(10);
+
+	// Extract search query from payload
+	const searchQuery = payload.description?.trim() || "";
+	
+	// Build search filter for name fields (multilingual)
+	const buildNameSearchFilter = (searchQuery: string) => {
+		if (!searchQuery) return {};
+		return {
+			$or: [
+				{ "name.eng": { $regex: searchQuery, $options: "i" } },
+				{ "name.kaz": { $regex: searchQuery, $options: "i" } },
+				{ "name.rus": { $regex: searchQuery, $options: "i" } },
+			],
+		};
+	};
+
+	const nameSearchFilter = buildNameSearchFilter(searchQuery);
+
+	// Categories
+	const categories = await categoriesModel.find(nameSearchFilter);
+
+	// Collections
+	const collections = await getAllCollectionsWithBooksService(
+		{ description: searchQuery }, 
+		res
+	);
+
+	// Publishers
+	const publisher = await publishersModel
+		.find(nameSearchFilter)
+		.limit(10);
+
+	// Authors
+	const author = await authorsModel
+		.find(nameSearchFilter)
+		.limit(10);
+
+	// Read Progress with search on book name
+	const readProgressFilter = searchQuery
+		? {
+				userId: user.id,
+				bookId: {
+					$in: await productsModel
+						.find(nameSearchFilter)
+						.distinct("_id"),
+				},
+		  }
+		: { userId: user.id };
+
 	const readProgress = await readProgressModel
-		.find({ userId: user.id })
+		.find(readProgressFilter)
 		.limit(2)
 		.populate({
 			path: "bookId",
@@ -213,13 +251,55 @@ export const getBookMarketForUserService = async (user: any, payload: any, res: 
 			populate: [{ path: "authorId", select: "name" }],
 		})
 		.select("-certificate -createdAt -readSections -updatedAt -__v");
+
+	// Audiobooks with search
+	const audiobookFilter: any = { lang: payload.lang };
+
+		if (searchQuery) {
+		// Search in both audiobook chapter name and product name
+		const matchingProductIds = await productsModel
+			.find(nameSearchFilter)
+			.distinct("_id");
+		
+		audiobookFilter.$or = [
+			{ name: { $regex: searchQuery, $options: "i" } }, // Search audiobook chapter name
+			{ productId: { $in: matchingProductIds } }, // Search product name
+		];
+	}
+
 	const audiobooks = await audiobookChaptersModel
-		.find({ lang: payload.lang })
+		.find(audiobookFilter)
 		.limit(1)
 		.populate({
 			path: "productId",
-			populate: [{ path: "authorId", select: "_id name" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }],
+			populate: [
+				{ path: "authorId", select: "_id name" },
+				{ path: "categoryId" },
+				{ path: "subCategoryId" },
+				{ path: "publisherId" },
+			],
 		});
+
+	// Best Sellers with search
+	const bestSellersMatchStage = searchQuery
+		? {
+				$match: {
+					"book.type": "audio&ebook",
+					"book.format": { $ne: "audiobook" },
+					$or: [
+						{ "book.name.eng": { $regex: searchQuery, $options: "i" } },
+						{ "book.name.kaz": { $regex: searchQuery, $options: "i" } },
+						{ "book.name.rus": { $regex: searchQuery, $options: "i" } },
+					],
+				},
+		  }
+		: {
+				$match: {
+					"book.type": "audio&ebook",
+					"book.format": { $ne: "audiobook" },
+				},
+		  };
+
 	const bestSellers = await ordersModel.aggregate([
 		{
 			$unwind: "$productIds",
@@ -247,12 +327,7 @@ export const getBookMarketForUserService = async (user: any, payload: any, res: 
 		{
 			$unwind: "$book",
 		},
-		{
-			$match: {
-				"book.type": "audio&ebook",
-				"book.format": { $ne: "audiobook" },
-			},
-		},
+		bestSellersMatchStage,
 		{
 			$lookup: {
 				from: "authors",
@@ -276,9 +351,20 @@ export const getBookMarketForUserService = async (user: any, payload: any, res: 
 		},
 	]);
 
+	// New Books with search
+	const newBooksFilter = searchQuery
+		? {
+				type: "audio&ebook",
+				format: { $nin: ["audiobook", null] },
+				...nameSearchFilter,
+		  }
+		: {
+				type: "audio&ebook",
+				format: { $nin: ["audiobook", null] },
+		  };
+
 	const newBooks = await productsModel
-		// .find({ type: "e-book" }) //TODO--CHANGED
-		.find({ type: "audio&ebook", format: { $nin: ["audiobook", null] } })
+		.find(newBooksFilter)
 		.sort({ createdAt: -1 })
 		.limit(20)
 		.populate([
