@@ -61,7 +61,8 @@ connectDB();
 app.get("/", (_, res: any) => {
     res.send("Hello world entry point 🚀✅");
 });
-
+app.get("/api/faqs", getAllFAQ)
+app.get("/api/policies", getSettings)
 app.use("/api/admin",checkValidAdminRole, admin);
 app.use("/api/publisher",checkValidPublisherRole,checkPublisherAuth, publisher);
 app.use("/api/user",checkAuth, user);
@@ -83,7 +84,6 @@ app.post("/api/resend-otp", resendOTP)
 app.post("/api/forgotpassword-resend-otp", forgotPasswordResendOTP)
 app.post("/api/user-forgot-password", forgotPasswordUser)
 app.patch("/api/user-new-password-otp-verified", newPassswordAfterOTPVerifiedUser)
-app.get("/api/users/faqs", getAllFAQ)
-app.get("/api/users/policies", getSettings)
+
 // initializeFirebase()
 app.listen(PORT, () => console.log(`Server is listening on port ${PORT}`));

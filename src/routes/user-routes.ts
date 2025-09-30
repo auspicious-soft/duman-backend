@@ -149,7 +149,7 @@ import {
   removeFromCartController,
 } from "src/controllers/cart/cart-controller";
 import { getSettings } from "src/controllers/settings/settings-controller";
-import { createFAQ, deleteFAQ, getAllFAQ, updateFAQ } from "src/controllers/FAQs/FAQs-controller";
+// import { createFAQ, deleteFAQ, getAllFAQ, updateFAQ } from "src/controllers/FAQs/FAQs-controller";
 
 const router = Router();
 
