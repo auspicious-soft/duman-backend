@@ -13,6 +13,8 @@ import { forgotPassword } from "./controllers/admin/admin-controller"
 import {  verifyOtpPasswordReset, forgotPasswordUser, newPassswordAfterOTPVerifiedUser,verifyOTP, resendOTP, loginUser, userSignup, WhatsapploginUser, forgotPasswordResendOTP } from "./controllers/user/user-controller";
 import { checkAuth,checkPublisherAuth } from "./middleware/check-auth"
 import { initializeFirebase } from "./utils/FCM/FCM"
+import { getAllFAQ } from "./controllers/FAQs/FAQs-controller"
+import { getSettings } from "./controllers/settings/settings-controller"
 
 // Create __dirname equivalent for ES modules
 const __filename = fileURLToPath(import.meta.url) // <-- Define __filename
@@ -81,6 +83,7 @@ app.post("/api/resend-otp", resendOTP)
 app.post("/api/forgotpassword-resend-otp", forgotPasswordResendOTP)
 app.post("/api/user-forgot-password", forgotPasswordUser)
 app.patch("/api/user-new-password-otp-verified", newPassswordAfterOTPVerifiedUser)
-
+app.get("/api/users/faqs", getAllFAQ)
+app.get("/api/users/policies", getSettings)
 // initializeFirebase()
 app.listen(PORT, () => console.log(`Server is listening on port ${PORT}`));

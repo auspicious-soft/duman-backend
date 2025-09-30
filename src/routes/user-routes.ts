@@ -322,10 +322,9 @@ router.route("/cart")
 router.patch("/cart/:id", removeFromCartController);
 
 //Policies route
-router.get("/policies", getSettings)
+// router.get("/policies", getSettings)
 
 //FAQs route
-router.route("/faqs").get(getAllFAQ);
 
 
 export { router };
