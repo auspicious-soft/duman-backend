@@ -25,7 +25,7 @@ export const getHomePageService = async (userData: any, payload: any, res: Respo
 			.select("-certificate -createdAt -readSections -updatedAt -__v");
 		const banners = bannersResponse?.data?.length ? bannersResponse.data : [];
 		const stories = storiesResponse?.data?.length ? storiesResponse.data : [];
-		const userdetails = await usersModel.findById(userData.id).select("schoolVoucher");
+		const userdetails = await usersModel.findById(userData.id).select("schoolVoucher firstName fullName email");
         const userSchoolVoucher = userdetails?.schoolVoucher?.voucherId ? true : false;
 
 		if (!banners.length && !stories.length && !readProgress.length) {
@@ -48,6 +48,7 @@ export const getHomePageService = async (userData: any, payload: any, res: Respo
 				stories,
 				readProgress,
 				userSchoolVoucher,
+				userdetails
 			},
 		};
 	} catch (error: any) {
