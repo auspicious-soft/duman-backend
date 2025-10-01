@@ -647,7 +647,10 @@ export const getBookForUserService = async (id: string, payload: any, user: any,
 	const userReadProgress = await readProgressModel.findOne({ userId: user.id, bookId: id });
 	// Convert the Map to a plain object
 	const bookObject: any = book.toObject();
-	bookObject.file = Object.fromEntries(book.file);
+	if (book?.file && book.file instanceof Map){
+
+		bookObject.file = Object.fromEntries(book?.file);
+	}
 	//TODO--CHANGED
 	// if (book.type === "audiobook") {
 	if (book.type === "audio&ebook" && book.format !== "e-book" && book.format !== null) {
