@@ -156,8 +156,8 @@ export const getCollectionForUserService = async (payload:any, user: any, id: st
     success: true,
     message: "Collection retrieved successfully",
     data: {
-      ...collection.toObject(),
-      booksId: updatedBooks,  // Replace the booksId with the updated books
+      // ...collection.toObject(),
+      books: updatedBooks,  // Replace the booksId with the updated books
     },
   };
 };
