@@ -145,8 +145,8 @@ if (languages.length > 0) {
     success: true,
     message: "Collection retrieved successfully",
     data: {
-      ...summary.toObject(),
-      booksId: updatedBooks,
+      // ...summary.toObject(),
+      books: updatedBooks,
     },
   };
 };
