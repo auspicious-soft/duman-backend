@@ -149,6 +149,7 @@ import {
   removeFromCartController,
 } from "src/controllers/cart/cart-controller";
 import { getSettings } from "src/controllers/settings/settings-controller";
+import { getAllQuotationsHandlerForUser } from "src/controllers/quotation/quotation-controller";
 // import { createFAQ, deleteFAQ, getAllFAQ, updateFAQ } from "src/controllers/FAQs/FAQs-controller";
 
 const router = Router();
@@ -320,6 +321,10 @@ router.post("/generate-certificate", generateCertificate);
 router.route("/cart")
   .post(createOrAddToCartController).get(getUserCartController).delete(deleteCartController);
 router.patch("/cart/:id", removeFromCartController);
+
+//quotes route
+router.get("/quotes", getAllQuotationsHandlerForUser);
+
 
 //Policies route
 // router.get("/policies", getSettings)

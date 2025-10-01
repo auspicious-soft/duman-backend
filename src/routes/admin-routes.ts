@@ -24,6 +24,7 @@ import { createCourseLesson, deleteCourseLanguage, deleteCourseLesson, deleteSub
 import { createAudiobookChapter, deleteAudiobookChapter, deleteAudiobookChaptersByProductId, getAllAudiobookChapters, getAudiobookChapter, getAudiobookChaptersByProductId, getAudiobookChaptersByProductIdForAdmin, updateAudiobookChapter, updateMultipleAudiobookChapters } from "src/controllers/audiobook-chapters/audiobook-chapters-controller";
 import { createSettings, getSettings } from "src/controllers/settings/settings-controller";
 import { createFAQ, deleteFAQ, getAllFAQ, updateFAQ } from "src/controllers/FAQs/FAQs-controller";
+import { createQuotationHandler, deleteQuotationHandler, getAllQuotationsHandler, getQuotationByIdHandler, updateQuotationHandler } from "src/controllers/quotation/quotation-controller";
 
 const router = Router();
 
@@ -42,6 +43,14 @@ router.get("/events", getAllEventsHandler);
 router.get("/events/:id", getEventByIdHandler);
 router.put("/events/:id", updateEventHandler);
 router.delete("/events/:id", deleteEventHandler);
+
+// quotes routes
+
+router.post("/quotes", createQuotationHandler);
+router.get("/quotes", getAllQuotationsHandler);
+router.get("/quotes/:id", getQuotationByIdHandler);
+router.put("/quotes/:id", updateQuotationHandler);
+router.delete("/quotes/:id", deleteQuotationHandler);
 
 //categories routes
 
