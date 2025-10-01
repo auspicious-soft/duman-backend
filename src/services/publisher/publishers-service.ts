@@ -261,7 +261,7 @@ export const getAllPublishersService = async (payload: any, res: Response) => {
 		const results = await publishersModel.aggregate(pipeline);
 		console.log("results: ", results);
 		const publishers = results.map((publisher) => ({
-			id: publisher._id,
+			_id: publisher._id,
 			name: publisher.name,
 			bookCount: publisher.bookCount,
 			image: publisher.image,
