@@ -10,6 +10,9 @@ const authorsSchema = new mongoose.Schema(
     profession:{
       type: [String],
     },
+    category:{
+      type: [String],
+    },
     country: {
       type: String,
     },

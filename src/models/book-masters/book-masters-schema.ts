@@ -7,7 +7,7 @@ const bookMastersSchema = new Schema(
           ref: "products",
           required: true
         },
-       
+      
     
   },
   { timestamps: true }

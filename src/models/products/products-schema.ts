@@ -63,6 +63,12 @@ const productsSchema = new mongoose.Schema(
 			enum: ["e-book","audiobook", "both","video","audio"],
 			default: null,
 		},
+		module:{
+			type: [String],
+			enum: ["bookMaster","bookSchool","bookMarket","bookStudy","bookUniversity"],
+			required: true,
+			default: "bookMarket"
+		},
 		createdAt: { type: Date, default: Date.now },
 		averageRating: { type: Number, default: 0 },
 	},
