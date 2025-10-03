@@ -17,20 +17,32 @@ import { getAllCollectionsWithBooksService } from "../collections/collections-se
 import { audiobookChaptersModel } from "src/models/audiobook-chapters/audiobook-chapters-schema";
 import { cartModel } from "src/models/cart/cart-schema";
 import { sendNotification } from "src/utils/FCM/FCM";
+import { addBooksToBookStudy } from "../book-studies/book-studies-service";
+import { addBooksToBookMaster } from "../book-masters/book-masters-service";
+import { addBooksToBookUniversity } from "../book-universities/book-universities-service";
 
 export const createBookService = async (payload: any, res: Response) => {
 	const newBook = new productsModel(payload);
 	const savedBook = await newBook.save();
-		const users = await usersModel.find().select("fcmToken");
-		if (users.length > 0) {
-			const referenceId = { productId: savedBook._id };
-			const fcmPromises = users.map((user) => {
-				const userIds = [user._id];
-				return sendNotification({ userIds, type: "Product_Created", referenceId });
-			});
-			await Promise.all(fcmPromises);
-		}
-	
+	console.log("savedBook: ", savedBook);
+	const productIds = [savedBook._id];
+	if (Array.isArray(savedBook.module) && savedBook.module.includes("bookStudy")) {
+		const response = await addBooksToBookStudy({ productsId: productIds }, res);
+	} else if (Array.isArray(savedBook.module) && savedBook.module.includes("bookUniversity")) {
+		const response = await addBooksToBookUniversity({ productsId: productIds }, res);
+	} else if (Array.isArray(savedBook.module) && savedBook.module.includes("bookMaster")) {
+		const response = await addBooksToBookMaster({ productsId: productIds }, res);
+	}
+	const users = await usersModel.find().select("fcmToken");
+	if (users.length > 0) {
+		const referenceId = { productId: savedBook._id };
+		const fcmPromises = users.map((user) => {
+			const userIds = [user._id];
+			return sendNotification({ userIds, type: "Product_Created", referenceId });
+		});
+		await Promise.all(fcmPromises);
+	}
+
 	return {
 		success: true,
 		message: "Book created successfully",
@@ -82,7 +94,6 @@ export const getBooksService = async (payload: any, id: string, res: Response) =
 };
 
 export const getAllBooksService = async (payload: any, res: Response) => {
-	console.log("payload: ", payload);
 	const page = parseInt(payload.page as string) || 1;
 	const limit = parseInt(payload.limit as string) || 0;
 	const offset = (page - 1) * limit;
@@ -109,7 +120,7 @@ export const getAllBooksService = async (payload: any, res: Response) => {
 	}
 
 	const results = await productsModel
-		.find(query)
+		.find({ ...query, module: payload.module })
 		.sort({
 			createdAt: -1,
 		})
@@ -124,9 +135,9 @@ export const getAllBooksService = async (payload: any, res: Response) => {
 	totalDataCount = await productsModel.countDocuments(query);
 	if (payload.description) {
 		const searchQuery = typeof payload.description === "string" ? payload.description.toLowerCase() : "";
-		console.log('searchQuery: ', searchQuery);
+		console.log("searchQuery: ", searchQuery);
 		const searchLanguage = payload.language && ["eng", "kaz", "rus"].includes(payload.language) ? payload.language : null;
-		console.log('searchLanguage: ', searchLanguage);
+		console.log("searchLanguage: ", searchLanguage);
 
 		filteredResults = results.filter((book) => {
 			try {
@@ -190,24 +201,18 @@ export const getAllBooksService = async (payload: any, res: Response) => {
 	};
 };
 
-
-
 export const getBookMarketForUserService = async (user: any, payload: any, res: Response) => {
 	console.log("user: ", user);
 	console.log("payload: ", payload);
 
 	// Extract search query from payload
 	const searchQuery = payload.description?.trim() || "";
-	
+
 	// Build search filter for name fields (multilingual)
 	const buildNameSearchFilter = (searchQuery: string) => {
 		if (!searchQuery) return {};
 		return {
-			$or: [
-				{ "name.eng": { $regex: searchQuery, $options: "i" } },
-				{ "name.kaz": { $regex: searchQuery, $options: "i" } },
-				{ "name.rus": { $regex: searchQuery, $options: "i" } },
-			],
+			$or: [{ "name.eng": { $regex: searchQuery, $options: "i" } }, { "name.kaz": { $regex: searchQuery, $options: "i" } }, { "name.rus": { $regex: searchQuery, $options: "i" } }],
 		};
 	};
 
@@ -217,35 +222,26 @@ export const getBookMarketForUserService = async (user: any, payload: any, res: 
 	const categories = await categoriesModel.find(nameSearchFilter);
 
 	// Collections
-	const collections = await getAllCollectionsWithBooksService(
-		{ description: searchQuery }, 
-		res
-	);
+	const collections = await getAllCollectionsWithBooksService({ description: searchQuery }, res);
 
 	// Publishers
-	const publisher = await publishersModel
-		.find(nameSearchFilter)
-		.limit(10);
+	const publisher = await publishersModel.find(nameSearchFilter).limit(10);
 
 	// Authors
-	const author = await authorsModel
-		.find(nameSearchFilter)
-		.limit(10);
+	const author = await authorsModel.find(nameSearchFilter).limit(10);
 
 	// Read Progress with search on book name
 	const readProgressFilter = searchQuery
 		? {
 				userId: user.id,
 				bookId: {
-					$in: await productsModel
-						.find(nameSearchFilter)
-						.distinct("_id"),
+					$in: await productsModel.find(nameSearchFilter).distinct("_id"),
 				},
-		  }
+			}
 		: { userId: user.id };
 
 	const readProgress = await readProgressModel
-		.find(readProgressFilter)
+		.find({ ...readProgressFilter, module:"bookMarket" })
 		.limit(2)
 		.populate({
 			path: "bookId",
@@ -257,12 +253,10 @@ export const getBookMarketForUserService = async (user: any, payload: any, res: 
 	// Audiobooks with search
 	const audiobookFilter: any = { lang: payload.lang };
 
-		if (searchQuery) {
+	if (searchQuery) {
 		// Search in both audiobook chapter name and product name
-		const matchingProductIds = await productsModel
-			.find(nameSearchFilter)
-			.distinct("_id");
-		
+		const matchingProductIds = await productsModel.find(nameSearchFilter).distinct("_id");
+
 		audiobookFilter.$or = [
 			{ name: { $regex: searchQuery, $options: "i" } }, // Search audiobook chapter name
 			{ productId: { $in: matchingProductIds } }, // Search product name
@@ -274,12 +268,7 @@ export const getBookMarketForUserService = async (user: any, payload: any, res: 
 		.limit(1)
 		.populate({
 			path: "productId",
-			populate: [
-				{ path: "authorId", select: "_id name" },
-				{ path: "categoryId" },
-				{ path: "subCategoryId" },
-				{ path: "publisherId" },
-			],
+			populate: [{ path: "authorId", select: "_id name" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }],
 		});
 
 	// Best Sellers with search
@@ -288,19 +277,15 @@ export const getBookMarketForUserService = async (user: any, payload: any, res: 
 				$match: {
 					"book.type": "audio&ebook",
 					"book.format": { $ne: "audiobook" },
-					$or: [
-						{ "book.name.eng": { $regex: searchQuery, $options: "i" } },
-						{ "book.name.kaz": { $regex: searchQuery, $options: "i" } },
-						{ "book.name.rus": { $regex: searchQuery, $options: "i" } },
-					],
+					$or: [{ "book.name.eng": { $regex: searchQuery, $options: "i" } }, { "book.name.kaz": { $regex: searchQuery, $options: "i" } }, { "book.name.rus": { $regex: searchQuery, $options: "i" } }],
 				},
-		  }
+			}
 		: {
 				$match: {
 					"book.type": "audio&ebook",
 					"book.format": { $ne: "audiobook" },
 				},
-		  };
+			};
 
 	const bestSellers = await ordersModel.aggregate([
 		{
@@ -359,11 +344,11 @@ export const getBookMarketForUserService = async (user: any, payload: any, res: 
 				type: "audio&ebook",
 				format: { $nin: ["audiobook", null] },
 				...nameSearchFilter,
-		  }
+			}
 		: {
 				type: "audio&ebook",
 				format: { $nin: ["audiobook", null] },
-		  };
+			};
 
 	const newBooks = await productsModel
 		.find(newBooksFilter)
@@ -389,7 +374,6 @@ export const getBookMarketForUserService = async (user: any, payload: any, res: 
 		},
 	};
 };
-
 
 export const getAllProductsForStocksTabService = async (payload: any, res: Response) => {
 	// const page = parseInt(payload.page as string) || 1;
@@ -621,11 +605,11 @@ export const getProductsForHomePage = async () => {
 };
 
 export const getBookForUserService = async (id: string, payload: any, user: any, res: Response) => {
-	console.log('payload: ', payload);
+	console.log("payload: ", payload);
 	let isPurchased;
-	if (payload.bookSchool === 'true') {
-	 isPurchased = true;
-	 console.log('isPurchased: ', isPurchased);
+	if (payload.bookSchool === "true") {
+		isPurchased = true;
+		console.log("isPurchased: ", isPurchased);
 	} else {
 		isPurchased = await ordersModel.find({ productIds: { $in: id }, userId: user.id, status: "Completed" });
 	}
@@ -641,14 +625,13 @@ export const getBookForUserService = async (id: string, payload: any, user: any,
 	const relatedBooks = await productsModel.find({ categoryId: { $in: book?.categoryId }, type: book?.type, _id: { $ne: id } }).populate([{ path: "authorId" }]);
 	const isAddedToCart = await cartModel.find({ productId: { $in: [id] }, userId: user.id, buyed: "pending" }).lean();
 	const purchaseFlag = isPurchased === true || (Array.isArray(isPurchased) && isPurchased.length > 0) ? true : false;
-	console.log('purchaseFlag: ', purchaseFlag);
+	console.log("purchaseFlag: ", purchaseFlag);
 
 	let language;
 	const userReadProgress = await readProgressModel.findOne({ userId: user.id, bookId: id });
 	// Convert the Map to a plain object
 	const bookObject: any = book.toObject();
-	if (book?.file && book.file instanceof Map){
-
+	if (book?.file && book.file instanceof Map) {
 		bookObject.file = Object.fromEntries(book?.file);
 	}
 	//TODO--CHANGED
@@ -962,9 +945,9 @@ export const getChaptersByAudiobookIDForUserService = async (id: string, payload
 	};
 };
 
-export const getBestSellersService = async (userData: any,payload: any, res: Response) => {
-	console.log('payload: ', payload);
-	console.log('userData: ', userData);
+export const getBestSellersService = async (userData: any, payload: any, res: Response) => {
+	console.log("payload: ", payload);
+	console.log("userData: ", userData);
 	const page = parseInt(payload.page as string) || 1;
 	const limit = parseInt(payload.limit as string) || 10;
 	const offset = (page - 1) * limit;
@@ -1023,7 +1006,7 @@ export const getBestSellersService = async (userData: any,payload: any, res: Res
 			},
 		},
 	]);
-    const languages = toArray(payload.language);
+	const languages = toArray(payload.language);
 	const filteredResult = filterBooksByLanguage(bestSellers, languages);
 	const sortedResult = sortBooks(filteredResult, payload.sorting, userData?.productsLanguage, userData?.language);
 	const total = sortedResult.length;

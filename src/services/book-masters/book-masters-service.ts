@@ -1,13 +1,10 @@
 import { Response } from "express";
 import { errorResponseHandler } from "../../lib/errors/error-response-handler";
 import { httpStatusCode } from "../../lib/constant";
-import { nestedQueryBuilder, queryBuilder } from "src/utils";
 import { bookMastersModel } from "../../models/book-masters/book-masters-schema";
 import { productsModel } from "../../models/products/products-schema"; // Import productsModel
-import { PipelineStage } from "mongoose";
 import { favoritesModel } from "src/models/product-favorites/product-favorites-schema";
 import { readProgressModel } from "src/models/user-reads/read-progress-schema";
-import { getBookStudyCategoryService } from "../book-studies/book-studies-service";
 
 export const addBooksToBookMaster = async (payload: any, res: Response) => {
   try {
