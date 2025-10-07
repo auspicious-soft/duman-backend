@@ -24,7 +24,6 @@ import { addBooksToBookUniversity } from "../book-universities/book-universities
 export const createBookService = async (payload: any, res: Response) => {
 	const newBook = new productsModel(payload);
 	const savedBook = await newBook.save();
-	console.log("savedBook: ", savedBook);
 	const productIds = [savedBook._id];
 	if (Array.isArray(savedBook.module) && savedBook.module.includes("bookStudy")) {
 		const response = await addBooksToBookStudy({ productsId: productIds }, res);
@@ -58,6 +57,7 @@ export const getBooksService = async (payload: any, id: string, res: Response) =
 		let lessons, totalDataCount;
 
 		const books = await productsModel.find({ _id: id }).populate([{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }]);
+		console.log('books: ', books);
 		if (!books || books.length === 0) {
 			return errorResponseHandler("Book not found", httpStatusCode.NOT_FOUND, res);
 		}
@@ -1017,3 +1017,27 @@ export const getBestSellersService = async (userData: any, payload: any, res: Re
 		data: bestSellers,
 	};
 };
+export const getRelatedBooksService = async (user: any, payload: any, res: Response) => {
+	const page = parseInt(payload.page as string) || 1;
+	const limit = parseInt(payload.limit as string) || 10;
+	const offset = (page - 1) * limit;
+	const book = await productsModel.findById(payload.bookId);
+	if (!book) {
+		return errorResponseHandler("Book not found", httpStatusCode.NOT_FOUND, res);
+	}
+	const relatedBooks = await productsModel.find({ categoryId: book.categoryId, _id: { $ne: book._id }, type: book.type }).populate([{ path: "authorId", select: "name" }]);
+	const userData = await usersModel.findById(user.id);
+	const languages = toArray(payload.language);
+	const filteredResult = filterBooksByLanguage(relatedBooks, languages);
+	const sortedResult = sortBooks(filteredResult, payload.sorting, userData?.productsLanguage, userData?.language);
+	const total = sortedResult.length;
+	const paginatedResults = sortedResult.slice(offset, offset + limit);
+	return {
+		success: true,
+		message: "Related books retrieved successfully",
+		page,
+		limit,
+		total: total,
+		data: paginatedResults,
+	};
+}
