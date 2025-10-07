@@ -101,7 +101,6 @@ export const markAllNotificationsAsReadService = async (userData: any, res: Resp
 		if (!user) return errorResponseHandler("User not found", httpStatusCode.NOT_FOUND, res);
 
 		const notifications = await notificationsModel.find({ userIds: userData.id, isRead: false }).select("-__v -userId");
-		console.log('notifications: ', notifications);
 
 		if (!notifications.length) {
 			return errorResponseHandler("No notifications found", httpStatusCode.NO_CONTENT, res);
@@ -118,11 +117,9 @@ export const markAllNotificationsAsReadService = async (userData: any, res: Resp
 export const markNotificationsAsReadService = async (userData: any,id:string, res: Response) => {
 	try {
 		const user = await usersModel.findById(userData.id);
-		console.log('userData.id: ', userData.id);
 		if (!user) return errorResponseHandler("User not found", httpStatusCode.NOT_FOUND, res);
 
 		const notifications = await notificationsModel.find({ userIds: userData.id,_id: id, isRead: false }).select("-__v -userId");
-		console.log('notifications: ', notifications);
 
 		if (!notifications.length) {
 			return errorResponseHandler("No notifications found", httpStatusCode.NO_CONTENT, res);

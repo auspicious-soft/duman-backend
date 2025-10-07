@@ -259,7 +259,6 @@ export const getAllPublishersService = async (payload: any, res: Response) => {
 
 		// Execute the aggregation pipeline
 		const results = await publishersModel.aggregate(pipeline);
-		console.log("results: ", results);
 		const publishers = results.map((publisher) => ({
 			_id: publisher._id,
 			name: publisher.name,
@@ -281,7 +280,6 @@ export const getAllPublishersService = async (payload: any, res: Response) => {
 			data: publishers,
 		};
 	} catch (error: any) {
-		console.error("Error in getAllPublishersService:", error.message);
 		return {
 			page,
 			limit,
@@ -309,7 +307,6 @@ export const getBooksByPublisherService = async (payload: any, req: any, res: Re
 		} else if (payload.type === "e-book") {
 			type = "audio&ebook";
 			format = ["e-book", "both"];
-			console.log("type: ", type);
 		} else if (payload.type === "audiobook") {
 			type = "audio&ebook";
 			format = ["audiobook", "both"];
@@ -321,7 +318,6 @@ export const getBooksByPublisherService = async (payload: any, req: any, res: Re
 		}
 
 		query.publisherId = req.currentUser;
-		console.log("query: ", query);
 
 		const totalDataCount = Object.keys(query).length < 1 ? await productsModel.countDocuments() : await productsModel.countDocuments(query);
 		const results = await productsModel.find(query).sort(sort).skip(offset).limit(limit).populate("categoryId").populate("authorId");
@@ -332,7 +328,6 @@ export const getBooksByPublisherService = async (payload: any, req: any, res: Re
 			data: results,
 		};
 	} catch (error: any) {
-		console.error("Error in getBooksByPublisherService:", error.message);
 		return {
 			success: false,
 			message: "Error retrieving books",

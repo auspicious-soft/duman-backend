@@ -68,13 +68,11 @@ export const getAllAuthorsService = async (payload: any, res: Response) => {
   const offset = (page - 1) * limit;
   const { query, sort } = nestedQueryBuilder(payload, ["name"]);
   if (payload.category) {
-    console.log('payload.category: ', payload.category);
     (query as any).category = {
       $in: Array.isArray(payload.category) ? payload.category : [payload.category],
     };
   }
   const totalDataCount = Object.keys(query).length < 1 ? await authorsModel.countDocuments() : await authorsModel.countDocuments(query);
-  console.log('query: ', query);
   const results = await authorsModel.find({...query}).sort({
     createdAt: -1,
     ...sort,

@@ -5,7 +5,6 @@ import { filterBooksByLanguage, sortBooks, toArray } from "src/utils";
 import { usersModel } from "src/models/user/user-schema";
 
 export const getAllReadingBooksService = async (user: any, payload: any) => {
-	console.log("user: ", user);
 	const page = parseInt(payload.page as string) || 1;
 	const limit = parseInt(payload.limit as string) || 10;
 	const offset = (page - 1) * limit;
@@ -22,7 +21,6 @@ export const getAllReadingBooksService = async (user: any, payload: any) => {
 	//TODO--CHANGED
 	//TODO--need to be tested
 	// const modifiedResults = readingBooks.filter((item: any) => item.bookId.type === "e-book");
-	console.log("readingBooks: ", readingBooks);
 	const modifiedResults = readingBooks.filter((item: any) => item?.bookId?.type === "audio&ebook" && item?.bookId?.format !== "audiobook");
 	const languages = toArray(payload.language);
 	const filteredResult = filterBooksByLanguage(modifiedResults, languages);
@@ -106,7 +104,6 @@ export const getAllFaviouriteBooksService = async (user: any, payload: any) => {
 			path: "productId",
 			populate: [{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }],
 		});
-	console.log("favBooks: ", favBooks);
 	//TODO-- CHANGED
 	// const modifiedResults = favBooks.filter((item: any) => {
 	//   return item.productId.type === "e-book";
@@ -157,9 +154,7 @@ export const getCoursesBookRoomService = async (user: any, payload: any) => {
 			});
 
 			const filteredCourses = favCourses.filter((item: any) => item?.productId?.type === "course");
-			console.log('filteredCourses: ', filteredCourses);
             	const languages = toArray(payload.language);
-	// 			console.log('languages: ', languages);
 	// const filteredResult = filterBooksByLanguage(filteredCourses, languages);
 	const sortedResult = sortBooks(filteredCourses, payload.sorting, userData?.productsLanguage, userData?.language);
 
@@ -174,11 +169,9 @@ export const getCoursesBookRoomService = async (user: any, payload: any) => {
 				path: "bookId",
 				populate: [{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }],
 			});
-			console.log("completedCourses: ", completedCourses);
 			results = completedCourses?.filter((item: any) => {
 				return item?.bookId?.type === "course";
 			});
-			console.log("results: ", results);
 
 			break;
 
@@ -187,11 +180,9 @@ export const getCoursesBookRoomService = async (user: any, payload: any) => {
 				path: "bookId",
 				populate: [{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }],
 			});
-			console.log("studyingCourses: ", studyingCourses);
 			results = studyingCourses?.filter((item: any) => {
 				return item?.bookId?.type === "course";
 			});
-			console.log("results: ", results);
 
 			break;
 

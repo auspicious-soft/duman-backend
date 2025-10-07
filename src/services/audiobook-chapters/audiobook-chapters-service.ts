@@ -190,7 +190,6 @@ export const getAudiobookChaptersByProductIdService = async (user: any, payload:
 
   // Get product
   const productData = await productsModel.findById(productId).lean();
-  console.log('productData: ', productData);
 
   // Get read progress for the user and product
   const readProgress = await readProgressModel.findOne({
@@ -341,7 +340,6 @@ export const deleteAudiobookChapterService = async (id: string, res: Response) =
 export const deleteAudiobookChaptersByProductIdService = async (productId: string, res: Response) => {
   try {
     const chapters = await audiobookChaptersModel.find({ productId: productId });
-    console.log('chapters: ', chapters);
     if (!chapters.length) {
       return errorResponseHandler("No audiobook chapters found for this product", httpStatusCode.NOT_FOUND, res);
     }
@@ -349,14 +347,12 @@ export const deleteAudiobookChaptersByProductIdService = async (productId: strin
     // Delete all files from S3
     for (const chapter of chapters) {
       if (chapter.file) {
-        console.log('chapter.file: ', chapter.file);
         await deleteFileFromS3(chapter.file);
       }
     }
 
     // Delete all chapters from database
     const deletedResult = await audiobookChaptersModel.deleteMany({ productId: productId });
-    console.log('deletedResult: ', deletedResult);
 
     return {
       success: true,

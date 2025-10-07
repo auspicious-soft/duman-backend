@@ -36,7 +36,6 @@ export const getSignUpQueryByAuthType = async (userData: UserDocument, authType:
     //         : process.env.GOOGLE_CLIENT_ID,
     //   });
     const appleData = await verifyAppleToken(userData.appleToken as string);
-    console.log('appleData: ', appleData);
     let email, fullName, profilePic;
     email = appleData?.email || `${appleData?.sub}@appleId.com`;
     if (fullName) {

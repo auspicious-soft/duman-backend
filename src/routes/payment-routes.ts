@@ -16,9 +16,7 @@ router.get('/check', checkPayment);
 router.post('/result', resultPayment);
 router.get('/result', resultPayment);
 router.get('/success', (req, res) => {
-  console.log('req--------: ', req);
   const { pg_order_id, pg_payment_id, pg_salt, pg_sig } = req.query;
-  console.log('req.query: ', req.query);
   // Verify signature (see below)
   console.log('Payment successful:', { pg_order_id, pg_payment_id });
   

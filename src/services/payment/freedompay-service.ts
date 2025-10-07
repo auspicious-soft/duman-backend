@@ -41,7 +41,6 @@ async function handlePaymentSuccess(order: any, paymentDetails: any) {
 		await walletHistoryModel.create({ orderId: orderDetails?._id, userId: order.userId, type: "earn", points: amount });
 		await usersModel.findByIdAndUpdate(order.userId, { $inc: { wallet: amount } });
 		const cart = await cartModel.findOneAndDelete({ userId: order.userId }); 
-			console.log("cart: ", cart);
 	} catch (error) {
 		console.error("Error in post-payment success handling:", error);
 	}

@@ -39,12 +39,9 @@ const sanitizeUser = (user: any): UserDocument => {
 };
 
 export const loginUserService = async (userData: UserDocument, authType: string, res: Response) => {
-	console.log("userData: ", userData);
 	let query = await getSignUpQueryByAuthType(userData, authType);
-	console.log("query: ", query);
 
 	let user: any = await usersModel.findOne(query);
-	console.log('user: ', user);
 	if (authType === "Apple") {
 		userData.email = query.email;
 		// (userData as any).appleToken = query.appleToken;
@@ -57,7 +54,6 @@ export const loginUserService = async (userData: UserDocument, authType: string,
 		// (userData as any).firstName = userData.fullName;
 		// (userData as any).lastName = { eng: null ,kaz: null, rus: null};
 	}
-	console.log("userData: ", userData);
 	if (!user && (authType === "Google" || authType === "Apple" || authType === "Facebook")) {
 		user = await createNewUser(userData, authType); // You should implement the createNewUser function as per your needs
 	}
@@ -73,8 +69,6 @@ export const loginUserService = async (userData: UserDocument, authType: string,
 
 	user.token = generateUserToken(user as any);
 	(user as any).fcmToken = userData.fcmToken;
-	console.log("userData.fcmToken: ", userData.fcmToken);
-	console.log("user.fcmToken: ", user.fcmToken);
 	await user.save();
 	return {
 		success: true,
@@ -104,8 +98,7 @@ const createNewUser = async (userData: any, authType: string) => {
 };
 
 export const signUpService = async (userData: UserDocument, authType: string, res: Response) => {
-	console.log("authType: ", authType);
-	console.log("userData: ", userData);
+
 	if (!authType) {
 		return errorResponseHandler("Auth type is required", httpStatusCode.BAD_REQUEST, res);
 	}
@@ -117,7 +110,6 @@ export const signUpService = async (userData: UserDocument, authType: string, re
 	// 	userData.fullName = `${userData.firstName?.eng} ${userData.lastName}`
 	// }
 	const query = await getSignUpQueryByAuthType(userData, authType);
-	console.log("query: ", query);
 	const existingUser = await usersModel.findOne(query);
 	const existingUserResponse = existingUser ? handleExistingUser(existingUser as any, authType, res) : null;
 	if (existingUserResponse) return existingUserResponse;

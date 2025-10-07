@@ -178,7 +178,6 @@ export const getCourseLessonByIdForUserService = async (user: any, payload: any,
 	// Fetch user data and course
 	const userData = await usersModel.findById(user.id).lean();
 	const course = await productsModel.findById(productId).lean();
-	console.log('course: ', course);
 
 	const availableLanguages = ["eng", "kaz", "rus"];
 	let courseLessons = [];

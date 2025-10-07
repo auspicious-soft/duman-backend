@@ -79,9 +79,6 @@ import { discountVouchersModel } from "src/models/discount-vouchers/discount-vou
 
 
 export const createOrderService = async (payload: any, res: Response, userDetails: any, userInfo?: any) => {
-	console.log('userInfo: ', userInfo);
-	console.log('payload: ', payload);
-	console.log('userDetails: ', userDetails);
 
 	// Start a session
 	const session = await mongoose.startSession();

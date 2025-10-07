@@ -26,11 +26,11 @@ export const createBookService = async (payload: any, res: Response) => {
 	const savedBook = await newBook.save();
 	const productIds = [savedBook._id];
 	if (Array.isArray(savedBook.module) && savedBook.module.includes("bookStudy")) {
-		const response = await addBooksToBookStudy({ productsId: productIds }, res);
+		await addBooksToBookStudy({ productsId: productIds }, res);
 	} else if (Array.isArray(savedBook.module) && savedBook.module.includes("bookUniversity")) {
-		const response = await addBooksToBookUniversity({ productsId: productIds }, res);
+		await addBooksToBookUniversity({ productsId: productIds }, res);
 	} else if (Array.isArray(savedBook.module) && savedBook.module.includes("bookMaster")) {
-		const response = await addBooksToBookMaster({ productsId: productIds }, res);
+		 await addBooksToBookMaster({ productsId: productIds }, res);
 	}
 	const users = await usersModel.find().select("fcmToken");
 	if (users.length > 0) {
@@ -105,7 +105,6 @@ export const getAllBooksService = async (payload: any, res: Response) => {
 	} else if (payload.type === "e-book") {
 		type = "audio&ebook";
 		format = ["e-book", "both"];
-		console.log("type: ", type);
 	} else if (payload.type === "audiobook") {
 		type = "audio&ebook";
 		format = ["audiobook", "both"];
@@ -143,9 +142,7 @@ export const getAllBooksService = async (payload: any, res: Response) => {
 	totalDataCount = await productsModel.countDocuments(query);
 	if (payload.description) {
 		const searchQuery = typeof payload.description === "string" ? payload.description.toLowerCase() : "";
-		console.log("searchQuery: ", searchQuery);
 		const searchLanguage = payload.language && ["eng", "kaz", "rus"].includes(payload.language) ? payload.language : null;
-		console.log("searchLanguage: ", searchLanguage);
 
 		filteredResults = results.filter((book) => {
 			try {
@@ -210,8 +207,6 @@ export const getAllBooksService = async (payload: any, res: Response) => {
 };
 
 export const getBookMarketForUserService = async (user: any, payload: any, res: Response) => {
-	console.log("user: ", user);
-	console.log("payload: ", payload);
 
 	// Extract search query from payload
 	const searchQuery = payload.description?.trim() || "";
@@ -613,11 +608,9 @@ export const getProductsForHomePage = async () => {
 };
 
 export const getBookForUserService = async (id: string, payload: any, user: any, res: Response) => {
-	console.log("payload: ", payload);
 	let isPurchased;
 	if (payload.bookSchool === "true") {
 		isPurchased = true;
-		console.log("isPurchased: ", isPurchased);
 	} else {
 		isPurchased = await ordersModel.find({ productIds: { $in: id }, userId: user.id, status: "Completed" });
 	}
@@ -633,7 +626,6 @@ export const getBookForUserService = async (id: string, payload: any, user: any,
 	const relatedBooks = await productsModel.find({ categoryId: { $in: book?.categoryId }, type: book?.type, _id: { $ne: id } }).populate([{ path: "authorId" }]);
 	const isAddedToCart = await cartModel.find({ productId: { $in: [id] }, userId: user.id, buyed: "pending" }).lean();
 	const purchaseFlag = isPurchased === true || (Array.isArray(isPurchased) && isPurchased.length > 0) ? true : false;
-	console.log("purchaseFlag: ", purchaseFlag);
 
 	let language;
 	const userReadProgress = await readProgressModel.findOne({ userId: user.id, bookId: id });
@@ -954,8 +946,6 @@ export const getChaptersByAudiobookIDForUserService = async (id: string, payload
 };
 
 export const getBestSellersService = async (userData: any, payload: any, res: Response) => {
-	console.log("payload: ", payload);
-	console.log("userData: ", userData);
 	const page = parseInt(payload.page as string) || 1;
 	const limit = parseInt(payload.limit as string) || 10;
 	const offset = (page - 1) * limit;

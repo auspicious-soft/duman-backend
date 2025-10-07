@@ -31,9 +31,7 @@ import { uploadStreamToS3Service } from "src/config/s3";
 
 export const userSignup = async (req: Request, res: Response) => {
   try {
-    console.log('req.body: ', req.body);
     const user = await signUpService(req.body, req.body.authType, res);
-
     return res.status(httpStatusCode.OK).json(user);
   }  catch (error: any) {
     const { code, message } = errorParser(error);
