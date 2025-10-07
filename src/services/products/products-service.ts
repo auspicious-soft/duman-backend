@@ -112,15 +112,23 @@ export const getAllBooksService = async (payload: any, res: Response) => {
 	} else {
 		type = payload.type;
 	}
-	const query: any = payload.type ? { type: type, ...(format && { format: { $in: format } }) } : {};
 
+	
+	const query: any = payload.type ? { type: type, ...(format && { format: { $in: format } }) } : {};
+	console.log('query: ', query);
+	if (payload.module) {
+		const module = payload.module;
+		const moduleQuery = Array.isArray(module) ? { $in: module } : module;
+		(query as any).module = moduleQuery;
+	}
+	
 	const sort: any = {};
 	if (payload.orderColumn && payload.order) {
 		sort[payload.orderColumn] = payload.order === "asc" ? 1 : -1;
 	}
 
 	const results = await productsModel
-		.find({ ...query, module: payload.module })
+		.find({ ...query })
 		.sort({
 			createdAt: -1,
 		})
