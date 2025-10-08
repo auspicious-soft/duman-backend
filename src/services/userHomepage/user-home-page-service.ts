@@ -36,6 +36,7 @@ export const getHomePageService = async (userData: any, payload: any, res: Respo
 					banners: [],
 					stories: [],
 					readProgress: [],
+					userSchoolVoucher
 				},
 			};
 		}
