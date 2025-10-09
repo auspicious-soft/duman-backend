@@ -106,6 +106,8 @@ import {
   getPopularCourses,
 } from "src/controllers/book-studies/book-studies-controller";
 import {
+  getBookMarketAuthors,
+  getBookMarketCategories,
   getBookMasterCategories,
   getBookMasterForUser,
   getBookMasterTeachers,
@@ -223,6 +225,8 @@ router.post("/vouchers/:id", verifyDiscountVoucher);
 
 //book-masters route
 router.get("/book-market", getBookMarketForUser);
+router.get("/books-market/categories", getBookMarketCategories);
+router.get("/books-market/authors", getBookMarketAuthors);
 
 //publishers route
 router.get("/publishers", getAllPublishers);

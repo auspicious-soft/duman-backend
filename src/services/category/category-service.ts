@@ -10,6 +10,7 @@ import { favoritesModel } from "src/models/product-favorites/product-favorites-s
 import { usersModel } from "src/models/user/user-schema";
 
 export const createCategoryService = async (payload: any, res: Response) => {
+  console.log('payload: ', payload);
   const newCategory = new categoriesModel(payload);
   const savedCategory = await newCategory.save();
   return {
@@ -129,10 +130,16 @@ export const getBooksByCategoryIdService = async (
 
 
 export const getAllCategoriesService = async (payload: any, res: Response) => {
+  console.log('payload: ', payload);
   const page = parseInt(payload.page as string) || 1;
   const limit = parseInt(payload.limit as string) || 0;
   const offset = (page - 1) * limit;
   const { query, sort } = nestedQueryBuilder(payload, ["name"]);
+  if (payload.module && payload.module !== "All") {
+    const module = payload.module;
+		const moduleQuery = Array.isArray(module) ? { $in: [module,] } : module;
+		(query as any).module = moduleQuery;
+  }
 
   const totalDataCount = Object.keys(query).length < 1 ? await categoriesModel.countDocuments() : await categoriesModel.countDocuments(query);
   const results = await categoriesModel.find(query).sort({

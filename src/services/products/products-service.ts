@@ -222,7 +222,7 @@ export const getBookMarketForUserService = async (user: any, payload: any, res: 
 	const nameSearchFilter = buildNameSearchFilter(searchQuery);
 
 	// Categories
-	const categories = await categoriesModel.find(nameSearchFilter);
+	const categories = await categoriesModel.find({ module: "bookMarket", ...nameSearchFilter });
 
 	// Collections
 	const collections = await getAllCollectionsWithBooksService({ description: searchQuery }, res);
@@ -231,7 +231,8 @@ export const getBookMarketForUserService = async (user: any, payload: any, res: 
 	const publisher = await publishersModel.find(nameSearchFilter).limit(10);
 
 	// Authors
-	const author = await authorsModel.find(nameSearchFilter).limit(10);
+	console.log('nameSearchFilter: ', nameSearchFilter);
+	const author = await authorsModel.find({ category: "bookMarket", ...nameSearchFilter }).limit(10);
 
 	// Read Progress with search on book name
 	const readProgressFilter = searchQuery
@@ -244,7 +245,7 @@ export const getBookMarketForUserService = async (user: any, payload: any, res: 
 		: { userId: user.id };
 
 	const readProgress = await readProgressModel
-		.find({ ...readProgressFilter, module:"bookMarket" })
+		.find({ ...readProgressFilter})
 		.limit(2)
 		.populate({
 			path: "bookId",

@@ -5,6 +5,8 @@ import { bookMastersModel } from "../../models/book-masters/book-masters-schema"
 import { productsModel } from "../../models/products/products-schema"; // Import productsModel
 import { favoritesModel } from "src/models/product-favorites/product-favorites-schema";
 import { readProgressModel } from "src/models/user-reads/read-progress-schema";
+import { categoriesModel } from "src/models/categories/categroies-schema";
+import { authorsModel } from "src/models/authors/authors-schema";
 
 export const addBooksToBookMaster = async (payload: any, res: Response) => {
   try {
@@ -347,7 +349,7 @@ export const getBookMasterCategoryService = async (user: any, payload: any, res:
 
 export const getBookMasterTeacherService = async (payload: any, user: any, res: Response) => {
 
-  const bookStudy = await bookMastersModel.find().populate({
+  const bookStudy = await bookMastersModel.find({}).populate({
     path: "productsId",
     populate: [
       { path: "authorId" },
@@ -758,5 +760,32 @@ export const getBookMastersForUserService = async (user: any, payload: any, res:
       categories: categories.data.categories,
       popularCourses: popularCourses.data.popularCourses
     },
+  };
+};
+export const getBookMarketCategoryService = async (user: any, payload: any, res: Response) => {
+  const page = parseInt(payload.page as string) || 1;
+  const limit = parseInt(payload.limit as string) || 0;
+  const offset = (page - 1) * limit;
+
+ const categories = await categoriesModel.find({ module: "bookMarket" });
+ 
+
+  return {
+    success: true,
+    message: "Book Market categories retrieved successfully",
+    data: {categories: categories },
+  };
+};
+export const getBookMarketAuthorService = async (user: any, payload: any, res: Response) => {
+  const page = parseInt(payload.page as string) || 1;
+  const limit = parseInt(payload.limit as string) || 0;
+  const offset = (page - 1) * limit;
+
+ const author = await authorsModel.find({ category: "bookMarket" });
+ 
+  return {
+    success: true,
+    message: "Book Market authors retrieved successfully",
+    data: { authors: author },
   };
 };

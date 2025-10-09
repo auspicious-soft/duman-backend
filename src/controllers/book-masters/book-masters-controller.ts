@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { addBooksToBookMaster, getBookMasterService, updateBookMasterService, deleteBookMasterService, getAllBookMastersService, getAvailableProductsService, getBookMastersForUserService, getBookMasterReadProgressService, getBookMasterNewbookService, getBookMasterTeacherService, getPopularCoursesBookMasterService, getBookMasterCategoryService } from "../../services/book-masters/book-masters-service";
+import { addBooksToBookMaster, getBookMasterService, updateBookMasterService, deleteBookMasterService, getAllBookMastersService, getAvailableProductsService, getBookMastersForUserService, getBookMasterReadProgressService, getBookMasterNewbookService, getBookMasterTeacherService, getPopularCoursesBookMasterService, getBookMasterCategoryService, getBookMarketCategoryService, getBookMarketAuthorService } from "../../services/book-masters/book-masters-service";
 import { errorParser } from "../../lib/errors/error-response-handler";
 import { httpStatusCode } from "../../lib/constant";
 
@@ -110,6 +110,24 @@ export const getBookMasterReadProgress = async (req: Request, res: Response) => 
 export const getBookMasterForUser = async (req: Request, res: Response) => {
     try {
         const response = await getBookMastersForUserService(req.user,req.query,res);
+        return res.status(httpStatusCode.OK).json(response);
+    } catch (error: any) {
+        const { code, message } = errorParser(error);
+        return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
+    }
+};
+export const getBookMarketCategories = async (req: Request, res: Response) => {
+    try {
+        const response = await getBookMarketCategoryService(req.query,req.user,res);
+        return res.status(httpStatusCode.OK).json(response);
+    } catch (error: any) {
+        const { code, message } = errorParser(error);
+        return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
+    }
+};
+export const getBookMarketAuthors = async (req: Request, res: Response) => {
+    try {
+        const response = await getBookMarketAuthorService(req.query,req.user,res);
         return res.status(httpStatusCode.OK).json(response);
     } catch (error: any) {
         const { code, message } = errorParser(error);

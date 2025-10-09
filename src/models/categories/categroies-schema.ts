@@ -12,6 +12,12 @@ const categoriesSchema = new mongoose.Schema({
       requried: true,
       unique: true,
     },
+    module:{
+			type: [String],
+			enum: ["All","bookMaster","bookSchool","bookMarket","bookStudy","bookUniversity"],
+			required: true,
+			default: "All"
+		},
   },
   { timestamps: true }
 );
