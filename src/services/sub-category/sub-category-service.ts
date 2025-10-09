@@ -258,7 +258,6 @@ export const getSubCategoriesService = async (payload: any, id: string, res: Res
 // };
 
 export const getSubCategoriesForUserService = async (user: any, payload: any, id: string, res: Response) => {
-  try {
     const userData = await usersModel.findById(user.id);
     const subCategories = await subCategoriesModel.findById(id);
 
@@ -287,10 +286,9 @@ export const getSubCategoriesForUserService = async (user: any, payload: any, id
     // ✅ Filter Books Based on Language
     const languages = toArray(payload.language);
     subCategoryBooks = filterBooksByLanguage(subCategoryBooks, languages);
-
-    if (!subCategoryBooks.length) {
-      return errorResponseHandler("No books found for the selected languages", httpStatusCode.NO_CONTENT, res);
-    }
+//  if (!subCategoryBooks.length) {
+//       return errorResponseHandler("No books found for the selected languages", httpStatusCode.NO_CONTENT, res);
+//     }
 
     subCategoryBooks = sortBooks(subCategoryBooks, payload.sorting, userData?.productsLanguage,userData?.language);
 
@@ -310,10 +308,7 @@ export const getSubCategoriesForUserService = async (user: any, payload: any, id
       total: totalDataCount,
       data: { subCategories, books: subCategoryBooksWithFavoriteStatus },
     };
-  } catch (error) {
-    console.error("Error in getSubCategoriesForUserService:", error);
-    return errorResponseHandler("Failed to fetch sub-categories", httpStatusCode.INTERNAL_SERVER_ERROR, res);
-  }
+
 };
 
 export const getAllSubCategoriesService = async (payload: any, res: Response) => {
