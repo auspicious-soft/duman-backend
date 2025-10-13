@@ -286,12 +286,13 @@ export const getSubCategoriesForUserService = async (user: any, payload: any, id
     // ✅ Filter Books Based on Language
     const languages = toArray(payload.language);
     subCategoryBooks = filterBooksByLanguage(subCategoryBooks, languages);
-//  if (!subCategoryBooks.length) {
-//       return errorResponseHandler("No books found for the selected languages", httpStatusCode.NO_CONTENT, res);
-//     }
+ if (!subCategoryBooks.length) {
+      return errorResponseHandler("No books found for the selected languages", httpStatusCode.NOT_FOUND, res);
+    }
 
     subCategoryBooks = sortBooks(subCategoryBooks, payload.sorting, userData?.productsLanguage,userData?.language);
 
+    console.log('user.id: ', user.id);
     const favoriteBooks = await favoritesModel.find({ userId: user.id }).populate("productId");
     const favoriteIds = favoriteBooks.map((book) => book.productId._id.toString());
 

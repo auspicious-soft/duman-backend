@@ -9,7 +9,7 @@ import { initializePayment } from "../payment/freedompay-service";
 import { usersModel } from "../../models/user/user-schema";
 import { walletHistoryModel } from "src/models/wallet-history/wallet-history-schema";
 import { cartModel } from "src/models/cart/cart-schema";
-import mongoose from "mongoose";
+import mongoose, { ClientSession } from "mongoose";
 import { discountVouchersModel } from "src/models/discount-vouchers/discount-vouchers-schema";
 
 // export const createOrderService = async (payload: any, res: Response, userDetails: any, userInfo?: any) => {
@@ -78,29 +78,62 @@ import { discountVouchersModel } from "src/models/discount-vouchers/discount-vou
 // };
 
 
-export const createOrderService = async (payload: any, res: Response, userDetails: any, userInfo?: any) => {
+export const createOrderService = async (
+payload: any, res: Response, userInfo: any, user: unknown) => {
+	const session: ClientSession = await mongoose.startSession();
 
-	// Start a session
-	const session = await mongoose.startSession();
+	// helper to safely close the session without double-aborting
+	const safeAbort = async () => {
+		try {
+			await session.abortTransaction();
+		} catch (_) {}
+		session.endSession();
+	};
 
 	try {
 		session.startTransaction();
 
-		const products = await productsModel.find({ _id: { $in: payload.productIds } }).session(session);
-		const hasDiscountedProduct = products.some((product) => product.isDiscounted);
+		// Fetch products for validation
+		const products = await productsModel
+			.find({ _id: { $in: payload.productIds } })
+			.session(session);
 
+		const hasDiscountedProduct = products.some(
+			(product) => product.isDiscounted
+		);
+
+		// Restrict voucher on discounted products
 		if (hasDiscountedProduct && payload.voucherId) {
-			await session.abortTransaction();
-			session.endSession();
-			return errorResponseHandler("Voucher cannot be applied to discounted products", httpStatusCode.BAD_REQUEST, res);
+			await safeAbort();
+			return errorResponseHandler(
+				"Voucher cannot be applied to discounted products",
+				httpStatusCode.BAD_REQUEST,
+				res
+			);
 		}
-        await discountVouchersModel.findByIdAndUpdate(payload.voucherId, { $inc: { codeActivated: 1 } }).session(session);
+
+		// If voucher is applied, increment code activation
+		if (payload.voucherId) {
+			await discountVouchersModel
+				.findByIdAndUpdate(payload.voucherId, {
+					$inc: { codeActivated: 1 },
+				})
+				.session(session);
+		}
+
+		// Generate a unique order identifier
 		const identifier = customAlphabet("0123456789", 5);
 		payload.identifier = identifier();
 
-		const newOrder = new ordersModel({ ...payload, userId: userInfo.id });
+		// Create and save new order
+		const newOrder = new ordersModel({
+			...payload,
+			userId: userInfo.id,
+		});
+
 		const savedOrder = await newOrder.save({ session });
 
+		// Handle redeem points, if applicable
 		if (payload.redeemPoints) {
 			await usersModel.findByIdAndUpdate(
 				userInfo.id,
@@ -109,37 +142,37 @@ export const createOrderService = async (payload: any, res: Response, userDetail
 			);
 
 			await walletHistoryModel.create(
-				[{
-					orderId: savedOrder._id,
-					userId: userInfo.id,
-					type: "redeem",
-					points: payload.redeemPoints,
-				}],
+				[
+					{
+						orderId: savedOrder._id,
+						userId: userInfo.id,
+						type: "redeem",
+						points: payload.redeemPoints,
+					},
+				],
 				{ session }
 			);
 		}
 
-		// Commit the transaction
+		// Commit transaction
 		await session.commitTransaction();
 		session.endSession();
 
-		// Payment initialization - OUTSIDE the transaction
+		// Initialize payment (outside the transaction)
 		let paymentData = null;
 		try {
-			console.log(`Order ${savedOrder.identifier} created successfully. Initializing payment...`);
+			console.log(
+				`Order ${savedOrder.identifier} created successfully. Initializing payment...`
+			);
 
-			let userPhone, userEmail;
-			if (userInfo && userInfo.phoneNumber && userInfo.email) {
-				userPhone = userInfo.phoneNumber;
-				userEmail = userInfo.email;
-			} else {
-				const userId = userDetails.id;
-				if (userId) {
-					const user = await usersModel.findById(userId);
-					if (user) {
-						userPhone = user.phoneNumber;
-						userEmail = user.email;
-					}
+			let userPhone = userInfo?.phoneNumber;
+			let userEmail = userInfo?.email;
+
+			if (!userPhone || !userEmail) {
+				const user = await usersModel.findById(userInfo.id);
+				if (user) {
+					userPhone = user.phoneNumber;
+					userEmail = user.email;
 				}
 			}
 
@@ -156,9 +189,14 @@ export const createOrderService = async (payload: any, res: Response, userDetail
 			);
 
 			paymentData = paymentResponse;
-			console.log(`Payment initialized successfully for order ${savedOrder.identifier}`);
+			console.log(
+				`Payment initialized successfully for order ${savedOrder.identifier}`
+			);
 		} catch (paymentError) {
-			console.error(`Failed to initialize payment for order ${savedOrder.identifier}:`, paymentError);
+			console.error(
+				`Failed to initialize payment for order ${savedOrder.identifier}:`,
+				paymentError
+			);
 		}
 
 		return {
@@ -170,12 +208,111 @@ export const createOrderService = async (payload: any, res: Response, userDetail
 			},
 		};
 	} catch (err) {
-		await session.abortTransaction();
-		session.endSession();
+		await safeAbort();
 		console.error("Transaction failed:", err);
-		throw err; // Will be caught by the calling function (controller)
+		throw err;
 	}
 };
+
+
+// export const createOrderService = async (payload: any, res: Response, userDetails: any, userInfo?: any) => {
+
+// 	// Start a session
+// 	const session = await mongoose.startSession();
+
+// 	try {
+// 		session.startTransaction();
+
+// 		const products = await productsModel.find({ _id: { $in: payload.productIds } }).session(session);
+// 		const hasDiscountedProduct = products.some((product) => product.isDiscounted);
+
+// 		if (hasDiscountedProduct && payload.voucherId) {
+// 			await session.abortTransaction();
+// 			session.endSession();
+// 			return errorResponseHandler("Voucher cannot be applied to discounted products", httpStatusCode.BAD_REQUEST, res);
+// 		}
+//         await discountVouchersModel.findByIdAndUpdate(payload.voucherId, { $inc: { codeActivated: 1 } }).session(session);
+// 		const identifier = customAlphabet("0123456789", 5);
+// 		payload.identifier = identifier();
+
+// 		const newOrder = new ordersModel({ ...payload, userId: userInfo.id });
+// 		const savedOrder = await newOrder.save({ session });
+
+// 		if (payload.redeemPoints) {
+// 			await usersModel.findByIdAndUpdate(
+// 				userInfo.id,
+// 				{ $inc: { wallet: -payload.redeemPoints } },
+// 				{ session }
+// 			);
+
+// 			await walletHistoryModel.create(
+// 				[{
+// 					orderId: savedOrder._id,
+// 					userId: userInfo.id,
+// 					type: "redeem",
+// 					points: payload.redeemPoints,
+// 				}],
+// 				{ session }
+// 			);
+// 		}
+
+// 		// Commit the transaction
+// 		await session.commitTransaction();
+// 		session.endSession();
+
+// 		// Payment initialization - OUTSIDE the transaction
+// 		let paymentData = null;
+// 		try {
+// 			console.log(`Order ${savedOrder.identifier} created successfully. Initializing payment...`);
+
+// 			let userPhone, userEmail;
+// 			if (userInfo && userInfo.phoneNumber && userInfo.email) {
+// 				userPhone = userInfo.phoneNumber;
+// 				userEmail = userInfo.email;
+// 			} else {
+// 				const userId = userDetails.id;
+// 				if (userId) {
+// 					const user = await usersModel.findById(userId);
+// 					if (user) {
+// 						userPhone = user.phoneNumber;
+// 						userEmail = user.email;
+// 					}
+// 				}
+// 			}
+
+// 			const modifiedAmount = payload.redeemPoints
+// 				? savedOrder.totalAmount - payload.redeemPoints
+// 				: savedOrder.totalAmount;
+
+// 			const paymentResponse = await initializePayment(
+// 				savedOrder.identifier as string,
+// 				modifiedAmount / 100,
+// 				`Payment for order ${savedOrder.identifier}`,
+// 				userPhone,
+// 				userEmail
+// 			);
+
+// 			paymentData = paymentResponse;
+// 			console.log(`Payment initialized successfully for order ${savedOrder.identifier}`);
+// 		} catch (paymentError) {
+// 			console.error(`Failed to initialize payment for order ${savedOrder.identifier}:`, paymentError);
+// 		}
+
+// 		return {
+// 			success: true,
+// 			message: "Order created successfully",
+// 			data: {
+// 				order: savedOrder,
+// 				payment: paymentData,
+// 			},
+// 		};
+// 	} catch (err) {
+// 		await session.abortTransaction();
+// 		session.endSession();
+// 		console.error("Transaction failed:", err);
+// 		throw err; // Will be caught by the calling function (controller)
+// 	}
+// };
 
 
 
