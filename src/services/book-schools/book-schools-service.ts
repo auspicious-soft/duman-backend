@@ -135,7 +135,6 @@ export const getBookSchoolsByCodeService = async (payload: any, user: any, res: 
   //     { path: "subCategoryId", select: "name" },
   //   ]);
   const bookSchoolData = await productsModel
-  // .find({publisherId: { $in: publisherObjectIds }})
   .find({ publisherId: { $in: publisherObjectIds }, type: "audio&ebook", format: { $nin: ["audiobook", null] } })
   .skip(offset)
   .limit(limit)

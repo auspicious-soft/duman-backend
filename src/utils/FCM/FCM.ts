@@ -63,7 +63,8 @@ export const sendNotification = async ({
 		const notifications: any[] = [];   
 
 		for (const userId of userIds) {
-			const userData = await usersModel.findById(userId).select("fcmToken language");
+			const userData = await usersModel.findById(userId).select("fcmToken language notificationAllowed _id");
+			console.log('userData: ', userData);
 
       
 			// Save each user’s notification separately in DB
