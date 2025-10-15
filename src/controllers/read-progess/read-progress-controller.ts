@@ -47,7 +47,7 @@ export const updateReadProgressHandler = async (req: Request, res: Response) => 
 
 export const generateCertificate = async (req: Request, res: Response) => {
   try {
-    const response = await generateCertificateBothFormatsService(req.body, req.user);
+    const response = await generateCertificateBothFormatsService(req.body, req.user,res);
     return res.status(httpStatusCode.OK).json(response);
   } catch (error: any) {
     const { code, message } = errorParser(error);

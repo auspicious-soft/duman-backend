@@ -458,7 +458,7 @@ export const generateCertificateService = async (
   }
 };
 
-export const generateCertificateBothFormatsService = async (data: any, user: any) => {
+export const generateCertificateBothFormatsService = async (data: any, user: any,res:Response) => {
   try {
     const userDetail: any = await usersModel.findById(user.id);
     if (!userDetail) {
@@ -518,7 +518,15 @@ export const generateCertificateBothFormatsService = async (data: any, user: any
     course.isCompleted = true;
     course.progress = 100;
     await course.save();
-
+     const users = await usersModel.find({_id:user.id}).select("fcmToken");
+    if (!users.length) return errorResponseHandler("No users found", httpStatusCode.NO_CONTENT,res);
+  
+    const fcmPromises = users.map((user) => {
+      const userIds = [user._id];
+      return sendNotification({ userIds, type: "Certificate_Created" });
+    });
+  
+    await Promise.all(fcmPromises);
     return {
       success: pdfResult.success && pngResult.success,
       message: "Certificates generated in both formats",
@@ -618,15 +626,7 @@ export const getReadProgressById = async (readProgressId: string, userId: string
 
 export const getCourseCertificateService = async (readProgressId: string, userId: string,res:Response) => {
 	const certificate = await readProgressModel.findOne({ userId, bookId: readProgressId }).select("certificatePdf certificatePng");
-	  const users = await usersModel.find({_id:userId}).select("fcmToken");
-    if (!users.length) return errorResponseHandler("No users found", httpStatusCode.NO_CONTENT,res);
-  
-    const fcmPromises = users.map((user) => {
-      const userIds = [user._id];
-      return sendNotification({ userIds, type: "Publisher_Created" });
-    });
-  
-    await Promise.all(fcmPromises);
+	 
   return {
 		success: true,
 		message: "Course certificate retrieved successfully",
@@ -674,11 +674,11 @@ export const updateReadProgress = async (readProgressId: string, readProgressDat
 				{ audiobookProgress: 100 }
 			]
 		});
-		await readProgressModel.findOneAndUpdate(
-			{ userId, bookId: readProgressId }, 
-			{ isCompleted: true }, 
-			{ new: true }
-		);
+		// await readProgressModel.findOneAndUpdate(
+		// 	{ userId, bookId: readProgressId }, 
+		// 	// { isCompleted: true }, 
+		// 	{ new: true }
+		// );
 		//TODO: check that the badge will be considered for books only or all?
 		const awardedBadge = badges.find(({ count }) => bookRead === count);
 

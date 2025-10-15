@@ -73,6 +73,10 @@ export const sendNotification = async ({
           console.error(`❌ User not found for FCM token for ${userId}`);
           return;
         }
+		if (userData.notificationAllowed === false) {
+			console.log(`❌ User ${userId} disabled notifications.`);
+			return;
+		}
         const userLanguage = userData?.language ?? "eng";
 
 

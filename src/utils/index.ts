@@ -204,6 +204,10 @@ export const notificationMessages: any = {
       title: "Publisher Created",
       description: "A new publisher has been added.",
     },
+    Certificate_Created: {
+      title: "Certificate Generated",
+      description: "A new certificate has been generated.",
+    },
   },
   kaz: {
     Author_Created: {
@@ -217,6 +221,10 @@ export const notificationMessages: any = {
     Publisher_Created: {
       title: "Жариялаушы Құрылды",
       description: "Жаңа жариялаушы сәтті құрылды.",
+    },
+    Certificate_Created: {
+      title: "Сертификат Жасалды",
+      description: "Жаңа сертификат сәтті жасалды.",
     },
   
   },
@@ -233,6 +241,9 @@ export const notificationMessages: any = {
       title: "Издатель Создан",
       description: "Новый издатель был успешно создан.",
     },
-   
+    Certificate_Created: {
+      title: "Сертификат Создан",
+      description: "Новый сертификат был успешно создан.",
+    },
   }
 };

@@ -121,7 +121,7 @@ export const getBookSchoolsByCodeService = async (payload: any, user: any, res: 
   }
   const publisherId = results.map((school) => school.publisherId).flat(); // Flatten the array if needed
 
-  const publisherObjectIds = publisherId.map((id: any) => new mongoose.Types.ObjectId(id));
+  const publisherObjectIds = publisherId.map((id: any) => id);
 
 //TODO--CHANGED
   // const bookSchoolData = await productsModel
@@ -135,16 +135,18 @@ export const getBookSchoolsByCodeService = async (payload: any, user: any, res: 
   //     { path: "subCategoryId", select: "name" },
   //   ]);
   const bookSchoolData = await productsModel
-    .find({ publisherId: { $in: publisherObjectIds }, type: "audio&ebook", format: { $nin: ["audiobook", null] } })
-    .skip(offset)
-    .limit(limit)
-    .populate([
-      { path: "publisherId", select: "name" },
-      { path: "authorId", select: "name" },
-      { path: "categoryId", select: "name" },
-      { path: "subCategoryId", select: "name" },
-    ]);
-
+  // .find({publisherId: { $in: publisherObjectIds }})
+  .find({ publisherId: { $in: publisherObjectIds }, type: "audio&ebook", format: { $nin: ["audiobook", null] } })
+  .skip(offset)
+  .limit(limit)
+  .populate([
+    { path: "publisherId", select: "name" },
+    { path: "authorId", select: "name" },
+    { path: "categoryId", select: "name" },
+    { path: "subCategoryId", select: "name" },
+  ]);
+  
+  console.log('bookSchoolData: ', bookSchoolData);
   // const total = bookSchoolData.length;
     const favoriteBooks = await favoritesModel.find({ userId: user.id }).populate("productId");
   const favoriteIds = favoriteBooks
