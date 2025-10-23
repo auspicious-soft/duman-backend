@@ -1,5 +1,5 @@
 import { Request, Response } from "express"
-import { createCategoryService, getCategoryService, updateCategoryService, deleteCategoryService, getAllCategoriesService, addBookToCategoryService, getBooksByCategoryIdService } from "../../services/category/category-service";
+import { createCategoryService, getCategoryService, updateCategoryService, deleteCategoryService, getAllCategoriesService, addBookToCategoryService, getBooksByCategoryIdService, getCategoriesWithSubCategoriesService } from "../../services/category/category-service";
 import { errorParser } from "../../lib/errors/error-response-handler";
 import { httpStatusCode } from "../../lib/constant";
 
@@ -56,6 +56,15 @@ export const deleteCategory = async (req: Request, res: Response) => {
 export const getAllCategories = async (req: Request, res: Response) => {
     try {
         const response = await getAllCategoriesService(req.query,res);
+        return res.status(httpStatusCode.OK).json(response);
+    } catch (error: any) {
+        const { code, message } = errorParser(error);
+        return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
+    }
+};
+export const getCategoriesWithSubCategories = async (req: Request, res: Response) => {
+    try {
+        const response = await getCategoriesWithSubCategoriesService(req.query,res);
         return res.status(httpStatusCode.OK).json(response);
     } catch (error: any) {
         const { code, message } = errorParser(error);

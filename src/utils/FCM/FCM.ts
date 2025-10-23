@@ -151,23 +151,3 @@ export interface NotificationPayload {
 	description: string;
 	userIds?: string[];
 }
-
-// export const sendNotification = async (fcmToken: string, title: string, body: string): Promise<void> => {
-//     const message: NotificationMessage = {
-//         notification: {
-//             title,
-//             body,
-//         },
-//         token: fcmToken,
-//     };
-
-//     try {
-//         const response = await admin.messaging().send(message);
-//         console.log('Successfully sent FCM message:', response);
-//     } catch (error) {
-//         console.error('Error sending FCM message:', error);
-//         throw error;
-//     }
-// };
-// Example usage
-// sendNotification('<CLIENT_FCM_TOKEN>', 'Hello', 'This is a test notification');

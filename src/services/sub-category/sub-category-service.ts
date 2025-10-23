@@ -8,6 +8,7 @@ import { categoriesModel } from "src/models/categories/categroies-schema";
 import { deleteFileFromS3 } from "src/config/s3";
 import { favoritesModel } from "src/models/product-favorites/product-favorites-schema";
 import { usersModel } from "src/models/user/user-schema";
+import mongoose from "mongoose";
 
 export const createSubCategoryService = async (payload: any, res: Response) => {
   const isCategory = await categoriesModel.findOne({ _id: payload.categoryId });
@@ -387,6 +388,32 @@ export const getSubCategoriesByCategoryIdService = async (payload: any, category
     total: totalDataCount,
   };
 };
+
+export const getSubCategoryService = async (ids: any, res: Response) => {
+  console.log('ids: ', ids);
+
+    // ✅ Convert comma-separated string to array
+    const idsArray = typeof ids === "string" ? ids.split(",") : ids;
+
+    // ✅ Convert each id to a valid ObjectId
+    const objectIds = idsArray.map((id: string) => new mongoose.Types.ObjectId(id.trim()));
+    console.log('objectIds: ', objectIds);
+
+    const subCategory = await subCategoriesModel
+    .find({ categoryId: { $in: objectIds } })
+    .populate("categoryId");
+    console.log('subCategory: ', subCategory);
+
+    if (!subCategory || subCategory.length === 0)
+      return errorResponseHandler("Sub-category not found", httpStatusCode.NOT_FOUND, res);
+
+    return {
+      success: true,
+      message: "Sub-category retrieved successfully",
+      data: subCategory,
+    };
+  };
+
 export const getSubCategoriesByCategoryIdForUserService = async (payload: any, categoryId: string, res: Response) => {
   console.log('payload: ', payload);
   const page = parseInt(payload.page as string) || 1;

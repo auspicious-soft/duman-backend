@@ -11,6 +11,7 @@ import { walletHistoryModel } from "src/models/wallet-history/wallet-history-sch
 import { cartModel } from "src/models/cart/cart-schema";
 import mongoose, { ClientSession } from "mongoose";
 import { discountVouchersModel } from "src/models/discount-vouchers/discount-vouchers-schema";
+import { readProgressModel } from "src/models/user-reads/read-progress-schema";
 
 // export const createOrderService = async (payload: any, res: Response, userDetails: any, userInfo?: any) => {
 // 	console.log('userInfo: ', userInfo);
@@ -77,9 +78,7 @@ import { discountVouchersModel } from "src/models/discount-vouchers/discount-vou
 // 	};
 // };
 
-
-export const createOrderService = async (
-payload: any, res: Response, userInfo: any, user: unknown) => {
+export const createOrderService = async (payload: any, res: Response, userInfo: any, user: unknown) => {
 	const session: ClientSession = await mongoose.startSession();
 
 	// helper to safely close the session without double-aborting
@@ -94,22 +93,14 @@ payload: any, res: Response, userInfo: any, user: unknown) => {
 		session.startTransaction();
 
 		// Fetch products for validation
-		const products = await productsModel
-			.find({ _id: { $in: payload.productIds } })
-			.session(session);
+		const products = await productsModel.find({ _id: { $in: payload.productIds } }).session(session);
 
-		const hasDiscountedProduct = products.some(
-			(product) => product.isDiscounted
-		);
+		const hasDiscountedProduct = products.some((product) => product.isDiscounted);
 
 		// Restrict voucher on discounted products
 		if (hasDiscountedProduct && payload.voucherId) {
 			await safeAbort();
-			return errorResponseHandler(
-				"Voucher cannot be applied to discounted products",
-				httpStatusCode.BAD_REQUEST,
-				res
-			);
+			return errorResponseHandler("Voucher cannot be applied to discounted products", httpStatusCode.BAD_REQUEST, res);
 		}
 
 		// If voucher is applied, increment code activation
@@ -135,11 +126,7 @@ payload: any, res: Response, userInfo: any, user: unknown) => {
 
 		// Handle redeem points, if applicable
 		if (payload.redeemPoints) {
-			await usersModel.findByIdAndUpdate(
-				userInfo.id,
-				{ $inc: { wallet: -payload.redeemPoints } },
-				{ session }
-			);
+			await usersModel.findByIdAndUpdate(userInfo.id, { $inc: { wallet: -payload.redeemPoints } }, { session });
 
 			await walletHistoryModel.create(
 				[
@@ -161,9 +148,7 @@ payload: any, res: Response, userInfo: any, user: unknown) => {
 		// Initialize payment (outside the transaction)
 		let paymentData = null;
 		try {
-			console.log(
-				`Order ${savedOrder.identifier} created successfully. Initializing payment...`
-			);
+			console.log(`Order ${savedOrder.identifier} created successfully. Initializing payment...`);
 
 			let userPhone = userInfo?.phoneNumber;
 			let userEmail = userInfo?.email;
@@ -176,27 +161,24 @@ payload: any, res: Response, userInfo: any, user: unknown) => {
 				}
 			}
 
-			const modifiedAmount = payload.redeemPoints
-				? savedOrder.totalAmount - payload.redeemPoints
-				: savedOrder.totalAmount;
+			const modifiedAmount = payload.redeemPoints ? savedOrder.totalAmount - payload.redeemPoints : savedOrder.totalAmount;
 
-			const paymentResponse = await initializePayment(
-				savedOrder.identifier as string,
-				modifiedAmount / 100,
-				`Payment for order ${savedOrder.identifier}`,
-				userPhone,
-				userEmail
-			);
+			const paymentResponse = await initializePayment(savedOrder.identifier as string, modifiedAmount / 100, `Payment for order ${savedOrder.identifier}`, userPhone, userEmail);
 
 			paymentData = paymentResponse;
-			console.log(
-				`Payment initialized successfully for order ${savedOrder.identifier}`
-			);
+
+			const readProgressDocs = payload.productIds.map((productId: string) => ({
+				userId: userInfo.id,
+				bookId: productId,
+				progress: 0,
+			}));
+
+			const readProgress = await readProgressModel.insertMany(readProgressDocs);
+			console.log('readProgress: ', readProgress);
+
+			console.log(`Payment initialized successfully for order ${savedOrder.identifier}`);
 		} catch (paymentError) {
-			console.error(
-				`Failed to initialize payment for order ${savedOrder.identifier}:`,
-				paymentError
-			);
+			console.error(`Failed to initialize payment for order ${savedOrder.identifier}:`, paymentError);
 		}
 
 		return {
@@ -213,109 +195,6 @@ payload: any, res: Response, userInfo: any, user: unknown) => {
 		throw err;
 	}
 };
-
-
-// export const createOrderService = async (payload: any, res: Response, userDetails: any, userInfo?: any) => {
-
-// 	// Start a session
-// 	const session = await mongoose.startSession();
-
-// 	try {
-// 		session.startTransaction();
-
-// 		const products = await productsModel.find({ _id: { $in: payload.productIds } }).session(session);
-// 		const hasDiscountedProduct = products.some((product) => product.isDiscounted);
-
-// 		if (hasDiscountedProduct && payload.voucherId) {
-// 			await session.abortTransaction();
-// 			session.endSession();
-// 			return errorResponseHandler("Voucher cannot be applied to discounted products", httpStatusCode.BAD_REQUEST, res);
-// 		}
-//         await discountVouchersModel.findByIdAndUpdate(payload.voucherId, { $inc: { codeActivated: 1 } }).session(session);
-// 		const identifier = customAlphabet("0123456789", 5);
-// 		payload.identifier = identifier();
-
-// 		const newOrder = new ordersModel({ ...payload, userId: userInfo.id });
-// 		const savedOrder = await newOrder.save({ session });
-
-// 		if (payload.redeemPoints) {
-// 			await usersModel.findByIdAndUpdate(
-// 				userInfo.id,
-// 				{ $inc: { wallet: -payload.redeemPoints } },
-// 				{ session }
-// 			);
-
-// 			await walletHistoryModel.create(
-// 				[{
-// 					orderId: savedOrder._id,
-// 					userId: userInfo.id,
-// 					type: "redeem",
-// 					points: payload.redeemPoints,
-// 				}],
-// 				{ session }
-// 			);
-// 		}
-
-// 		// Commit the transaction
-// 		await session.commitTransaction();
-// 		session.endSession();
-
-// 		// Payment initialization - OUTSIDE the transaction
-// 		let paymentData = null;
-// 		try {
-// 			console.log(`Order ${savedOrder.identifier} created successfully. Initializing payment...`);
-
-// 			let userPhone, userEmail;
-// 			if (userInfo && userInfo.phoneNumber && userInfo.email) {
-// 				userPhone = userInfo.phoneNumber;
-// 				userEmail = userInfo.email;
-// 			} else {
-// 				const userId = userDetails.id;
-// 				if (userId) {
-// 					const user = await usersModel.findById(userId);
-// 					if (user) {
-// 						userPhone = user.phoneNumber;
-// 						userEmail = user.email;
-// 					}
-// 				}
-// 			}
-
-// 			const modifiedAmount = payload.redeemPoints
-// 				? savedOrder.totalAmount - payload.redeemPoints
-// 				: savedOrder.totalAmount;
-
-// 			const paymentResponse = await initializePayment(
-// 				savedOrder.identifier as string,
-// 				modifiedAmount / 100,
-// 				`Payment for order ${savedOrder.identifier}`,
-// 				userPhone,
-// 				userEmail
-// 			);
-
-// 			paymentData = paymentResponse;
-// 			console.log(`Payment initialized successfully for order ${savedOrder.identifier}`);
-// 		} catch (paymentError) {
-// 			console.error(`Failed to initialize payment for order ${savedOrder.identifier}:`, paymentError);
-// 		}
-
-// 		return {
-// 			success: true,
-// 			message: "Order created successfully",
-// 			data: {
-// 				order: savedOrder,
-// 				payment: paymentData,
-// 			},
-// 		};
-// 	} catch (err) {
-// 		await session.abortTransaction();
-// 		session.endSession();
-// 		console.error("Transaction failed:", err);
-// 		throw err; // Will be caught by the calling function (controller)
-// 	}
-// };
-
-
-
 
 export const getOrderService = async (id: any, res: Response) => {
 	const order = await ordersModel.findById(id);
@@ -368,7 +247,6 @@ export const getAllOrdersService = async (payload: any, res: Response) => {
 	}
 };
 
-
 export const updateOrderService = async (id: string, payload: any, res: Response) => {
 	const updatedOrder = await ordersModel.findByIdAndUpdate(id, payload, {
 		new: true,
@@ -381,7 +259,6 @@ export const updateOrderService = async (id: string, payload: any, res: Response
 	};
 };
 
-
 export const getWalletHistoryService = async (userData: any, payload: any, res: Response) => {
 	const user = await usersModel.findById(userData.id);
 	if (!user) return errorResponseHandler("User not found", httpStatusCode.NOT_FOUND, res);
@@ -392,8 +269,18 @@ export const getWalletHistoryService = async (userData: any, payload: any, res: 
 	// If month filter is provided
 	if (payload.month) {
 		const monthMap: { [key: string]: number } = {
-			jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
-			jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11,
+			jan: 0,
+			feb: 1,
+			mar: 2,
+			apr: 3,
+			may: 4,
+			jun: 5,
+			jul: 6,
+			aug: 7,
+			sep: 8,
+			oct: 9,
+			nov: 10,
+			dec: 11,
 		};
 
 		const monthKey = payload.month.toLowerCase();
@@ -415,9 +302,7 @@ export const getWalletHistoryService = async (userData: any, payload: any, res: 
 		filter.createdAt = { $gte: startDate, $lt: endDate };
 	}
 
-	const walletHistory = await walletHistoryModel
-		.find(filter)
-		.populate("orderId", "-paymentGatewayResponse");
+	const walletHistory = await walletHistoryModel.find(filter).populate("orderId", "-paymentGatewayResponse");
 
 	return {
 		success: true,
@@ -431,10 +316,10 @@ export const createFreeProductOrderService = async (payload: any, res: Response,
 
 	const identifier = customAlphabet("0123456789", 5);
 	payload.identifier = identifier();
-	const newOrder = new ordersModel({ ...payload, userId: userDetails.id,status:"Completed", totalAmount:0 });
+	const newOrder = new ordersModel({ ...payload, userId: userDetails.id, status: "Completed", totalAmount: 0 });
 	const savedOrder = await newOrder.save();
-	
-	const cart = await cartModel.findOneAndDelete({ userId: savedOrder.userId }); 
+
+	const cart = await cartModel.findOneAndDelete({ userId: savedOrder.userId });
 
 	return {
 		success: true,
@@ -443,4 +328,4 @@ export const createFreeProductOrderService = async (payload: any, res: Response,
 			order: savedOrder,
 		},
 	};
-}; 
+};

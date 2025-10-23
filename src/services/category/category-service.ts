@@ -30,6 +30,19 @@ export const getCategoryService = async (id: string, res: Response) => {
   };
 };
 
+export const getCategoriesWithSubCategoriesService = async (payload: any, res: Response) => {
+  const subCategories = await subCategoriesModel.find().lean();
+  const categoryIds = [...new Set(subCategories.map((sc:any) => sc.categoryId.toString()))];
+  const categories = await categoriesModel.find({ _id: { $in: categoryIds }, module: payload.type }).lean();
+
+  return {
+    success: true,
+    message: "Categories with subcategories retrieved successfully",
+    data: categories,
+  };
+};
+
+
 // export const getBooksByCategoryIdService = async (id: string, user: any, payload: any, res: Response) => {
 //   const userData = await usersModel.findById(user.id);
 //   const category = await categoriesModel.findById(id);

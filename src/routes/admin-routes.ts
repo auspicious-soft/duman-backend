@@ -2,8 +2,8 @@ import { Router } from "express";
 import {  getAdminDetails, getDashboardStats, getNewUsers } from "../controllers/admin/admin-controller";
 import { createEventHandler, getEventByIdHandler, updateEventHandler, deleteEventHandler, getAllEventsHandler } from "../controllers/events/events-controller";
 import { createNewUser, deleteUser, getAllUser, getUser, getUserDashboardStats, updateUser } from "src/controllers/user/user-controller";
-import { addBooksToCategory, createCategory, deleteCategory, getAllCategories, getCategory, updateCategory } from "src/controllers/categories/categories-controller";
-import { addBooksToSubCategory, createSubCategory, deleteSubCategory, getAllSubCategory, getSubCategoriesByCategoryId, getSubCategory, updateSubCategory } from "src/controllers/sub-categories/sub-categories-controller";
+import { addBooksToCategory, createCategory, deleteCategory, getAllCategories, getCategoriesWithSubCategories, getCategory, updateCategory } from "src/controllers/categories/categories-controller";
+import { addBooksToSubCategory, createSubCategory, deleteSubCategory, getAllSubCategory, getSubCategories, getSubCategoriesByCategoryId, getSubCategory, updateSubCategory } from "src/controllers/sub-categories/sub-categories-controller";
 import {  addBookToDiscounts, createBook, deleteBook, getAllBooks, getAllDiscountedBooks, getBook, removeBookFromDiscounts, updateBook } from "../controllers/products/products-controller";
 import { createOrder, getAllOrders, getOrder, updateOrder } from "src/controllers/orders/orders-controller";
 import { createPublisher, deletePublisher, getAllPublishers, getPublisher, updatePublisher } from "src/controllers/publisher/publishers-controller";
@@ -56,6 +56,7 @@ router.delete("/quotes/:id", deleteQuotationHandler);
 
 router.post("/categories", createCategory);
 router.get("/categories", getAllCategories);
+router.get("/categories-with-sub-categories", getCategoriesWithSubCategories);
 router.get("/categories/:id", getCategory);
 router.get("/categories/:categoryId/sub-categories", getSubCategoriesByCategoryId);
 router.put("/categories/:id", updateCategory);
@@ -66,6 +67,7 @@ router.delete("/categories/:id", deleteCategory);
 
 router.post("/sub-categories", createSubCategory);
 router.get("/sub-categories", getAllSubCategory);
+router.get("/sub-categories/:ids/category", getSubCategories);
 router.get("/sub-categories/:id", getSubCategory);
 router.put("/sub-categories/:id", updateSubCategory);
 router.put("/sub-categories/:id/add", addBooksToSubCategory);

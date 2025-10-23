@@ -633,6 +633,14 @@ export const getCourseCertificateService = async (readProgressId: string, userId
 		data: certificate,
 	};
 };
+export const createReadProgressService = async (payload: any,res:Response) => {
+	const readProgress = await readProgressModel.create(payload);
+  return {
+		success: true,
+		message: "Read progress created successfully",
+		data: readProgress,
+	};
+};
 
 
 export const updateReadProgress = async (readProgressId: string, readProgressData: any, user: any, res: Response) => {

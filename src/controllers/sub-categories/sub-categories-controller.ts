@@ -11,6 +11,7 @@ import {
   addBookToSubCategoryService,
   getSubCategoriesByCategoryIdForUserService,
   getSubCategoriesForUserService,
+  getSubCategoryService,
 } from "../../services/sub-category/sub-category-service";
 
 export const createSubCategory = async (req: Request, res: Response) => {
@@ -77,6 +78,20 @@ export const getSubCategoriesByCategoryId = async (
   try {
     const { categoryId } = req.params;
     const response = await getSubCategoriesByCategoryIdService(req.query,categoryId, res);
+    return res.status(httpStatusCode.OK).json(response);
+  } catch (error: any) {
+    const { code, message } = errorParser(error);
+    return res
+      .status(code || httpStatusCode.INTERNAL_SERVER_ERROR)
+      .json({ success: false, message: message || "An error occurred" });
+  }
+};
+export const getSubCategories = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const response = await getSubCategoryService(req.params.ids, res);
     return res.status(httpStatusCode.OK).json(response);
   } catch (error: any) {
     const { code, message } = errorParser(error);
