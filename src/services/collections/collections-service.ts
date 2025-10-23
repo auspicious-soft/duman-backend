@@ -208,7 +208,7 @@ export const getAllCollectionsWithBooksService = async (payload: any, res: Respo
   const offset = (page - 1) * limit;
   const { query, sort } = nestedQueryBuilder(payload, ["name"]);
 
-  // Add condition to only get collections with non-empty booksId arrays
+ 
   const nonEmptyBooksQuery = {
     ...query,
     displayOnMobile: true,
@@ -228,7 +228,7 @@ export const getAllCollectionsWithBooksService = async (payload: any, res: Respo
       {
         path: "categoryId",
         select: "name image",
-        // options: { limit: 3 } // Limit categories to 3
+        options: { limit: 3 } // Limit categories to 3
       },
       { path: "subCategoryId", select: "name image" },
       { path: "publisherId", select: "name image" },

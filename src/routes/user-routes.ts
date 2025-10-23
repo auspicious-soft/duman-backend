@@ -110,6 +110,7 @@ import {
   getBookMarketCategories,
   getBookMasterCategories,
   getBookMasterForUser,
+  getBookMasterReadProgress,
   getBookMasterTeachers,
   getPopularCoursesBookMaster,
 } from "src/controllers/book-masters/book-masters-controller";
@@ -267,7 +268,7 @@ router.get("/books-masters/categories", getBookMasterCategories);
 router.get("/books-masters/speakers", getBookMasterTeachers);
 router.get("/books-masters/popular-courses", getPopularCoursesBookMaster);
 // router.get("/books-masters/new-books", getBookMasterNewbooks);
-// router.get("/books-masters/read-progress", getBookMasterReadProgress);
+router.get("/books-masters/read-progress", getBookMasterReadProgress);
 
 //books-studies route
 router.get("/books-universities", getBookUniversityForUser);

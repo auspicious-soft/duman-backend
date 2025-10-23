@@ -19,7 +19,7 @@ export const createDiscountVoucherService = async (payload: any, res: Response) 
 
 export const getDiscountVoucherService = async (id: string, res: Response) => {
   const voucher = await discountVouchersModel.findById(id);
-  if (!voucher) return errorResponseHandler("Discount voucher not found", httpStatusCode.NOT_FOUND, res);
+  if (!voucher) return errorResponseHandler("Invalid Discount voucher", httpStatusCode.BAD_REQUEST, res);
   return {
     success: true,
     message: "Discount voucher retrieved successfully",
@@ -28,11 +28,11 @@ export const getDiscountVoucherService = async (id: string, res: Response) => {
 };
 export const verifyDiscountVoucherService = async (id: string,payload: any, res: Response) => {
 const voucher = await discountVouchersModel.findOne({ couponCode: id });
-  if (!voucher) return errorResponseHandler("Coupon not found", httpStatusCode.NOT_FOUND, res);
+  if (!voucher) return errorResponseHandler("Invalid Discount voucher", httpStatusCode.BAD_REQUEST, res);
     const products = await productsModel.find({ _id: { $in: payload.productIds } });
       const hasDiscountedProduct = products.some((product) => product.isDiscounted);
   
-      if (hasDiscountedProduct && payload.voucherId) {
+      if (hasDiscountedProduct) {
         return errorResponseHandler("Voucher cannot be applied to discounted products", httpStatusCode.BAD_REQUEST, res);
       }
   if (voucher.codeActivated >= voucher.activationAllowed) {
