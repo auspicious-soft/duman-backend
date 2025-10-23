@@ -65,7 +65,7 @@ export const getAllFinishedBooksService = async (user: any, payload: any) => {
 	//TODO--CHANGED
 	// const modifiedResults = finishedBooks.filter((item: any) => item.bookId.type === "e-books");
 	const modifiedResults = finishedBooks?.filter((item: any) => item?.bookId?.type === "audio&ebook" && item?.bookId?.format !== "audiobook");
-		const languages = toArray(payload.language);
+	const languages = toArray(payload.language);
 	const filteredResult = filterBooksByLanguage(modifiedResults, languages);
 	const sortedResult = sortBooks(filteredResult, payload.sorting, userData?.productsLanguage, userData?.language);
 	const total = sortedResult?.length;
@@ -111,7 +111,7 @@ export const getAllFaviouriteBooksService = async (user: any, payload: any) => {
 	const modifiedResults = favBooks.filter((item: any) => {
 		return item?.productId?.type === "audio&ebook" && item?.productId?.format !== "audiobook";
 	});
- 	const languages = toArray(payload.language);
+	const languages = toArray(payload.language);
 	const filteredResult = filterBooksByLanguage(modifiedResults, languages);
 	const sortedResult = sortBooks(filteredResult, payload.sorting, userData?.productsLanguage, userData?.language);
 	const total = modifiedResults.length;
@@ -142,7 +142,7 @@ export const getCoursesBookRoomService = async (user: any, payload: any) => {
 	const page = parseInt(payload.page as string) || 1;
 	const limit = parseInt(payload.limit as string) || 10;
 	const offset = (page - 1) * limit;
-    const userData = await usersModel.findById(user.id);
+	const userData = await usersModel.findById(user.id);
 	let results: any[] = [];
 	let total = 0;
 
@@ -154,9 +154,9 @@ export const getCoursesBookRoomService = async (user: any, payload: any) => {
 			});
 
 			const filteredCourses = favCourses.filter((item: any) => item?.productId?.type === "course");
-            	const languages = toArray(payload.language);
-	// const filteredResult = filterBooksByLanguage(filteredCourses, languages);
-	const sortedResult = sortBooks(filteredCourses, payload.sorting, userData?.productsLanguage, userData?.language);
+			const languages = toArray(payload.language);
+			// const filteredResult = filterBooksByLanguage(filteredCourses, languages);
+			const sortedResult = sortBooks(filteredCourses, payload.sorting, userData?.productsLanguage, userData?.language);
 
 			results = sortedResult.map((book) => ({
 				...book.toObject(),
@@ -189,9 +189,29 @@ export const getCoursesBookRoomService = async (user: any, payload: any) => {
 		case "certificate":
 			const certCourses = await readProgressModel.find({ userId: user.id, progress: 100 }).populate("bookId");
 			const certFilteredCourses = certCourses.filter((item: any) => item?.bookId?.type === "course" && item?.certificatePng !== null && item.certificatePdf !== null);
-			const certificates = certFilteredCourses.map((item: any) => ({ certificatePng: item.certificatePng, certificatePdf: item.certificatePdf, bookId: { name: item.bookId.name, _id : item.bookId._id} }));
+			const certificates = certFilteredCourses.map((item: any) => ({ certificatePng: item.certificatePng, certificatePdf: item.certificatePdf, bookId: { name: item.bookId.name, _id: item.bookId._id } }));
 			return { success: true, message: "Certificate action logged", data: certificates };
 
+		case "podcast":
+			const completedPodcast = await readProgressModel.find({ userId: user.id }).populate({
+				path: "bookId",
+				populate: [{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }],
+			});
+			results = completedPodcast?.filter((item: any) => {
+				return item?.bookId?.type === "podcast";
+			});
+			break;
+		
+		case "video-lecture":
+			const completedVideoLecture = await readProgressModel.find({ userId: user.id }).populate({
+				path: "bookId",
+				populate: [{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }],
+			});
+			results = completedVideoLecture?.filter((item: any) => {
+				return item?.bookId?.type === "video-lecture";
+			});
+			break;
+		
 		default:
 			return { success: false, message: "Invalid type", data: [] };
 	}

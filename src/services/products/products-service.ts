@@ -127,7 +127,7 @@ export const getAllBooksService = async (payload: any, res: Response) => {
 	}
 
 	const results = await productsModel
-		.find({ ...query })
+		.find({ ...query, isDeleted: false })
 		.sort({
 			createdAt: -1,
 		})
@@ -231,7 +231,6 @@ export const getBookMarketForUserService = async (user: any, payload: any, res: 
 	const publisher = await publishersModel.find(nameSearchFilter).limit(10);
 
 	// Authors
-	console.log('nameSearchFilter: ', nameSearchFilter);
 	const author = await authorsModel.find({ category: "bookMarket", ...nameSearchFilter }).limit(10);
 
 	// Read Progress with search on book name
@@ -239,7 +238,7 @@ export const getBookMarketForUserService = async (user: any, payload: any, res: 
 		? {
 				userId: user.id,
 				bookId: {
-					$in: await productsModel.find(nameSearchFilter).distinct("_id"),
+					$in: await productsModel.find({ ...nameSearchFilter, isDeleted: false }).distinct("_id"),
 				},
 			}
 		: { userId: user.id };
@@ -259,7 +258,7 @@ export const getBookMarketForUserService = async (user: any, payload: any, res: 
 
 	if (searchQuery) {
 		// Search in both audiobook chapter name and product name
-		const matchingProductIds = await productsModel.find(nameSearchFilter).distinct("_id");
+		const matchingProductIds = await productsModel.find({ ...nameSearchFilter, isDeleted: false }).distinct("_id");
 
 		audiobookFilter.$or = [
 			{ name: { $regex: searchQuery, $options: "i" } }, // Search audiobook chapter name
@@ -268,7 +267,7 @@ export const getBookMarketForUserService = async (user: any, payload: any, res: 
 	}
 
 	const audiobooks = await audiobookChaptersModel
-		.find(audiobookFilter)
+		.find({ ...audiobookFilter, isDeleted: false })
 		.limit(1)
 		.populate({
 			path: "productId",
@@ -281,6 +280,7 @@ export const getBookMarketForUserService = async (user: any, payload: any, res: 
 				$match: {
 					"book.type": "audio&ebook",
 					"book.format": { $ne: "audiobook" },
+					"book.isDeleted": false,
 					$or: [{ "book.name.eng": { $regex: searchQuery, $options: "i" } }, { "book.name.kaz": { $regex: searchQuery, $options: "i" } }, { "book.name.rus": { $regex: searchQuery, $options: "i" } }],
 				},
 			}
@@ -288,6 +288,7 @@ export const getBookMarketForUserService = async (user: any, payload: any, res: 
 				$match: {
 					"book.type": "audio&ebook",
 					"book.format": { $ne: "audiobook" },
+					"book.isDeleted": false,
 				},
 			};
 
@@ -347,15 +348,17 @@ export const getBookMarketForUserService = async (user: any, payload: any, res: 
 		? {
 				type: "audio&ebook",
 				format: { $nin: ["audiobook", null] },
+				isDeleted: false,
 				...nameSearchFilter,
 			}
 		: {
 				type: "audio&ebook",
 				format: { $nin: ["audiobook", null] },
+				isDeleted: false,
 			};
 
 	const newBooks = await productsModel
-		.find(newBooksFilter)
+		.find({ ...newBooksFilter, isDeleted: false })
 		.sort({ createdAt: -1 })
 		.limit(20)
 		.populate([
@@ -400,7 +403,7 @@ export const getAllProductsForStocksTabService = async (payload: any, res: Respo
 	// 	.populate([{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }])
 	// 	.lean();
 	const Books = await productsModel
-		.find({ type: "audio&ebook", format: { $nin: ["audiobook", null] } }) //TODO--CHANGED   type-ebook
+		.find({ type: "audio&ebook", format: { $nin: ["audiobook", null], isDeleted: false } }) //TODO--CHANGED   type-ebook
 		.sort(sort)
 		// .skip(offset)
 		.limit(4)
@@ -408,7 +411,7 @@ export const getAllProductsForStocksTabService = async (payload: any, res: Respo
 		.populate([{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }])
 		.lean();
 	const Courses = await productsModel
-		.find({ type: "course" })
+		.find({ type: "course", isDeleted: false }) //TODO--CHANGED
 		.sort(sort)
 		// .skip(offset)
 		.limit(4)
@@ -418,7 +421,7 @@ export const getAllProductsForStocksTabService = async (payload: any, res: Respo
 
 	// let filteredResults = results;
 	let totalDataCount;
-	totalDataCount = await productsModel.countDocuments(query);
+	totalDataCount = await productsModel.countDocuments({ ...query, isDeleted: false });
 
 	return {
 		// page,
@@ -442,9 +445,9 @@ export const getAllDiscountedBooksService = async (payload: any, res: Response) 
 	if (payload.type) {
 		query.type = payload.type;
 	}
-	const totalDataCount = Object.keys(query).length < 1 ? await productsModel.countDocuments() : await productsModel.countDocuments(query);
+	const totalDataCount = Object.keys(query).length < 1 ? await productsModel.countDocuments({ isDeleted: false }) : await productsModel.countDocuments({ ...query, isDeleted: false });
 	const results = await productsModel
-		.find(query)
+		.find({ ...query, isDeleted: false })
 		.sort({
 			createdAt: -1,
 			...sort,
@@ -555,35 +558,35 @@ export const removeBookFromDiscountsService = async (payload: any, res: Response
 };
 export const deleteBookService = async (id: string, res: Response) => {
 	try {
-		const deletedBook = await productsModel.findByIdAndDelete(id);
+		const deletedBook = await productsModel.findByIdAndUpdate(id, { isDeleted: true }, { new: true });
 		if (!deletedBook) return errorResponseHandler("Book not found", httpStatusCode.NOT_FOUND, res);
-		if (deletedBook?.image) {
-			await deleteFileFromS3(deletedBook.image);
-		}
-		if (deletedBook?.type === "course") {
-			const courseLessons = await courseLessonsModel.find({ productId: deletedBook._id });
+		// if (deletedBook?.image) {
+		// 	await deleteFileFromS3(deletedBook.image);
+		// }
+		// if (deletedBook?.type === "course") {
+		// 	const courseLessons = await courseLessonsModel.find({ productId: deletedBook._id });
 
-			// Extract all section files from each lesson
-			const fileKeys = courseLessons.flatMap((lesson: any) => lesson.sections.flatMap((section: any) => section.file));
+		// 	// Extract all section files from each lesson
+		// 	const fileKeys = courseLessons.flatMap((lesson: any) => lesson.sections.flatMap((section: any) => section.file));
 
-			// Delete each file from S3
-			await Promise.all(
-				fileKeys.filter(Boolean).map((filePath) => {
-					deleteFileFromS3(filePath);
-				})
-			);
+		// 	// Delete each file from S3
+		// 	await Promise.all(
+		// 		fileKeys.filter(Boolean).map((filePath) => {
+		// 			deleteFileFromS3(filePath);
+		// 		})
+		// 	);
 
-			await courseLessonsModel.deleteMany({ productId: deletedBook._id });
-		}
+		// 	await courseLessonsModel.deleteMany({ productId: deletedBook._id });
+		// }
 
-		if (deletedBook?.file && deletedBook.file instanceof Map) {
-			for (const key of deletedBook.file.keys()) {
-				const fileValue = deletedBook.file.get(key);
-				if (fileValue && typeof fileValue === "string") {
-					await deleteFileFromS3(fileValue);
-				}
-			}
-		}
+		// if (deletedBook?.file && deletedBook.file instanceof Map) {
+		// 	for (const key of deletedBook.file.keys()) {
+		// 		const fileValue = deletedBook.file.get(key);
+		// 		if (fileValue && typeof fileValue === "string") {
+		// 			await deleteFileFromS3(fileValue);
+		// 		}
+		// 	}
+		// }
 		return {
 			success: true,
 			message: "Book Deleted successfully",
@@ -598,8 +601,8 @@ export const getProductsForHomePage = async () => {
 	try {
 		//TODO--CHANGED
 		// const books = await productsModel.find({ type: "e-book" }).limit(10);
-		const books = await productsModel.find({ type: "audio&ebook", format: { $nin: ["audiobook", null] } }).limit(10);
-		const courses = await productsModel.find({ type: "course" }).limit(10);
+		const books = await productsModel.find({ type: "audio&ebook", format: { $nin: ["audiobook", null] }, isDeleted: false }).limit(10);
+		const courses = await productsModel.find({ type: "course", isDeleted: false }).limit(10);
 
 		return { books: books, courses: courses, success: true, message: "Products retrieved successfully" };
 	} catch (error) {
@@ -695,11 +698,11 @@ export const getNewbookForUserService = async (user: any, payload: any, res: Res
 	const offset = (page - 1) * 20;
 	//TODO--CHANGED
 	// const totalDataCount = await productsModel.countDocuments({ type: "e-book" });
-	const totalDataCount = await productsModel.countDocuments({ type: "audio&ebook", format: { $nin: ["audiobook", null] } });
+	const totalDataCount = await productsModel.countDocuments({ type: "audio&ebook", format: { $nin: ["audiobook", null], isDeleted: false } });
 	const userData = await usersModel.findById(user.id);
 	let newBooks = await productsModel
 		// .find({ type: "e-book" }) //TODO--CHANGED
-		.find({ type: "audio&ebook", format: { $nin: ["audiobook", null] } })
+		.find({ type: "audio&ebook", format: { $nin: ["audiobook", null], isDeleted: false } })
 		.sort({ createdAt: -1 })
 		.skip(offset)
 		.limit(20)
@@ -744,7 +747,7 @@ export const getAllAudioBookForUserService = async (payload: any, user: any, res
 	// 	]);
 	//TODO--CHANGED
 	let audiobooks = await productsModel
-		.find({ type: "audio&ebook", format: { $nin: ["e-book", null] } })
+		.find({ type: "audio&ebook", format: { $nin: ["e-book", null], isDeleted: false } })
 		.sort({ createdAt: -1 })
 		.skip(offset)
 		.limit(limit)
@@ -752,7 +755,7 @@ export const getAllAudioBookForUserService = async (payload: any, user: any, res
 			{ path: "authorId", select: "name" },
 			{ path: "categoryId", select: "name" },
 		]);
-	const totalDataCount = await productsModel.countDocuments({ type: "audio&ebook", format: { $nin: ["e-book", null] } });
+	const totalDataCount = await productsModel.countDocuments({ type: "audio&ebook", format: { $nin: ["e-book", null], isDeleted: false } });
 
 	const favoriteBooks = await favoritesModel.find({ userId: user.id }).populate("productId");
 	const favoriteIds = favoriteBooks.filter((book) => book.productId && book.productId._id).map((book) => book.productId._id.toString());
@@ -981,6 +984,7 @@ export const getBestSellersService = async (userData: any, payload: any, res: Re
 			$match: {
 				"book.type": "audio&ebook",
 				"book.format": { $ne: "audiobook" },
+				"book.isDeleted": false,
 			},
 		},
 		{
@@ -1024,7 +1028,7 @@ export const getRelatedBooksService = async (user: any, payload: any, res: Respo
 	if (!book) {
 		return errorResponseHandler("Book not found", httpStatusCode.NOT_FOUND, res);
 	}
-	const relatedBooks = await productsModel.find({ categoryId: book.categoryId, _id: { $ne: book._id }, type: book.type }).populate([{ path: "authorId", select: "name" }]);
+	const relatedBooks = await productsModel.find({ categoryId: book.categoryId, _id: { $ne: book._id }, type: book.type, isDeleted: false }).populate([{ path: "authorId", select: "name" }]);
 	const userData = await usersModel.findById(user.id);
 	const languages = toArray(payload.language);
 	const filteredResult = filterBooksByLanguage(relatedBooks, languages);

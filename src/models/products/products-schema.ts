@@ -69,6 +69,10 @@ const productsSchema = new mongoose.Schema(
 			required: true,
 			default: "bookMarket"
 		},
+		isDeleted: {
+			type: Boolean,
+			default: false,
+		},
 		createdAt: { type: Date, default: Date.now },
 		averageRating: { type: Number, default: 0 },
 	},

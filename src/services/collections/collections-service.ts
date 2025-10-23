@@ -218,7 +218,7 @@ export const getAllCollectionsWithBooksService = async (payload: any, res: Respo
   const totalDataCount = await collectionsModel.countDocuments(nonEmptyBooksQuery);
 
   // Get collections with books and limit categories to 3
-  const results = await collectionsModel.find(nonEmptyBooksQuery).sort({
+  const results = await collectionsModel.find({nonEmptyBooksQuery}).sort({
     createdAt: -1,
     ...sort,
   }).skip(offset).limit(limit).select("-__v").populate({
