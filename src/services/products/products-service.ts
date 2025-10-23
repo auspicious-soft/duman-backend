@@ -57,7 +57,6 @@ export const getBooksService = async (payload: any, id: string, res: Response) =
 		let lessons, totalDataCount;
 
 		const books = await productsModel.find({ _id: id }).populate([{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }]);
-		console.log("books: ", books);
 		if (!books || books.length === 0) {
 			return errorResponseHandler("Book not found", httpStatusCode.NOT_FOUND, res);
 		}
@@ -113,7 +112,6 @@ export const getAllBooksService = async (payload: any, res: Response) => {
 	}
 
 	const query: any = payload.type ? { type: type, ...(format && { format: { $in: format } }) } : {};
-	console.log("query: ", query);
 	if (payload.module) {
 		const module = payload.module;
 		const moduleQuery = Array.isArray(module) ? { $in: module } : module;
@@ -850,6 +848,7 @@ export const getBestSellersService = async (userData: any, payload: any, res: Re
 	const offset = (page - 1) * limit;
 	const favoriteBooks = await favoritesModel.find({ userId: userData.id }).select("productId");
 	const favoriteBookIds = favoriteBooks.map((f) => f.productId.toString());
+	console.log('favoriteBookIds: ', favoriteBookIds);
 	const bestSellers = await ordersModel.aggregate([
 		{
 			$unwind: "$productIds",

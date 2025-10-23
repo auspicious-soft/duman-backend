@@ -292,7 +292,6 @@ export const getAllPublishersService = async (payload: any, res: Response) => {
 };
 
 export const getBooksByPublisherService = async (payload: any, req: any, res: Response) => {
-	console.log("payload: ", payload);
 	try {
 		const page = parseInt(payload.page as string) || 1;
 		const limit = parseInt(payload.limit as string) || 0;

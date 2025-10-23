@@ -476,7 +476,6 @@ export const generateCertificateBothFormatsService = async (data: any, user: any
       course = await readProgressModel
         .findById(course._id)
         .populate("bookId");
-      console.log("course-readProgressModel: ", course);
     }
     if (course.certificatePdf && course.certificatePng) {
       return {

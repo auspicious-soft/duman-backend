@@ -259,7 +259,6 @@ export const processResultRequest = async (params: Record<string, any>) => {
 			};
 
 			const cart = await cartModel.findOneAndDelete({ userId: order.userId }); 
-			console.log("cart: ", cart);
 			await order.save();
 			
 			console.log(`Order ${orderId} successfully updated with payment details:`, {
