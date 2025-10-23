@@ -7,6 +7,7 @@ import { parseStringPromise } from "xml2js";
 import { walletHistoryModel } from "src/models/wallet-history/wallet-history-schema";
 import { usersModel } from "src/models/user/user-schema";
 import { cartModel } from "src/models/cart/cart-schema";
+import { readProgressModel } from "src/models/user-reads/read-progress-schema";
 
 console.log(freedomPayConfig);
 
@@ -257,7 +258,14 @@ export const processResultRequest = async (params: Record<string, any>) => {
 				pg_salt: params.pg_salt,
 				processedAt: new Date(),
 			};
+            const readProgressDocs = order.productIds?.map((productId: any) => ({
+				userId: order.userId,
+				bookId: productId,
+				progress: 0,
+			}));
 
+			const readProgress = await readProgressModel.insertMany(readProgressDocs);
+			console.log('readProgress: ', readProgress);
 			const cart = await cartModel.findOneAndDelete({ userId: order.userId }); 
 			await order.save();
 			

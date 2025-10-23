@@ -105,7 +105,6 @@ export const updateFavoriteService = async (user: any, payload: any, res: Respon
         { $set: { productId: payload.productId, userId: user.id } }, // Update fields
         { new: true, upsert: true } // Create if not found
       );
-      // if (!updatedFavorite) return errorResponseHandler("Favorite not found", httpStatusCode.NOT_FOUND, res);
       return {
         success: true,
         message: "Favorite updated successfully",

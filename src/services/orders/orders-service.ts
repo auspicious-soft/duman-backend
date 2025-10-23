@@ -167,15 +167,6 @@ export const createOrderService = async (payload: any, res: Response, userInfo: 
 
 			paymentData = paymentResponse;
 
-			const readProgressDocs = payload.productIds.map((productId: string) => ({
-				userId: userInfo.id,
-				bookId: productId,
-				progress: 0,
-			}));
-
-			const readProgress = await readProgressModel.insertMany(readProgressDocs);
-			console.log('readProgress: ', readProgress);
-
 			console.log(`Payment initialized successfully for order ${savedOrder.identifier}`);
 		} catch (paymentError) {
 			console.error(`Failed to initialize payment for order ${savedOrder.identifier}:`, paymentError);
