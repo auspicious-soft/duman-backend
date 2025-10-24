@@ -46,6 +46,8 @@ import {
   getChaptersByAudiobookIDForUser,
   getCourseforUser,
   getNewbookForUser,
+  getNewPodcastsForUser,
+  getNewVideoLecturesForUser,
   getRelatedBooks,
 } from "src/controllers/products/products-controller";
 import {
@@ -195,6 +197,8 @@ router.get("/stories/:id", getStory);
 // books routes
 router.get("/books", getAllBooks);
 router.get("/new-books", getNewbookForUser);
+router.get("/new-podcasts", getNewPodcastsForUser);
+router.get("/new-video-lectures", getNewVideoLecturesForUser);
 router.get("/best-sellers", getBestSellers);
 router.get("/related-books", getRelatedBooks);
 router.get("/audiobooks", getAllAudioBookForUser);
