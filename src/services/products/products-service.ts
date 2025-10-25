@@ -965,7 +965,7 @@ export const getRelatedBooksService = async (user: any, payload: any, res: Respo
 	if (!book) {
 		return errorResponseHandler("Book not found", httpStatusCode.NOT_FOUND, res);
 	}
-	const relatedBooks = await productsModel.find({ categoryId: book.categoryId, _id: { $ne: book._id }, type: book.type, isDeleted: false }).populate([{ path: "authorId", select: "name" }]);
+	const relatedBooks = await productsModel.find({ categoryId: book.categoryId, _id: { $ne: book._id }, type: book.type, isDeleted: false, module:book.module }).populate([{ path: "authorId", select: "name" }]);
 	const userData = await usersModel.findById(user.id);
 	const languages = toArray(payload.language);
 	const filteredResult = filterBooksByLanguage(relatedBooks, languages);
