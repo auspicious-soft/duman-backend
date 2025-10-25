@@ -4,7 +4,7 @@ import { errorParser } from "../../lib/errors/error-response-handler";
 import { httpStatusCode } from "../../lib/constant";
 
 
-export const createOrder = async (req: Request, res: Response) => {
+export const createOrder =async (req: Request, res: Response) => {
     try {
         // Extract user information from the authenticated request
         let userInfo = null;

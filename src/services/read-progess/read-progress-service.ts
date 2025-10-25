@@ -504,7 +504,7 @@ export const generateCertificateBothFormatsService = async (data: any, user: any
     const payload = {
       name: name,
       date: new Date().toLocaleDateString(),
-      courseTitle: course?.bookId?.name?.eng,
+      courseTitle: course?.bookId?.name?.eng ?? course?.bookId?.name?.rus ?? course?.bookId?.name?.kaz,
     };
     const pdfResult = await generateCertificateService(payload, user);
     const pngResult = await generateCertificatePNGService(payload, user);
@@ -675,12 +675,13 @@ export const updateReadProgress = async (readProgressId: string, readProgressDat
 
 	if (readProgressData.progress === 100 || ReadProgress.audiobookProgress === 100) {
 		const bookRead = await readProgressModel.countDocuments({ 
-			userId, 
+      userId, 
 			$or: [
-				{ progress: 100 },
+        { progress: 100 },
 				{ audiobookProgress: 100 }
 			]
 		});
+    console.log('bookRead: ', bookRead);
 		// await readProgressModel.findOneAndUpdate(
 		// 	{ userId, bookId: readProgressId }, 
 		// 	// { isCompleted: true }, 
@@ -688,12 +689,11 @@ export const updateReadProgress = async (readProgressId: string, readProgressDat
 		// );
 		//TODO: check that the badge will be considered for books only or all?
 		const awardedBadge = badges.find(({ count }) => bookRead === count);
+    console.log('awardedBadge: ', awardedBadge);
 
 		if (awardedBadge) {
-			updatedBadge = await awardsModel.findOneAndUpdate(
-				{ userId }, 
-				{ level: awardedBadge.level, badge: awardedBadge.badge }, 
-				{ new: true, upsert: true }
+			updatedBadge = await awardsModel.create(
+				{ userId, level: awardedBadge.level, badge: awardedBadge.badge },
 			);
 		}
 	}

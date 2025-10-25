@@ -233,11 +233,12 @@ export const getBookMarketForUserService = async (user: any, payload: any, res: 
 	const readProgressFilter = searchQuery
 		? {
 				userId: user.id,
+				progress: { $lt: 100 },
 				bookId: {
 					$in: await productsModel.find({ ...nameSearchFilter, isDeleted: false }).distinct("_id"),
 				},
 			}
-		: { userId: user.id };
+		: { userId: user.id, progress: { $lt: 100 } };
 
 	const readProgress = await readProgressModel
 		.find({ ...readProgressFilter })
@@ -288,7 +289,7 @@ export const getBookMarketForUserService = async (user: any, payload: any, res: 
 				},
 			};
 	const favoriteBooks = await favoritesModel.find({ userId: user.id }).select("productId");
-	const favoriteBookIds = favoriteBooks.map((f) => f.productId.toString());
+	const favoriteBookIds = favoriteBooks.map((f) => f.productId?.toString());
 
 	const bestSellers = await ordersModel.aggregate([
 		{

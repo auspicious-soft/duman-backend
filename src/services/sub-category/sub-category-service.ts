@@ -295,7 +295,7 @@ export const getSubCategoriesForUserService = async (user: any, payload: any, id
 
     console.log('user.id: ', user.id);
     const favoriteBooks = await favoritesModel.find({ userId: user.id }).populate("productId");
-    const favoriteIds = favoriteBooks.map((book) => book.productId._id.toString());
+    const favoriteIds = favoriteBooks.map((book) => book.productId?._id.toString());
 
     const subCategoryBooksWithFavoriteStatus = subCategoryBooks.map((book) => ({
       ...book.toObject(),

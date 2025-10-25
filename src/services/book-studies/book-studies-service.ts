@@ -655,8 +655,10 @@ export const getBookStudyReadProgressService = async (user: any, payload: any, r
 
   const readProgress = await readProgressModel.find({
     userId: user.id,
-    bookId: { $in: bookIds }
+    bookId: { $in: bookIds },
+    progress: { $lt: 100 },
   })
+  .sort({ createdAt: -1 }) // Sort by createdAt field in descending order
   .populate({
     path: "bookId",
     populate: [
