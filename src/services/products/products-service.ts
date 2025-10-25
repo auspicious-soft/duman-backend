@@ -993,7 +993,6 @@ export const getNewPodcastsService = async (user: any, payload: any, res: Respon
 		.find({ type: "podcast", isDeleted: false })
 		.sort({ createdAt: -1 })
 		.skip(offset)
-		.limit(20)
 		.populate([
 			{ path: "authorId", select: "name" },
 			{ path: "categoryId", select: "name" },
@@ -1024,15 +1023,12 @@ export const getNewVideoLecturesService = async (user: any, payload: any, res: R
 	const limit = parseInt(payload.limit as string) || 0;
 	const offset = (page - 1) * 20;
 	//TODO--CHANGED
-	// const totalDataCount = await productsModel.countDocuments({ type: "e-book" });
 	const totalDataCount = await productsModel.countDocuments({ type: "video-lecture", isDeleted: false });
 	const userData = await usersModel.findById(user.id);
 	let newBooks = await productsModel
-		// .find({ type: "e-book" }) //TODO--CHANGED
 		.find({ type: "video-lecture", isDeleted: false })
 		.sort({ createdAt: -1 })
 		.skip(offset)
-		.limit(20)
 		.populate([
 			{ path: "authorId", select: "name" },
 			{ path: "categoryId", select: "name" },
