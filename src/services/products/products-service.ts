@@ -980,24 +980,36 @@ export const getRelatedBooksService = async (user: any, payload: any, res: Respo
 	const page = parseInt(payload.page as string) || 1;
 	const limit = parseInt(payload.limit as string) || 10;
 	const offset = (page - 1) * limit;
-	const book = await productsModel.findById(payload.bookId);
+	const book = await productsModel.findById({ _id: payload.bookId }).populate([{ path: "authorId" }]);
+	console.log('book: ', book);
 	if (!book) {
 		return errorResponseHandler("Book not found", httpStatusCode.NOT_FOUND, res);
 	}
-	const relatedBooks = await productsModel.find({ categoryId: book.categoryId, _id: { $ne: book._id }, type: book.type, isDeleted: false, module:book.module }).populate([{ path: "authorId", select: "name" }]);
+	const relatedBooks = await productsModel.find({ categoryId: book.categoryId, _id: { $ne: book._id }, type: book.type, isDeleted: false, module:book.module }).populate([{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }]);
 	const userData = await usersModel.findById(user.id);
 	const languages = toArray(payload.language);
 	const filteredResult = filterBooksByLanguage(relatedBooks, languages);
 	const sortedResult = sortBooks(filteredResult, payload.sorting, userData?.productsLanguage, userData?.language);
 	const total = sortedResult.length;
 	const paginatedResults = sortedResult.slice(offset, offset + limit);
+		const favoriteBooks = await favoritesModel.find({ userId: user.id }).populate("productId");
+	  const favoriteIds = favoriteBooks
+		.filter((book) => book.productId && book.productId._id)
+		.map((book) => book.productId._id.toString());
+	
+	  let booksWithFavoriteStatus = paginatedResults.map((book) => ({
+		  ...book.toObject(),
+		  isFavorite: favoriteIds.includes(book._id.toString()),
+		//   isPurchased: true,
+		}));
+		console.log('booksWithFavoriteStatus: ', booksWithFavoriteStatus);
 	return {
 		success: true,
 		message: "Related books retrieved successfully",
 		page,
 		limit,
 		total: total,
-		data: paginatedResults,
+		data: booksWithFavoriteStatus,
 	};
 };
 export const getNewPodcastsService = async (user: any, payload: any, res: Response) => {
@@ -1035,6 +1047,44 @@ export const getNewPodcastsService = async (user: any, payload: any, res: Respon
 		total: totalDataCount,
 		data: {
 			newPodcasts: newBooksWithFavoriteStatus,
+		},
+	};
+};
+export const getNewCoursesService = async (user: any, payload: any, res: Response) => {
+	const page = parseInt(payload.page as string) || 1;
+	const limit = parseInt(payload.limit as string) || 0;
+	const offset = (page - 1) * 20;
+	//TODO--CHANGED
+	// const totalDataCount = await productsModel.countDocuments({ type: "e-book" });
+	const totalDataCount = await productsModel.countDocuments({ type: "course", isDeleted: false });
+	const userData = await usersModel.findById(user.id);
+	let newBooks = await productsModel
+		// .find({ type: "e-book" }) //TODO--CHANGED
+		.find({ type: "course", isDeleted: false })
+		.sort({ createdAt: -1 })
+		.skip(offset)
+		.populate([
+			{ path: "authorId", select: "name" },
+			{ path: "categoryId", select: "name" },
+		]);
+	const favoriteBooks = await favoritesModel.find({ userId: user.id }).populate("productId");
+	const favoriteIds = favoriteBooks.filter((book) => book.productId && book.productId._id).map((book) => book.productId._id.toString());
+	const languages = toArray(payload.language);
+	newBooks = filterBooksByLanguage(newBooks, languages);
+	newBooks = sortBooks(newBooks, payload.sorting, userData?.productsLanguage, userData?.language);
+
+	const newBooksWithFavoriteStatus = newBooks.map((book) => ({
+		...book.toObject(),
+		isFavorite: favoriteIds.includes(book._id.toString()),
+	}));
+	return {
+		success: true,
+		message: "Book retrieved successfully",
+		page,
+		limit,
+		total: totalDataCount,
+		data: {
+			newCourses: newBooksWithFavoriteStatus,
 		},
 	};
 };
