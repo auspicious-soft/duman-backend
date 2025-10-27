@@ -370,6 +370,16 @@ export const getBookMarketForUserService = async (user: any, payload: any, res: 
 				type: "podcast",
 				isDeleted: false,
 			};
+	const newCoursesFilter = searchQuery
+		? {
+				type: "course",
+				isDeleted: false,
+				...nameSearchFilter,
+			}
+		: {
+				type: "course",
+				isDeleted: false,
+			};
 
 	const newvideoLecturesFilter = searchQuery
 		? {
@@ -408,6 +418,14 @@ export const getBookMarketForUserService = async (user: any, payload: any, res: 
 			{ path: "authorId", select: "name" },
 			{ path: "categoryId", select: "name" },
 		]);
+	const newCourses = await productsModel
+		.find({ ...newCoursesFilter })
+		.sort({ createdAt: -1 })
+		.limit(20)
+		.populate([
+			{ path: "authorId", select: "name" },
+			{ path: "categoryId", select: "name" },
+		]);
 
 	const newBooksWithFavorite = newBooks.map((item) => ({
 		...item.toObject(),
@@ -426,6 +444,7 @@ export const getBookMarketForUserService = async (user: any, payload: any, res: 
 			author: author,
 			newBooks: newBooksWithFavorite,
 			newPodcasts: newPodcasts,
+			newCourses: newCourses,
 			newVideoLecture: newVideoLecture,
 			bestSellers: bestSellersWithFavorite,
 		},
