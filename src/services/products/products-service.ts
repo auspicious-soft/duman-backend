@@ -756,13 +756,19 @@ export const getNewbookForUserService = async (user: any, payload: any, res: Res
 	const page = parseInt(payload.page as string) || 1;
 	const limit = parseInt(payload.limit as string) || 0;
 	const offset = (page - 1) * 20;
+	let module
+	if(payload.module){
+		module=payload.module
+	}else{
+		module="bookMarket"
+	}
 	//TODO--CHANGED
 	// const totalDataCount = await productsModel.countDocuments({ type: "e-book" });
-	const totalDataCount = await productsModel.countDocuments({ type: "audio&ebook", format: { $nin: ["audiobook", null] }, isDeleted: false });
+	const totalDataCount = await productsModel.countDocuments({ type: "audio&ebook", format: { $nin: ["audiobook", null] }, isDeleted: false,module });
 	const userData = await usersModel.findById(user.id);
 	let newBooks = await productsModel
 		// .find({ type: "e-book" }) //TODO--CHANGED
-		.find({ type: "audio&ebook", format: { $nin: ["audiobook", null] }, isDeleted: false })
+		.find({ type: "audio&ebook", format: { $nin: ["audiobook", null] }, isDeleted: false, module })
 		.sort({ createdAt: -1 })
 		.skip(offset)
 		.limit(20)
@@ -1002,7 +1008,6 @@ export const getRelatedBooksService = async (user: any, payload: any, res: Respo
 		  isFavorite: favoriteIds.includes(book._id.toString()),
 		//   isPurchased: true,
 		}));
-		console.log('booksWithFavoriteStatus: ', booksWithFavoriteStatus);
 	return {
 		success: true,
 		message: "Related books retrieved successfully",
@@ -1016,13 +1021,19 @@ export const getNewPodcastsService = async (user: any, payload: any, res: Respon
 	const page = parseInt(payload.page as string) || 1;
 	const limit = parseInt(payload.limit as string) || 0;
 	const offset = (page - 1) * 20;
+	let module
+	if(payload.module){
+		module=payload.module
+	}else{
+		module="bookMarket"
+	}
 	//TODO--CHANGED
 	// const totalDataCount = await productsModel.countDocuments({ type: "e-book" });
-	const totalDataCount = await productsModel.countDocuments({ type: "podcast", isDeleted: false });
+	const totalDataCount = await productsModel.countDocuments({ type: "podcast", isDeleted: false, module });
 	const userData = await usersModel.findById(user.id);
 	let newBooks = await productsModel
 		// .find({ type: "e-book" }) //TODO--CHANGED
-		.find({ type: "podcast", isDeleted: false })
+		.find({ type: "podcast", isDeleted: false, module })
 		.sort({ createdAt: -1 })
 		.skip(offset)
 		.populate([
@@ -1054,18 +1065,26 @@ export const getNewCoursesService = async (user: any, payload: any, res: Respons
 	const page = parseInt(payload.page as string) || 1;
 	const limit = parseInt(payload.limit as string) || 0;
 	const offset = (page - 1) * 20;
+	let module
+	if(payload.module){
+		module=payload.module
+	}else{
+		module="bookMarket"
+	}
 	//TODO--CHANGED
 	// const totalDataCount = await productsModel.countDocuments({ type: "e-book" });
-	const totalDataCount = await productsModel.countDocuments({ type: "course", isDeleted: false });
+	const totalDataCount = await productsModel.countDocuments({ type: "course", isDeleted: false, module });
 	const userData = await usersModel.findById(user.id);
 	let newBooks = await productsModel
 		// .find({ type: "e-book" }) //TODO--CHANGED
-		.find({ type: "course", isDeleted: false })
+		.find({ type: "course", isDeleted: false, module })
 		.sort({ createdAt: -1 })
 		.skip(offset)
 		.populate([
 			{ path: "authorId", select: "name" },
 			{ path: "categoryId", select: "name" },
+			{ path: "subCategoryId", select: "name" },
+			{ path: "publisherId", select: "name" },
 		]);
 	const favoriteBooks = await favoritesModel.find({ userId: user.id }).populate("productId");
 	const favoriteIds = favoriteBooks.filter((book) => book.productId && book.productId._id).map((book) => book.productId._id.toString());
@@ -1083,20 +1102,24 @@ export const getNewCoursesService = async (user: any, payload: any, res: Respons
 		page,
 		limit,
 		total: totalDataCount,
-		data: {
-			newCourses: newBooksWithFavoriteStatus,
-		},
+		data: newBooksWithFavoriteStatus,
 	};
 };
 export const getNewVideoLecturesService = async (user: any, payload: any, res: Response) => {
 	const page = parseInt(payload.page as string) || 1;
 	const limit = parseInt(payload.limit as string) || 0;
-	const offset = (page - 1) * 20;
+	const offset = (page - 1) * limit;
+	let module
+	if(payload.module){
+		module=payload.module
+	}else{
+		module="bookMarket"
+	}
 	//TODO--CHANGED
-	const totalDataCount = await productsModel.countDocuments({ type: "video-lecture", isDeleted: false });
+	const totalDataCount = await productsModel.countDocuments({ type: "video-lecture", isDeleted: false, module });
 	const userData = await usersModel.findById(user.id);
 	let newBooks = await productsModel
-		.find({ type: "video-lecture", isDeleted: false })
+		.find({ type: "video-lecture", isDeleted: false, module })
 		.sort({ createdAt: -1 })
 		.skip(offset)
 		.populate([
@@ -1113,6 +1136,7 @@ export const getNewVideoLecturesService = async (user: any, payload: any, res: R
 		...book.toObject(),
 		isFavorite: favoriteIds.includes(book._id.toString()),
 	}));
+
 	return {
 		success: true,
 		message: "Book retrieved successfully",

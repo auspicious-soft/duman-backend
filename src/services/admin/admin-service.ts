@@ -54,6 +54,7 @@ export const loginService = async (payload: any, res: Response) => {
 
 export const forgotPasswordService = async (email: string, res: Response) => {
   const admin = await adminModel.findOne({ email: email }).select("+password");
+  console.log('admin: ', admin);
   if (!admin) return errorResponseHandler("Email not found", httpStatusCode.NOT_FOUND, res);
 
   try {
