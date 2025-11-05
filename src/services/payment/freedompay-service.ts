@@ -266,7 +266,7 @@ export const processResultRequest = async (params: Record<string, any>) => {
 
 			const readProgress = await readProgressModel.insertMany(readProgressDocs);
 			console.log('readProgress: ', readProgress);
-			const cart = await cartModel.findOneAndDelete({ userId: order.userId }); 
+			const cart = await cartModel.findOneAndDelete({ userId: order.userId });
 			await order.save();
 			
 			console.log(`Order ${orderId} successfully updated with payment details:`, {

@@ -145,7 +145,6 @@ export const getBookSchoolsByCodeService = async (payload: any, user: any, res: 
     { path: "subCategoryId", select: "name" },
   ]);
   
-  console.log('bookSchoolData: ', bookSchoolData);
   // const total = bookSchoolData.length;
     const favoriteBooks = await favoritesModel.find({ userId: user.id }).populate("productId");
   const favoriteIds = favoriteBooks
