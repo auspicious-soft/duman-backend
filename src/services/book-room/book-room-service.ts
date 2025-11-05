@@ -10,18 +10,18 @@ export const getAllReadingBooksService = async (user: any, payload: any) => {
 	const offset = (page - 1) * limit;
 	const userData = await usersModel.findById(user.id);
 	const readingBooks = await readProgressModel
-		.find({
-			userId: user.id,
-			progress: { $lt: 100 },
-		})
-		.populate({
-			path: "bookId",
-			populate: [{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }],
-		});
+	.find({
+		userId: user.id,
+		progress: { $lt: 100 },
+	})
+	.populate({
+		path: "bookId",
+		populate: [{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }],
+	});
 	//TODO--CHANGED
 	//TODO--need to be tested
 	// const modifiedResults = readingBooks.filter((item: any) => item.bookId.type === "e-book");
-	const modifiedResults = readingBooks.filter((item: any) => item?.bookId?.type === "audio&ebook" && item?.bookId?.format !== "audiobook");
+	const modifiedResults = readingBooks.filter((item: any) => item?.bookId?.type === "audio&ebook" );
 	const languages = toArray(payload.language);
 	const filteredResult = filterBooksByLanguage(modifiedResults, languages);
 	const sortedResult = sortBooks(filteredResult, payload.sorting, userData?.productsLanguage, userData?.language);
