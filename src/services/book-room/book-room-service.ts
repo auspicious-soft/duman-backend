@@ -10,18 +10,18 @@ export const getAllReadingBooksService = async (user: any, payload: any) => {
 	const offset = (page - 1) * limit;
 	const userData = await usersModel.findById(user.id);
 	const readingBooks = await readProgressModel
-	.find({
-		userId: user.id,
-		progress: { $lt: 100 },
-	})
-	.populate({
-		path: "bookId",
-		populate: [{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }],
-	});
+		.find({
+			userId: user.id,
+			$or: [{ progress: { $lt: 100} }, { audiobookProgress: { $lt: 100 } }],
+		})
+		.populate({
+			path: "bookId",
+			populate: [{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }],
+		});
 	//TODO--CHANGED
 	//TODO--need to be tested
 	// const modifiedResults = readingBooks.filter((item: any) => item.bookId.type === "e-book");
-	const modifiedResults = readingBooks.filter((item: any) => item?.bookId?.type === "audio&ebook" );
+	const modifiedResults = readingBooks.filter((item: any) => item?.bookId?.type === "audio&ebook");
 	const languages = toArray(payload.language);
 	const filteredResult = filterBooksByLanguage(modifiedResults, languages);
 	const sortedResult = sortBooks(filteredResult, payload.sorting, userData?.productsLanguage, userData?.language);
@@ -56,7 +56,7 @@ export const getAllFinishedBooksService = async (user: any, payload: any) => {
 	const finishedBooks = await readProgressModel
 		.find({
 			userId: user.id,
-			progress: { $eq: 100 },
+			$or: [{ progress: { $eq: 100 } }, { audiobookProgress: { $eq: 100 } }],
 		})
 		.populate({
 			path: "bookId",
@@ -64,7 +64,7 @@ export const getAllFinishedBooksService = async (user: any, payload: any) => {
 		});
 	//TODO--CHANGED
 	// const modifiedResults = finishedBooks.filter((item: any) => item.bookId.type === "e-books");
-	const modifiedResults = finishedBooks?.filter((item: any) => item?.bookId?.type === "audio&ebook" && item?.bookId?.format !== "audiobook");
+	const modifiedResults = finishedBooks?.filter((item: any) => item?.bookId?.type === "audio&ebook");
 	const languages = toArray(payload.language);
 	const filteredResult = filterBooksByLanguage(modifiedResults, languages);
 	const sortedResult = sortBooks(filteredResult, payload.sorting, userData?.productsLanguage, userData?.language);
@@ -201,7 +201,7 @@ export const getCoursesBookRoomService = async (user: any, payload: any) => {
 				return item?.bookId?.type === "podcast";
 			});
 			break;
-		
+
 		case "video-lecture":
 			const completedVideoLecture = await readProgressModel.find({ userId: user.id }).populate({
 				path: "bookId",
@@ -211,7 +211,7 @@ export const getCoursesBookRoomService = async (user: any, payload: any) => {
 				return item?.bookId?.type === "video-lecture";
 			});
 			break;
-		
+
 		default:
 			return { success: false, message: "Invalid type", data: [] };
 	}
