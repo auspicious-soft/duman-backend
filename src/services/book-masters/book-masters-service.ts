@@ -7,6 +7,8 @@ import { favoritesModel } from "src/models/product-favorites/product-favorites-s
 import { readProgressModel } from "src/models/user-reads/read-progress-schema";
 import { categoriesModel } from "src/models/categories/categroies-schema";
 import { authorsModel } from "src/models/authors/authors-schema";
+import { sortBooks } from "src/utils";
+import { usersModel } from "src/models/user/user-schema";
 
 export const addBooksToBookMaster = async (payload: any, res: Response) => {
   try {
@@ -453,19 +455,27 @@ export const getPopularCoursesBookMasterService = async (payload: any, user: any
   .sort({
     "productsId.averageRating": 1,
   });
+  const userData = await usersModel.findById(user.id);
+const favoriteBooks = await favoritesModel.find({ userId: user.id }).populate("productId");
+  const favoriteIds = favoriteBooks.map((book) => book.productId?._id.toString());
+   let newBooksWithFavoriteStatus = bookStudy.map((book) => ({
+     ...book.toObject(),
+     isFavorite: favoriteIds.includes(book.productsId?._id.toString()),
+     // isPurchased: true,
+    }));
 
-
-  const filteredBookStudy = bookStudy.filter((study) => study.productsId !== null);
+  const filteredBookStudy = newBooksWithFavoriteStatus.filter((study) => study.productsId !== null);
+  const sortedResult = sortBooks(filteredBookStudy, payload.sorting, userData?.productsLanguage, userData?.language);
 
 
   // Apply search filter if description is provided
-  let searchFilteredCourses = filteredBookStudy;
+  let searchFilteredCourses = sortedResult;
   if (payload.description) {
     const searchQuery = typeof payload.description === 'string' ? payload.description.toLowerCase() : '';
     const searchLanguage = payload.language && ['eng', 'kaz', 'rus'].includes(payload.language) ? payload.language : null;
 
 
-    searchFilteredCourses = filteredBookStudy.filter((course) => {
+    searchFilteredCourses = sortedResult.filter((course) => {
       try {
         if (!course || !course.productsId) {
           return false;
@@ -543,7 +553,7 @@ export const getBookMasterNewbookService = async (user: any, payload: any, res: 
   const totalDataCount = await bookMastersModel.countDocuments({
     createdAt: { $gte: sixMonthsAgo }
   });
-
+  
 
   const newBooks = await bookMastersModel.find({
     createdAt: { $gte: sixMonthsAgo }
@@ -566,11 +576,13 @@ export const getBookMasterNewbookService = async (user: any, payload: any, res: 
   const favoriteIds = favoriteBooks
     .filter((book) => book.productId && book.productId._id)
     .map((book) => book.productId._id.toString());
+  const userData = await usersModel.findById(user.id);
 
+  const sortedResult = sortBooks(newBooks, payload.sorting, userData?.productsLanguage, userData?.language);
 
-  let newBooksWithFavoriteStatus = newBooks.map((book) => ({
+  let newBooksWithFavoriteStatus = sortedResult.map((book) => ({
     ...book.toObject(),
-    isFavorite: favoriteIds.includes(book._id.toString()),
+    isFavorite: favoriteIds.includes(book.productsId?._id.toString()),
   }));
 
 

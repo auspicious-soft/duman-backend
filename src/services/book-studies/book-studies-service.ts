@@ -5,6 +5,8 @@ import { bookStudiesModel } from "../../models/book-studies/book-studies-schema"
 import { productsModel } from "src/models/products/products-schema";
 import { favoritesModel } from "src/models/product-favorites/product-favorites-schema";
 import { readProgressModel } from "src/models/user-reads/read-progress-schema";
+import { sortBooks } from "src/utils";
+import { usersModel } from "src/models/user/user-schema";
 
 
 export const addBooksToBookStudy = async (payload: any, res: Response) => {
@@ -473,7 +475,16 @@ export const getPopularCoursesService = async (payload: any, user: any, res: Res
   .sort({
     "productsId.averageRating": 1,
   });
-  const filteredBookStudy = bookStudy.filter((study) => study.productsId !== null);
+
+  const favoriteBooks = await favoritesModel.find({ userId: user.id }).populate("productId");
+  const favoriteIds = favoriteBooks.map((book) => book.productId?._id.toString());
+   let newBooksWithFavoriteStatus = bookStudy.map((book) => ({
+    ...book.toObject(),
+    isFavorite: favoriteIds.includes(book.productsId?._id.toString()),
+    // isPurchased: true,
+  }));
+  const filteredBookStudy = newBooksWithFavoriteStatus.filter((study) => study.productsId !== null);
+
  const total = filteredBookStudy.length;
   return {
     success: true,
@@ -512,15 +523,18 @@ export const getBookStudyNewbookForUserService = async (user: any, payload: any,
     .sort({ createdAt: -1 })
     .skip(offset)
     .limit(limit);
+  const userData = await usersModel.findById(user.id);
+
+    const sortedResult = sortBooks(newBooks, payload.sorting, userData?.productsLanguage, userData?.language);
 
   const favoriteBooks = await favoritesModel.find({ userId: user.id }).populate("productId");
   const favoriteIds = favoriteBooks
     .filter((book) => book.productId && book.productId._id)
     .map((book) => book.productId._id.toString());
 
-  let newBooksWithFavoriteStatus = newBooks.map((book) => ({
+  let newBooksWithFavoriteStatus = sortedResult.map((book) => ({
     ...book.toObject(),
-    isFavorite: favoriteIds.includes(book._id.toString()),
+    isFavorite: favoriteIds.includes(book.productsId?._id.toString()),
   }));
 
   // Apply search filter if description is provided
