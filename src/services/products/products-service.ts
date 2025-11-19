@@ -52,7 +52,7 @@ export const createBookService = async (payload: any, res: Response) => {
 export const getBooksService = async (payload: any, id: string, res: Response) => {
 	try {
 		const page = parseInt(payload.page as string) || 1;
-		const limit = parseInt(payload.limit as string) || 0;
+		const limit = parseInt(payload.limit as string) || 10;
 		const offset = (page - 1) * limit;
 		let lessons, totalDataCount;
 
@@ -94,7 +94,7 @@ export const getBooksService = async (payload: any, id: string, res: Response) =
 
 export const getAllBooksService = async (payload: any, res: Response) => {
 	const page = parseInt(payload.page as string) || 1;
-	const limit = parseInt(payload.limit as string) || 0;
+	const limit = parseInt(payload.limit as string) || 10;
 	const offset = (page - 1) * limit;
 	let type;
 	let format = null;
@@ -453,7 +453,7 @@ export const getBookMarketForUserService = async (user: any, payload: any, res: 
 
 export const getAllProductsForStocksTabService = async (payload: any, res: Response) => {
 	// const page = parseInt(payload.page as string) || 1;
-	// const limit = parseInt(payload.limit as string) || 0;
+	// const limit = parseInt(payload.limit as string) || 10;
 	// const offset = (page - 1) * limit;
 
 	const query: any = payload.type ? { type: payload.type } : {};
@@ -495,7 +495,7 @@ export const getAllProductsForStocksTabService = async (payload: any, res: Respo
 };
 export const getAllDiscountedBooksService = async (payload: any, res: Response) => {
 	const page = parseInt(payload.page as string) || 1;
-	const limit = parseInt(payload.limit as string) || 0;
+	const limit = parseInt(payload.limit as string) || 10;
 	const offset = (page - 1) * limit;
 	const { query, sort } = nestedQueryBuilder(payload, ["name"]) as { query: any; sort: any };
 
@@ -754,8 +754,8 @@ export const getBookForUserService = async (id: string, payload: any, user: any,
 
 export const getNewbookForUserService = async (user: any, payload: any, res: Response) => {
 	const page = parseInt(payload.page as string) || 1;
-	const limit = parseInt(payload.limit as string) || 0;
-	const offset = (page - 1) * 20;
+	const limit = parseInt(payload.limit as string) || 10;
+	const offset = (page - 1) * limit;
 	let module
 	if(payload.module){
 		module=payload.module
@@ -799,7 +799,7 @@ export const getNewbookForUserService = async (user: any, payload: any, res: Res
 };
 export const getAllAudioBookForUserService = async (payload: any, user: any, res: Response) => {
 	const page = parseInt(payload.page as string) || 1;
-	const limit = parseInt(payload.limit as string) || 0;
+	const limit = parseInt(payload.limit as string) || 10;
 	const offset = (page - 1) * limit;
 	const userData = await usersModel.findById(user.id);
 	// let audiobooks = await productsModel
@@ -1019,7 +1019,7 @@ export const getRelatedBooksService = async (user: any, payload: any, res: Respo
 };
 export const getNewPodcastsService = async (user: any, payload: any, res: Response) => {
 	const page = parseInt(payload.page as string) || 1;
-	const limit = parseInt(payload.limit as string) || 0;
+	const limit = parseInt(payload.limit as string) || 10;
 	const offset = (page - 1) * 20;
 	let module
 	if(payload.module){
@@ -1063,7 +1063,7 @@ export const getNewPodcastsService = async (user: any, payload: any, res: Respon
 };
 export const getNewCoursesService = async (user: any, payload: any, res: Response) => {
 	const page = parseInt(payload.page as string) || 1;
-	const limit = parseInt(payload.limit as string) || 0;
+	const limit = parseInt(payload.limit as string) || 10;
 	const offset = (page - 1) * 20;
 	let module
 	if(payload.module){
@@ -1107,7 +1107,7 @@ export const getNewCoursesService = async (user: any, payload: any, res: Respons
 };
 export const getNewVideoLecturesService = async (user: any, payload: any, res: Response) => {
 	const page = parseInt(payload.page as string) || 1;
-	const limit = parseInt(payload.limit as string) || 0;
+	const limit = parseInt(payload.limit as string) || 10;
 	const offset = (page - 1) * limit;
 	let module
 	if(payload.module){

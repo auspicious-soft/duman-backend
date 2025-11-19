@@ -56,7 +56,7 @@ export const createCourseLessonService = async (bookDetails: any, lessons: any, 
 
 export const getCourseLessonByIdService = async (payload: any, productId: string) => {
 	const page = parseInt(payload.page as string) || 1;
-	const limit = parseInt(payload.limit as string) || 0;
+	const limit = parseInt(payload.limit as string) || 10;
 	const offset = (page - 1) * limit;
 	const courseData = await productsModel.findById(productId);
 	const totalDataCount = Object.keys({ productId: productId }).length < 1 ? await courseLessonsModel.countDocuments() : await courseLessonsModel.countDocuments({ productId: productId });
@@ -83,7 +83,7 @@ export const getCourseLessonByIdService = async (payload: any, productId: string
 
 export const getCourseLessonByIdForUserService = async (user: any, payload: any, productId: string) => {
 	const page = parseInt(payload.page as string) || 1;
-	const limit = parseInt(payload.limit as string) || 0;
+	const limit = parseInt(payload.limit as string) || 10;
 	const offset = (page - 1) * limit;
 	const { lang: language } = payload;
 
@@ -316,7 +316,7 @@ export const deleteCourseLanguageService = async (productId: string, lang: any, 
 
 export const getAllCourseLessons = async (payload: any) => {
 	const page = parseInt(payload.page as string) || 1;
-	const limit = parseInt(payload.limit as string) || 0;
+	const limit = parseInt(payload.limit as string) || 10;
 	const offset = (page - 1) * limit;
 	const { query, sort } = queryBuilder(payload, ["lessonTitle"]);
 

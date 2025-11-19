@@ -66,7 +66,7 @@ export const getBookUniversityService = async (id: string, res: Response) => {
 
 export const getAllBookUniversitiesService = async (payload: any) => {
 	const page = parseInt(payload.page as string) || 1;
-	const limit = parseInt(payload.limit as string) || 0;
+	const limit = parseInt(payload.limit as string) || 10;
 	const offset = (page - 1) * limit;
 
 	const query: any = {};
@@ -230,7 +230,7 @@ export const deleteBookUniversityService = async (id: string, res: Response) => 
 
 // export const getBookUniversityCategoryService = async (user: any, payload: any, res: Response) => {
 //   const page = parseInt(payload.page as string) || 1;
-//   const limit = parseInt(payload.limit as string) || 0;
+//   const limit = parseInt(payload.limit as string) || 10;
 //   const offset = (page - 1) * limit;
 
 //   // Fetch book studies and populate with related fields
@@ -301,7 +301,7 @@ export const deleteBookUniversityService = async (id: string, res: Response) => 
 
 export const getBookUniversityCategoryService = async (user: any, payload: any, res: Response) => {
 	const page = parseInt(payload.page as string) || 1;
-	const limit = parseInt(payload.limit as string) || 0;
+	const limit = parseInt(payload.limit as string) || 10;
 	const offset = (page - 1) * limit;
 
 	const bookStudy = await bookUniversitiesModel.find().populate({
@@ -381,7 +381,7 @@ export const getBookUniversityCategoryService = async (user: any, payload: any, 
 
 // export const getBookUniversityCategoryService = async (user: any, payload: any, res: Response) => {
 //   const page = parseInt(payload.page as string) || 1;
-//   const limit = parseInt(payload.limit as string) || 0;
+//   const limit = parseInt(payload.limit as string) || 10;
 //   const offset = (page - 1) * limit;
 
 //   const bookStudy = await bookUniversitiesModel.find().populate({
@@ -491,7 +491,7 @@ export const getBookUniversityTeacherService = async (payload: any, user: any, r
 
 export const getPopularCoursesBookUniversityService = async (payload: any, user: any, res: Response) => {
 	const page = parseInt(payload.page as string) || 1;
-	const limit = parseInt(payload.limit as string) || 0;
+	const limit = parseInt(payload.limit as string) || 10;
 	const bookStudy = await bookUniversitiesModel
 		.find()
 		.populate({
@@ -530,8 +530,8 @@ export const getPopularCoursesBookUniversityService = async (payload: any, user:
 
 export const getBookUniversityNewbookService = async (user: any, payload: any, res: Response) => {
 	const page = parseInt(payload.page as string) || 1;
-	const limit = parseInt(payload.limit as string) || 0;
-	const offset = (page - 1) * 20;
+	const limit = parseInt(payload.limit as string) || 10;
+	const offset = (page - 1) * limit;
 
 	const today = new Date();
 

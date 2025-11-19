@@ -65,7 +65,7 @@ export const getAudiobookChapterByIdService = async (id: string, res: Response) 
 };
 // export const getAudiobookChapterByIdService = async (user: any, payload: any, productId: string) => {
 //   const page = parseInt(payload.page as string) || 1;
-//   const limit = parseInt(payload.limit as string) || 0;
+//   const limit = parseInt(payload.limit as string) || 10;
 //   const offset = (page - 1) * limit;
 //   const { lang: language } = payload;
 
@@ -143,7 +143,7 @@ export const getAudiobookChapterByIdService = async (id: string, res: Response) 
 // Get all audiobook chapters for a specific product
 export const getAudiobookChaptersByProductIdForAdminService = async (payload: any, productId: string) => {
   const page = parseInt(payload.page as string) || 1;
-  const limit = parseInt(payload.limit as string) || 0;
+  const limit = parseInt(payload.limit as string) || 10;
   const offset = (page - 1) * limit;
   let query: { [key: string]: any } = {};
   if (payload.lang) {
@@ -180,7 +180,7 @@ export const getAudiobookChaptersByProductIdForAdminService = async (payload: an
 
 export const getAudiobookChaptersByProductIdService = async (user: any, payload: any, productId: string) => {
   const page = parseInt(payload.page as string) || 1;
-  const limit = parseInt(payload.limit as string) || 0;
+  const limit = parseInt(payload.limit as string) || 10;
   const offset = (page - 1) * limit;
 
   let query: { [key: string]: any } = {};
@@ -261,7 +261,7 @@ export const getAudiobookChaptersByProductIdService = async (user: any, payload:
 // Get all audiobook chapters
 export const getAllAudiobookChaptersService = async (payload: any) => {
   const page = parseInt(payload.page as string) || 1;
-  const limit = parseInt(payload.limit as string) || 0;
+  const limit = parseInt(payload.limit as string) || 10;
   const offset = (page - 1) * limit;
   const { query, sort } = queryBuilder(payload, ["name"]);
 

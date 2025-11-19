@@ -64,7 +64,7 @@ export const getAuthorForUserService = async (user: any, id: string, res: Respon
 
 export const getAllAuthorsService = async (payload: any, res: Response) => {
   const page = parseInt(payload.page as string) || 1;
-  const limit = parseInt(payload.limit as string) || 0;
+  const limit = parseInt(payload.limit as string) || 10;
   const offset = (page - 1) * limit;
   const { query, sort } = nestedQueryBuilder(payload, ["name"]);
   if (payload.category) {
@@ -98,7 +98,7 @@ export const getAllAuthorsService = async (payload: any, res: Response) => {
 };
 export const getAllAuthorsForUserService = async (user: any, payload: any, res: Response) => {
   const page = parseInt(payload.page as string) || 1;
-  const limit = parseInt(payload.limit as string) || 0;
+  const limit = parseInt(payload.limit as string) || 10;
   const offset = (page - 1) * limit;
   const { query, sort } = nestedQueryBuilder(payload, ["name"]);
 

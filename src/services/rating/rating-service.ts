@@ -51,7 +51,7 @@ export const getRatingService = async (id: string, res: Response) => {
 
 export const getAllRatingsService = async (payload: any, res: Response) => {
   const page = parseInt(payload.page as string) || 1;
-  const limit = parseInt(payload.limit as string) || 0;
+  const limit = parseInt(payload.limit as string) || 10;
   const offset = (page - 1) * limit;
   const { query, sort } = queryBuilder(payload, ["productId"]);
 

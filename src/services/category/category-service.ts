@@ -145,7 +145,7 @@ export const getBooksByCategoryIdService = async (
 export const getAllCategoriesService = async (payload: any, res: Response) => {
   console.log('payload: ', payload);
   const page = parseInt(payload.page as string) || 1;
-  const limit = parseInt(payload.limit as string) || 0;
+  const limit = parseInt(payload.limit as string) || 10;
   const offset = (page - 1) * limit;
   const { query, sort } = nestedQueryBuilder(payload, ["name"]);
   if (payload.module && payload.module !== "All" && payload.module !== "undefined") {

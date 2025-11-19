@@ -13,6 +13,7 @@ import { hashPasswordIfEmailAuth } from "src/utils/userAuth/signUpAuth";
 import { favoritesModel } from "src/models/product-favorites/product-favorites-schema";
 import { usersModel } from "src/models/user/user-schema";
 import { sendNotification } from "src/utils/FCM/FCM";
+import { categoriesModel } from "src/models/categories/categroies-schema";
 
 export const createPublisherService = async (payload: any, res: Response) => {
 	const newPublisher = new publishersModel(payload);
@@ -39,7 +40,8 @@ export const createPublisherService = async (payload: any, res: Response) => {
 };
 
 export const getPublisherService = async (id: string, res: Response) => {
-	const publisher = await publishersModel.findById(id).populate("categoryId");
+	const publisher = await publishersModel.findById(id)
+	// .populate("categoryId");
 	if (!publisher) return errorResponseHandler("Publisher not found", httpStatusCode.NOT_FOUND, res);
 
 	const publisherBooks = await productsModel.find({ publisherId: id }).populate([{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }]);
@@ -58,14 +60,16 @@ export const getPublisherService = async (id: string, res: Response) => {
 };
 
 export const getPublisherForUserService = async (id: string, user: any, res: Response) => {
-	const publisher = await publishersModel.findById(id).populate("categoryId");
-	if (!publisher) return errorResponseHandler("Publisher not found", httpStatusCode.NOT_FOUND, res);
+	const publisherDetails = await publishersModel.findById(id)
+	// .populate("categoryId");
+	if (!publisherDetails) return errorResponseHandler("Publisher not found", httpStatusCode.NOT_FOUND, res);
 
 	const favoriteBooks = await favoritesModel.find({ userId: user.id }).populate("productId");
 	const favoriteIds = favoriteBooks.map((book) => book.productId._id.toString());
 
 	const publisherBooks = await productsModel
 		.find({ publisherId: id })
+		.sort({ createdAt: -1 })
 		.populate([
 			{ path: "authorId", select: "name" },
 			{ path: "categoryId", select: "name" },
@@ -94,8 +98,31 @@ export const getPublisherForUserService = async (id: string, user: any, res: Res
 		};
 	});
 
-	const booksCount = await productsModel.countDocuments({ publisherId: id });
+	// --------------------------------------------
+	// 🔥 Extract unique categoryIds from books
+	// --------------------------------------------
+	console.log('publisherBooksWithFavoriteStatus: ', publisherBooksWithFavoriteStatus);
+	const categoryIds = [
+    ...new Set(
+        publisherBooksWithFavoriteStatus.flatMap((book) =>
+            Array.isArray(book.categoryId)
+                ? book.categoryId.map((cat) => cat._id?.toString()).filter(Boolean)
+                : []
+        )
+    ),
+];
+	console.log('categoryIds: ', categoryIds);
 
+	// --------------------------------------------
+	// 🔥 Populate the category documents
+	// --------------------------------------------
+	const relatedCategories = await categoriesModel.find({
+		_id: { $in: categoryIds },
+	});
+
+	// Count total books
+	const booksCount = await productsModel.countDocuments({ publisherId: id });
+    const publisher = {...publisherDetails.toObject(),categoryId:relatedCategories}; // Renaming for clarity
 	return {
 		success: true,
 		message: "Publisher retrieved successfully",
@@ -103,42 +130,50 @@ export const getPublisherForUserService = async (id: string, user: any, res: Res
 			publisher,
 			booksCount,
 			publisherBooks: publisherBooksWithFavoriteStatus,
+			relatedCategories, // 👈 Added here
 		},
 	};
 };
 
+
 // export const getPublisherForUserService = async (id: string, user: any, res: Response) => {
 // 	const publisher = await publishersModel.findById(id).populate("categoryId");
-// 	console.log('publisher: ', publisher);
 // 	if (!publisher) return errorResponseHandler("Publisher not found", httpStatusCode.NOT_FOUND, res);
 
 // 	const favoriteBooks = await favoritesModel.find({ userId: user.id }).populate("productId");
 // 	const favoriteIds = favoriteBooks.map((book) => book.productId._id.toString());
 
-// 	// Map the `isFavorite` to each book in `publisherBooks`
 // 	const publisherBooks = await productsModel
 // 		.find({ publisherId: id })
+// 		.sort({ createdAt: -1 })
 // 		.populate([
 // 			{ path: "authorId", select: "name" },
 // 			{ path: "categoryId", select: "name" },
 // 			{ path: "subCategoryId", select: "name" },
 // 		])
 // 		.limit(5);
-// 	const publisherBooksWithFavoriteStatus = publisherBooks.map((book) => ({
-// 		...book.toObject(),
-// 		isFavorite: favoriteIds.includes(book._id.toString()), // Check if the book is in the user's favorites
-// 	}));
-// // 	const publisherBooksWithFavoriteStatus = publisherBooks.map((book) => ({
-// // 	...book.toObject({
-// // 		transform: function(doc, ret) {
-// // 			if (ret.file instanceof Map) {
-// // 				ret.file = Object.fromEntries(ret.file);
-// // 			}
-// // 			return ret;
-// // 		}
-// // 	}),
-// // 	isFavorite: favoriteIds.includes(book._id.toString()),
-// // }));
+
+// 	const publisherBooksWithFavoriteStatus = publisherBooks.map((book) => {
+// 		const bookObj = book.toObject();
+
+// 		let convertedFile;
+
+// 		// Try multiple conversion approaches
+// 		if (book.file instanceof Map) {
+// 			convertedFile = Object.fromEntries(book.file);
+// 		} else if (bookObj.file && typeof bookObj.file === "object") {
+// 			convertedFile = bookObj.file;
+// 		} else {
+// 			convertedFile = {};
+// 		}
+
+// 		return {
+// 			...bookObj,
+// 			file: convertedFile,
+// 			isFavorite: favoriteIds.includes(book._id.toString()),
+// 		};
+// 	});
+
 // 	const booksCount = await productsModel.countDocuments({ publisherId: id });
 
 // 	return {
@@ -150,28 +185,6 @@ export const getPublisherForUserService = async (id: string, user: any, res: Res
 // 			publisherBooks: publisherBooksWithFavoriteStatus,
 // 		},
 // 	};
-// };
-
-// export const getPublisherWorkService = async (id: string, user: any, res: Response) => {
-//   const publisher = await publishersModel.findById(id);
-//   if (!publisher) return errorResponseHandler("Publisher not found", httpStatusCode.NOT_FOUND, res);
-
-//   const publisherBooks = await productsModel.find({ publisherId: id }).populate([{ path: "authorId", select: "name" }, { path: "categoryId", select: "name" }, { path: "subCategoryId" , select: "name"}]);
-//   console.log('publisherBooks: ', publisherBooks);
-
-//   const favoriteBooks = await favoritesModel.find({ userId: user.id }).populate("productId");
-//   const favoriteIds = favoriteBooks.map((book) => book.productId._id.toString());
-//   const isFavorite = publisherBooks.some((book) => favoriteIds.includes(book._id.toString()));
-//   console.log('isFavorite: ', isFavorite);
-
-//   return {
-//     success: true,
-//     message: "Publisher retrieved successfully",
-//     data: {
-//       publisher,
-//       publisherBooks,
-//     },
-//   };
 // };
 
 export const getPublisherWorkService = async (id: string, user: any, res: Response) => {
@@ -212,7 +225,8 @@ export const getAllPublishersService = async (payload: any, res: Response) => {
 	if (payload.sortField) {
 		sort[payload.sortField] = payload.sortOrder === "desc" ? -1 : (1 as 1 | -1);
 	} else {
-		sort["publisherDetails.name"] = -1; // Default sort by publisher name
+		sort["_id"] = -1;
+		// sort["publisherDetails.name"] = -1; // Default sort by publisher name
 	}
 
 	try {
@@ -243,9 +257,9 @@ export const getAllPublishersService = async (payload: any, res: Response) => {
 					{} as Record<string, 1 | -1>
 				), // Apply sorting
 			},
-			// {
-			//   $sort: sort, // Apply sorting
-			// },
+			{
+			  $sort: sort, // Apply sorting
+			},
 			{
 				$skip: offset, // Apply pagination: skip to the offset
 			},
@@ -265,7 +279,7 @@ export const getAllPublishersService = async (payload: any, res: Response) => {
 			bookCount: publisher.bookCount,
 			image: publisher.image,
 			role: publisher.role,
-			categoryId: publisher.categoryId,
+			// categoryId: publisher.categoryId,
 			email: publisher.email,
 			description: publisher.description,
 			country: publisher.country,
@@ -294,7 +308,7 @@ export const getAllPublishersService = async (payload: any, res: Response) => {
 export const getBooksByPublisherService = async (payload: any, req: any, res: Response) => {
 	try {
 		const page = parseInt(payload.page as string) || 1;
-		const limit = parseInt(payload.limit as string) || 0;
+		const limit = parseInt(payload.limit as string) || 10;
 		const offset = (page - 1) * limit;
 		const { query, sort } = nestedQueryBuilder(payload, ["name"]) as { query: any; sort: any };
 

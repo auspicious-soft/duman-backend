@@ -21,7 +21,7 @@ export const getBookLiveService = async (id: string, payload: any, res: Response
   if (!bookLive) return errorResponseHandler("Book live not found", httpStatusCode.NOT_FOUND, res);
 
   const page = parseInt(payload.page as string) || 1;
-  const limit = parseInt(payload.limit as string) || 0;
+  const limit = parseInt(payload.limit as string) || 10;
   const offset = (page - 1) * limit;
   const { query, sort } = queryBuilder(payload, ["name"]);
 
@@ -51,7 +51,7 @@ export const getBLogByIdService = async (id: string,  res: Response) => {
 
 export const getAllBookLivesService = async (payload: any, res: Response) => {
   const page = parseInt(payload.page as string) || 1;
-  const limit = parseInt(payload.limit as string) || 0;
+  const limit = parseInt(payload.limit as string) || 10;
   const offset = (page - 1) * limit;
   const { query, sort } = nestedQueryBuilder(payload, ["name"]);
 
@@ -82,7 +82,7 @@ export const getAllBookLivesService = async (payload: any, res: Response) => {
 
 export const getAllBookLivesWithBlogsService = async (payload: any, res: Response) => {
   const page = parseInt(payload.page as string) || 1;
-  const limit = parseInt(payload.limit as string) || 0;
+  const limit = parseInt(payload.limit as string) || 10;
   const offset = (page - 1) * limit;
   const { query, sort } = nestedQueryBuilder(payload, ["name"]);
 
@@ -136,7 +136,7 @@ export const getAllBookLivesWithBlogsService = async (payload: any, res: Respons
 };
 export const getAllBookLivesForUserService = async (payload: any, res: Response) => {
   const page = parseInt(payload.page as string) || 1;
-  const limit = parseInt(payload.limit as string) || 0;
+  const limit = parseInt(payload.limit as string) || 10;
   const offset = (page - 1) * limit;
   const { query, sort } = nestedQueryBuilder(payload, ["name"]);
 

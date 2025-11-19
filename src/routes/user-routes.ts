@@ -18,6 +18,7 @@ import {
 } from "src/controllers/categories/categories-controller";
 import {
   getAllCollections,
+  getAllCollectionsUser,
   getCollectionForUser,
 } from "src/controllers/collections/collections-controller";
 import { verifyDiscountVoucher } from "src/controllers/discount-vouchers/discount-vouchers-controller";
@@ -209,7 +210,7 @@ router.get("/books/:id", getBookforUser);
 router.get("/audiobook/:id/chapters", getChaptersByAudiobookIDForUser);
 
 // collections route
-router.get("/collections", getAllCollections);
+router.get("/collections", getAllCollectionsUser);
 router.get("/collections/:id", getCollectionForUser);
 
 // read-progress route

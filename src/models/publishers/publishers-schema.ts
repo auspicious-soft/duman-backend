@@ -11,11 +11,11 @@ const publishersSchema = new mongoose.Schema(
       requried: true,
       default: "publisher"
     },
-    categoryId: {
-      type: [mongoose.Schema.Types.ObjectId],
-      ref: "categories",
-      requried: true,
-    },
+    // categoryId: {
+    //   type: [mongoose.Schema.Types.ObjectId],
+    //   ref: "categories",
+    //   requried: true,
+    // },
     email: {
       type: String,
     },

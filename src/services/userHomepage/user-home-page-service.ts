@@ -85,7 +85,7 @@ export const getproductsTabService = async (payload: any, res: Response) => {
 				const stocks = await getAllProductsForStocksTabService(payload, res);
 				return {
 					success: true,
-					message: "Collections retrieved successfully",
+					message: "Stocks retrieved successfully",
 					data: stocks.success ? stocks : [],
 				};
 			}

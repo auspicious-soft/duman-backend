@@ -20,7 +20,7 @@ export const createBookSchoolService = async (payload: any, res: Response) => {
 
 export const getBookSchoolService = async (payload: any, id: string, res: Response) => {
 	const page = parseInt(payload.page as string) || 1;
-	const limit = parseInt(payload.limit as string) || 0;
+	const limit = parseInt(payload.limit as string) || 10;
 	const offset = (page - 1) * limit;
 	const { query, sort } = nestedQueryBuilder(payload, ["name"]);
 
@@ -72,7 +72,7 @@ export const getBookSchoolService = async (payload: any, id: string, res: Respon
 
 export const getAllBookSchoolsService = async (payload: any, res: Response) => {
 	const page = parseInt(payload.page as string) || 1;
-	const limit = parseInt(payload.limit as string) || 0;
+	const limit = parseInt(payload.limit as string) || 10;
 	const offset = (page - 1) * limit;
 	const { query, sort } = nestedQueryBuilder(payload, ["name"]);
 
@@ -184,7 +184,7 @@ export const getBookSchoolsByCodeService = async (payload: any, user: any, res: 
 export const verifyBookSchoolsByCodeService = async (payload: any, userData: any, res: Response) => {
 	const { query } = queryBuilder(payload, ["couponCode"]);
 	const page = parseInt(payload.page as string) || 1;
-	const limit = parseInt(payload.limit as string) || 0;
+	const limit = parseInt(payload.limit as string) || 10;
 	const totalDataCount = Object.keys(query).length < 1 ? await bookSchoolsModel.countDocuments() : await bookSchoolsModel.countDocuments(query);
 	const bookSchool = await bookSchoolsModel.find({ couponCode: payload.couponCode }).populate([{ path: "publisherId" }]);
 	const bookSchoolId = bookSchool.map((school) => school._id);

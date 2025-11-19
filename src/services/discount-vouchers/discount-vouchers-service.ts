@@ -48,7 +48,7 @@ const voucher = await discountVouchersModel.findOne({ couponCode: id });
 
 export const getAllDiscountVouchersService = async (payload: any, res: Response) => {
   const page = parseInt(payload.page as string) || 1;
-  const limit = parseInt(payload.limit as string) || 0;
+  const limit = parseInt(payload.limit as string) || 10;
   const offset = (page - 1) * limit;
   const { query, sort } = queryBuilder(payload, ["couponCode"]);
 

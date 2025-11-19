@@ -166,12 +166,50 @@ export const getCollectionForUserService = async (payload:any, user: any, id: st
 
 export const getAllCollectionsService = async (payload: any, res: Response) => {
   const page = parseInt(payload.page as string) || 1;
-  const limit = parseInt(payload.limit as string) || 0;
+  const limit = parseInt(payload.limit as string) || 10;
   const offset = (page - 1) * limit;
   const { query, sort } = nestedQueryBuilder(payload, ["name"]);
 
-  const totalDataCount = Object.keys(query).length < 1 ? await collectionsModel.countDocuments() : await collectionsModel.countDocuments(query);
-  const results = await collectionsModel.find(query).sort({
+  const totalDataCount = Object.keys({...query}).length < 1 ? await collectionsModel.countDocuments() : await collectionsModel.countDocuments(query);
+  const results = await collectionsModel.find({...query}).sort({
+    createdAt: -1,
+    ...sort,
+  }).skip(offset).limit(limit).select("-__v").populate({
+    path: "booksId",
+    populate: [
+      { path: "authorId",select: "name" },
+      { path: "categoryId",select: "name" },
+      { path: "subCategoryId",select: "name" },
+      { path: "publisherId",select: "name" },
+    ],
+  });
+  if (results.length)
+    return {
+      page,
+      limit,
+      success: true,
+      message: "Collections retrieved successfully",
+      total: totalDataCount,
+      data: results,
+    };
+  else {
+    return {
+      data: [],
+      page,
+      limit,
+      success: false,
+      total: 0,
+    };
+  }
+};
+export const getAllCollectionsUserService = async (payload: any, res: Response) => {
+  const page = parseInt(payload.page as string) || 1;
+  const limit = parseInt(payload.limit as string) || 10;
+  const offset = (page - 1) * limit;
+  const { query, sort } = nestedQueryBuilder(payload, ["name"]);
+
+  const totalDataCount = Object.keys({...query}).length < 1 ? await collectionsModel.countDocuments({...query,displayOnMobile: true}) : await collectionsModel.countDocuments(query);
+  const results = await collectionsModel.find({...query,displayOnMobile: true}).sort({
     createdAt: -1,
     ...sort,
   }).skip(offset).limit(limit).select("-__v").populate({
@@ -204,7 +242,7 @@ export const getAllCollectionsService = async (payload: any, res: Response) => {
 };
 export const getAllCollectionsWithBooksService = async (payload: any, res: Response) => {
   const page = parseInt(payload.page as string) || 1;
-  const limit = parseInt(payload.limit as string) || 0;
+  const limit = parseInt(payload.limit as string) || 10;
   const offset = (page - 1) * limit;
   const { query, sort } = nestedQueryBuilder(payload, ["name"]);
 
@@ -218,7 +256,7 @@ export const getAllCollectionsWithBooksService = async (payload: any, res: Respo
   const totalDataCount = await collectionsModel.countDocuments(nonEmptyBooksQuery);
 
   // Get collections with books and limit categories to 3
-  const results = await collectionsModel.find({nonEmptyBooksQuery}).sort({
+  const results = await collectionsModel.find(nonEmptyBooksQuery).sort({
     createdAt: -1,
     ...sort,
   }).skip(offset).limit(limit).select("-__v").populate({
@@ -234,7 +272,8 @@ export const getAllCollectionsWithBooksService = async (payload: any, res: Respo
       { path: "publisherId", select: "name image" },
     ],
   });
-
+  
+  console.log('results: ', results);
   if (results.length) {
     // Transform the results into the desired format with exactly 3 static keys
     const transformedData: Record<string, any[]> = {
