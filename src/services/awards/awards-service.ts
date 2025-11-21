@@ -44,7 +44,7 @@ export const updateAwardService = async (userId:any, badge:any, level:any) => {
 
 export const getAllAwardsService = async (user: any, payload: any) => {
   const page = parseInt(payload.page as string) || 1;
-  const limit = parseInt(payload.limit as string) || 10;
+  const limit = parseInt(payload.limit as string) || 100;
   const offset = (page - 1) * limit;
 
   const awards = await awardsModel

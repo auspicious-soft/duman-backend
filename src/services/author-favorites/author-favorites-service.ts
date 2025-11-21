@@ -37,7 +37,7 @@ export const getAuthorFavoriteService = async (id: string, user: any, res: Respo
 
 export const getAllAuthorFavoritesService = async (payload: any, user: any, res: Response) => {
 	const page = parseInt(payload.page as string) || 1;
-	const limit = parseInt(payload.limit as string) || 10;
+	const limit = parseInt(payload.limit as string) || 100;
 	const skip = (page - 1) * limit;
 
 	// Use queryBuilder to extract sort options
@@ -86,7 +86,7 @@ export const getAllAuthorFavoritesService = async (payload: any, user: any, res:
 	// Total count before pagination
 	const totalCountPipeline = [...pipeline, { $count: "total" }];
 	const totalResult = await authorFavoritesModel.aggregate(totalCountPipeline);
-	const total = totalResult[0]?.total || 10;
+	const total = totalResult[0]?.total || 100;
 
 	// Sorting (ensure at least one sort key)
 	if (sort && Object.keys(sort).length > 0) {
@@ -136,7 +136,7 @@ export const getAllAuthorFavoritesService = async (payload: any, user: any, res:
 
 // export const getAllAuthorFavoritesService = async (payload: any, user: any, res: Response) => {
 //   const page = parseInt(payload.page as string) || 1;
-//   const limit = parseInt(payload.limit as string) || 10;
+//   const limit = parseInt(payload.limit as string) || 100;
 //   const offset = (page - 1) * limit;
 //   const { query, sort } = queryBuilder(payload, ["name"]);
 // ['type', 'genres', 'country'].forEach((key) => {

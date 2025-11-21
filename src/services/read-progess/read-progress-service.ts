@@ -709,7 +709,7 @@ export const updateReadProgress = async (readProgressId: string, readProgressDat
 
 export const getAllReadProgress = async (payload: any, user: any) => {
 	const page = parseInt(payload.page as string) || 1;
-	const limit = parseInt(payload.limit as string) || 10;
+	const limit = parseInt(payload.limit as string) || 100;
 	const offset = (page - 1) * limit;
 	const { query, sort } = queryBuilder(payload, ["userId", "bookId"]);
 

@@ -15,7 +15,7 @@ export const createBook = async (req: Request, res: Response) => {
 
 export const getAllBooks = async (req: Request, res: Response) => {
   try {
-    const response = await getAllBooksService(req.query, res);
+    const response = await getAllBooksService(req.user, req.query, res);
     return res.status(httpStatusCode.OK).json(response);
   } catch (error: any) {
     const { code, message } = errorParser(error);

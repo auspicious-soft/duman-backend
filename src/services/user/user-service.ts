@@ -407,7 +407,7 @@ export const getUserProfileDetailService = async (id: string, payload: any, res:
 
 export const getAllUserService = async (payload: any, res: Response) => {
 	const page = parseInt(payload.page as string) || 1;
-	const limit = parseInt(payload.limit as string) || 10;
+	const limit = parseInt(payload.limit as string) || 100;
 	const offset = (page - 1) * limit;
 	let { query, sort } = nestedQueryBuilder(payload, ["name", "email"]);
 

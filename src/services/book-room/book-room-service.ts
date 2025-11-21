@@ -6,7 +6,7 @@ import { usersModel } from "src/models/user/user-schema";
 
 export const getAllReadingBooksService = async (user: any, payload: any) => {
 	const page = parseInt(payload.page as string) || 1;
-	const limit = parseInt(payload.limit as string) || 10;
+	const limit = parseInt(payload.limit as string) || 100;
 	const offset = (page - 1) * limit;
 	const userData = await usersModel.findById(user.id);
 	const readingBooks = await readProgressModel
@@ -50,7 +50,7 @@ export const getAllReadingBooksService = async (user: any, payload: any) => {
 };
 export const getAllFinishedBooksService = async (user: any, payload: any) => {
 	const page = parseInt(payload.page as string) || 1;
-	const limit = parseInt(payload.limit as string) || 10;
+	const limit = parseInt(payload.limit as string) || 100;
 	const offset = (page - 1) * limit;
 	const userData = await usersModel.findById(user.id);
 	const finishedBooks = await readProgressModel
@@ -93,7 +93,7 @@ export const getAllFinishedBooksService = async (user: any, payload: any) => {
 };
 export const getAllFaviouriteBooksService = async (user: any, payload: any) => {
 	const page = parseInt(payload.page as string) || 1;
-	const limit = parseInt(payload.limit as string) || 10;
+	const limit = parseInt(payload.limit as string) || 100;
 	const offset = (page - 1) * limit;
 	const userData = await usersModel.findById(user.id);
 	const favBooks = await favoritesModel
@@ -140,7 +140,7 @@ export const getAllFaviouriteBooksService = async (user: any, payload: any) => {
 
 export const getCoursesBookRoomService = async (user: any, payload: any) => {
 	const page = parseInt(payload.page as string) || 1;
-	const limit = parseInt(payload.limit as string) || 10;
+	const limit = parseInt(payload.limit as string) || 100;
 	const offset = (page - 1) * limit;
 	const userData = await usersModel.findById(user.id);
 	let results: any[] = [];
@@ -165,7 +165,7 @@ export const getCoursesBookRoomService = async (user: any, payload: any) => {
 			break;
 
 		case "completed":
-			const completedCourses = await readProgressModel.find({ userId: user.id, progress: 100, isCompleted: true }).populate({
+			const completedCourses = await readProgressModel.find({ userId: user.id,  progress:  100  , isCompleted:  true }).populate({
 				path: "bookId",
 				populate: [{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }],
 			});
@@ -176,7 +176,7 @@ export const getCoursesBookRoomService = async (user: any, payload: any) => {
 			break;
 
 		case "studying":
-			const studyingCourses = await readProgressModel.find({ userId: user.id, progress: { $ne: 100 } }).populate({
+			const studyingCourses = await readProgressModel.find({ userId: user.id,$or: [{ progress:  { $ne: 100 } }, { isCompleted:  false }]}).populate({
 				path: "bookId",
 				populate: [{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }],
 			});

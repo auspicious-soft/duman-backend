@@ -34,7 +34,7 @@ export const getBlogService = async (id: string, res: Response) => {
 
 export const getAllBlogsService = async (payload: any, res: Response) => {
   const page = parseInt(payload.page as string) || 1;
-  const limit = parseInt(payload.limit as string) || 10;
+  const limit = parseInt(payload.limit as string) || 100;
   const offset = (page - 1) * limit;
   const { query, sort } = queryBuilder(payload, ["name"]);
 

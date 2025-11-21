@@ -217,7 +217,7 @@ export const getPublisherWorkService = async (id: string, user: any, res: Respon
 
 export const getAllPublishersService = async (payload: any, res: Response) => {
 	const page = parseInt(payload.page as string) || 1;
-	const limit = parseInt(payload.limit as string) || 10; // Default limit
+	const limit = parseInt(payload.limit as string) || 100; // Default limit
 	const offset = (page - 1) * limit;
 	const { query } = nestedQueryBuilder(payload, ["name"]);
 	// Sorting logic
@@ -308,7 +308,7 @@ export const getAllPublishersService = async (payload: any, res: Response) => {
 export const getBooksByPublisherService = async (payload: any, req: any, res: Response) => {
 	try {
 		const page = parseInt(payload.page as string) || 1;
-		const limit = parseInt(payload.limit as string) || 10;
+		const limit = parseInt(payload.limit as string) || 100;
 		const offset = (page - 1) * limit;
 		const { query, sort } = nestedQueryBuilder(payload, ["name"]) as { query: any; sort: any };
 

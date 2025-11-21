@@ -20,7 +20,7 @@ export const createBookSchoolService = async (payload: any, res: Response) => {
 
 export const getBookSchoolService = async (payload: any, id: string, res: Response) => {
 	const page = parseInt(payload.page as string) || 1;
-	const limit = parseInt(payload.limit as string) || 10;
+	const limit = parseInt(payload.limit as string) || 100;
 	const offset = (page - 1) * limit;
 	const { query, sort } = nestedQueryBuilder(payload, ["name"]);
 
@@ -72,13 +72,13 @@ export const getBookSchoolService = async (payload: any, id: string, res: Respon
 
 export const getAllBookSchoolsService = async (payload: any, res: Response) => {
 	const page = parseInt(payload.page as string) || 1;
-	const limit = parseInt(payload.limit as string) || 10;
+	const limit = parseInt(payload.limit as string) || 100;
 	const offset = (page - 1) * limit;
 	const { query, sort } = nestedQueryBuilder(payload, ["name"]);
 
-	const totalDataCount = Object.keys(query).length < 1 ? await bookSchoolsModel.countDocuments() : await bookSchoolsModel.countDocuments(query);
+	const totalDataCount = Object.keys({...query, isDeleted: false}).length < 1 ? await bookSchoolsModel.countDocuments({ isDeleted: false }) : await bookSchoolsModel.countDocuments({...query, isDeleted: false});
 	const results = await bookSchoolsModel
-		.find(query)
+		.find({...query, isDeleted: false})
 		.sort({
 			createdAt: -1,
 		})
@@ -109,7 +109,7 @@ export const getAllBookSchoolsService = async (payload: any, res: Response) => {
 };
 export const getBookSchoolsByCodeService = async (payload: any, user: any, res: Response) => {
 	const page = parseInt(payload.page as string) || 1;
-	const limit = parseInt(payload.limit as string) || 10;
+	const limit = parseInt(payload.limit as string) || 100;
 	const offset = (page - 1) * limit;
 	const userId = user.id;
 	const schoolVoucher = (await usersModel.findById(userId))?.schoolVoucher;
@@ -182,11 +182,14 @@ export const getBookSchoolsByCodeService = async (payload: any, user: any, res: 
 	}
 };
 export const verifyBookSchoolsByCodeService = async (payload: any, userData: any, res: Response) => {
+	console.log('payload: ', payload);
 	const { query } = queryBuilder(payload, ["couponCode"]);
 	const page = parseInt(payload.page as string) || 1;
-	const limit = parseInt(payload.limit as string) || 10;
+	const limit = parseInt(payload.limit as string) || 100;
 	const totalDataCount = Object.keys(query).length < 1 ? await bookSchoolsModel.countDocuments() : await bookSchoolsModel.countDocuments(query);
-	const bookSchool = await bookSchoolsModel.find({ couponCode: payload.couponCode }).populate([{ path: "publisherId" }]);
+	const bookSchool = await bookSchoolsModel.find({ couponCode: payload.couponCode, isDeleted: false }).populate([{ path: "publisherId" }]);
+	console.log('bookSchool: ', bookSchool);
+	if (!bookSchool.length) return errorResponseHandler("Invalid book school coupon code", httpStatusCode.NOT_FOUND, res);
 	const bookSchoolId = bookSchool.map((school) => school._id);
 	let userQuery;
 	if (userData.email) {
@@ -234,7 +237,7 @@ export const updateBookSchoolService = async (id: string, payload: any, res: Res
 };
 
 export const deleteBookSchoolService = async (id: string, res: Response) => {
-	const deletedBookSchool = await bookSchoolsModel.findByIdAndDelete(id);
+	const deletedBookSchool = await bookSchoolsModel.findByIdAndUpdate(id, { isDeleted: true }, { new: true });
 	if (!deletedBookSchool) return errorResponseHandler("Book school not found", httpStatusCode.NOT_FOUND, res);
 
 	return {

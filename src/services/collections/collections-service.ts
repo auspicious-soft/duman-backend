@@ -166,7 +166,7 @@ export const getCollectionForUserService = async (payload:any, user: any, id: st
 
 export const getAllCollectionsService = async (payload: any, res: Response) => {
   const page = parseInt(payload.page as string) || 1;
-  const limit = parseInt(payload.limit as string) || 10;
+  const limit = parseInt(payload.limit as string) || 100;
   const offset = (page - 1) * limit;
   const { query, sort } = nestedQueryBuilder(payload, ["name"]);
 
@@ -204,7 +204,7 @@ export const getAllCollectionsService = async (payload: any, res: Response) => {
 };
 export const getAllCollectionsUserService = async (payload: any, res: Response) => {
   const page = parseInt(payload.page as string) || 1;
-  const limit = parseInt(payload.limit as string) || 10;
+  const limit = parseInt(payload.limit as string) || 100;
   const offset = (page - 1) * limit;
   const { query, sort } = nestedQueryBuilder(payload, ["name"]);
 
@@ -242,7 +242,7 @@ export const getAllCollectionsUserService = async (payload: any, res: Response) 
 };
 export const getAllCollectionsWithBooksService = async (payload: any, res: Response) => {
   const page = parseInt(payload.page as string) || 1;
-  const limit = parseInt(payload.limit as string) || 10;
+  const limit = parseInt(payload.limit as string) || 100;
   const offset = (page - 1) * limit;
   const { query, sort } = nestedQueryBuilder(payload, ["name"]);
 

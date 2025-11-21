@@ -31,7 +31,7 @@ export const getSubCategoriesService = async (payload: any, id: string, res: Res
       return errorResponseHandler("No sub-categories", httpStatusCode.NO_CONTENT, res);
     }
     const page = parseInt(payload.page as string) || 1;
-    const limit = parseInt(payload.limit as string) || 10;
+    const limit = parseInt(payload.limit as string) || 100;
     const offset = (page - 1) * limit;
     const { query, sort } = nestedQueryBuilder(payload, ["name"]);
 
@@ -267,7 +267,7 @@ export const getSubCategoriesForUserService = async (user: any, payload: any, id
     }
 
     const page = parseInt(payload.page as string) || 1;
-    const limit = parseInt(payload.limit as string) || 10;
+    const limit = parseInt(payload.limit as string) || 100;
     const offset = (page - 1) * limit;
     const { query } = nestedQueryBuilder(payload, ["name"]);
 
@@ -315,7 +315,7 @@ export const getSubCategoriesForUserService = async (user: any, payload: any, id
 
 export const getAllSubCategoriesService = async (payload: any, res: Response) => {
   const page = parseInt(payload.page as string) || 1;
-  const limit = parseInt(payload.limit as string) || 10;
+  const limit = parseInt(payload.limit as string) || 100;
   const offset = (page - 1) * limit;
   const { query, sort } = nestedQueryBuilder(payload, ["name"]);
 
@@ -347,7 +347,7 @@ export const getAllSubCategoriesService = async (payload: any, res: Response) =>
 
 export const getSubCategoriesByCategoryIdService = async (payload: any, categoryId: string, res: Response) => {
   const page = parseInt(payload.page as string) || 1;
-  const limit = parseInt(payload.limit as string) || 10;
+  const limit = parseInt(payload.limit as string) || 100;
   const offset = (page - 1) * limit;
   const { query, sort } = nestedQueryBuilder(payload, ["name"]);
   const category= await categoriesModel.findById(categoryId);
@@ -420,7 +420,7 @@ export const getSubCategoryService = async (ids: any, res: Response) => {
 export const getSubCategoriesByCategoryIdForUserService = async (payload: any, categoryId: string, res: Response) => {
   console.log('payload: ', payload);
   const page = parseInt(payload.page as string) || 1;
-  const limit = parseInt(payload.limit as string) || 10;
+  const limit = parseInt(payload.limit as string) || 100;
   const offset = (page - 1) * limit;
   const { query, sort } = nestedQueryBuilder(payload, ["name"]);
 

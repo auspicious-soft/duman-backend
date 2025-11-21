@@ -11,6 +11,7 @@ import { deleteFileFromS3 } from "src/config/s3";
 import { authorFavoritesModel } from "src/models/author-favorites/author-favorites-schema";
 import { sendNotification } from "src/utils/FCM/FCM";
 import { usersModel } from "src/models/user/user-schema";
+import { favoritesModel } from "src/models/product-favorites/product-favorites-schema";
 
 export const createAuthorService = async (payload: any, res: Response) => {
   const newAuthor = new authorsModel(payload);
@@ -46,12 +47,19 @@ export const getAuthorService = async (id: string, res: Response) => {
 export const getAuthorForUserService = async (user: any, id: string, res: Response) => {
   const author = await authorsModel.findById(id);
   if (!author) return errorResponseHandler("Author not found", httpStatusCode.NOT_FOUND, res);
-  const authorBooks = await productsModel.find({ authorId: id }).populate([
+  const favoriteBooks = await favoritesModel.find({ userId: user.id }).populate("productId");
+  const favoriteIds = favoriteBooks.map((book) => book.productId?._id.toString());
+  const authorBook = await productsModel.find({ authorId: id }).populate([
     { path: "authorId", select: "name" },
     { path: "categoryId", select: "name" },
     { path: "subCategoryId", select: "name" },
     { path: "publisherId", select: "name" },
   ]);
+  const authorBooks = authorBook.map((book) => ({
+    ...book.toObject(),
+    isFavorite: favoriteIds.includes(book._id.toString()),
+  }));
+  
   const favoriteAuthors = await authorFavoritesModel.find({ userId: user.id, authorId: id }).populate("authorId");
   return {
     success: true,
@@ -64,7 +72,7 @@ export const getAuthorForUserService = async (user: any, id: string, res: Respon
 
 export const getAllAuthorsService = async (payload: any, res: Response) => {
   const page = parseInt(payload.page as string) || 1;
-  const limit = parseInt(payload.limit as string) || 10;
+  const limit = parseInt(payload.limit as string) || 100;
   const offset = (page - 1) * limit;
   const { query, sort } = nestedQueryBuilder(payload, ["name"]);
   if (payload.category) {
@@ -98,7 +106,7 @@ export const getAllAuthorsService = async (payload: any, res: Response) => {
 };
 export const getAllAuthorsForUserService = async (user: any, payload: any, res: Response) => {
   const page = parseInt(payload.page as string) || 1;
-  const limit = parseInt(payload.limit as string) || 10;
+  const limit = parseInt(payload.limit as string) || 100;
   const offset = (page - 1) * limit;
   const { query, sort } = nestedQueryBuilder(payload, ["name"]);
 

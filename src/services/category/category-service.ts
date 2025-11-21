@@ -120,7 +120,7 @@ export const getBooksByCategoryIdService = async (
 
   // ✅ Pagination Logic
   const page = parseInt(payload.page) || 1;
-  const limit = parseInt(payload.limit) || 10;
+  const limit = parseInt(payload.limit) || 100;
   const startIndex = (page - 1) * limit;
   const endIndex = startIndex + limit;
   const paginatedBooks = categoryBooksWithFavoriteStatus.slice(startIndex, endIndex);
@@ -143,9 +143,8 @@ export const getBooksByCategoryIdService = async (
 
 
 export const getAllCategoriesService = async (payload: any, res: Response) => {
-  console.log('payload: ', payload);
   const page = parseInt(payload.page as string) || 1;
-  const limit = parseInt(payload.limit as string) || 10;
+  const limit = parseInt(payload.limit as string) || 100;
   const offset = (page - 1) * limit;
   const { query, sort } = nestedQueryBuilder(payload, ["name"]);
   if (payload.module && payload.module !== "All" && payload.module !== "undefined") {

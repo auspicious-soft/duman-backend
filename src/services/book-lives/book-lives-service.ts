@@ -21,7 +21,7 @@ export const getBookLiveService = async (id: string, payload: any, res: Response
   if (!bookLive) return errorResponseHandler("Book live not found", httpStatusCode.NOT_FOUND, res);
 
   const page = parseInt(payload.page as string) || 1;
-  const limit = parseInt(payload.limit as string) || 10;
+  const limit = parseInt(payload.limit as string) || 100;
   const offset = (page - 1) * limit;
   const { query, sort } = queryBuilder(payload, ["name"]);
 
@@ -51,7 +51,7 @@ export const getBLogByIdService = async (id: string,  res: Response) => {
 
 export const getAllBookLivesService = async (payload: any, res: Response) => {
   const page = parseInt(payload.page as string) || 1;
-  const limit = parseInt(payload.limit as string) || 10;
+  const limit = parseInt(payload.limit as string) || 100;
   const offset = (page - 1) * limit;
   const { query, sort } = nestedQueryBuilder(payload, ["name"]);
 
@@ -82,7 +82,7 @@ export const getAllBookLivesService = async (payload: any, res: Response) => {
 
 export const getAllBookLivesWithBlogsService = async (payload: any, res: Response) => {
   const page = parseInt(payload.page as string) || 1;
-  const limit = parseInt(payload.limit as string) || 10;
+  const limit = parseInt(payload.limit as string) || 100;
   const offset = (page - 1) * limit;
   const { query, sort } = nestedQueryBuilder(payload, ["name"]);
 
@@ -105,19 +105,16 @@ export const getAllBookLivesWithBlogsService = async (payload: any, res: Respons
     };
   }
 
-  // Determine which category ID to use for blogs
   let categoryIdForBlogs;
 
-  // If a specific category ID is provided in the query, use it
   if (payload.categoryId) {
     categoryIdForBlogs = payload.categoryId;
   } else {
-    // Otherwise, use the ID of the first book live
-    categoryIdForBlogs = bookLivesResults[0]._id;
+    categoryIdForBlogs = bookLivesResults.map((bookLive) => bookLive._id);
   }
 
   // Get blogs for the selected category
-  const blogs = await blogsModel.find({ categoryId: categoryIdForBlogs }).select("-__v");
+  const blogs = await blogsModel.find({ categoryId: { $in: categoryIdForBlogs } }).select("-__v");
 
   // Format the response data
   const categories = bookLivesResults.map(bookLife => bookLife.toObject());
@@ -136,7 +133,7 @@ export const getAllBookLivesWithBlogsService = async (payload: any, res: Respons
 };
 export const getAllBookLivesForUserService = async (payload: any, res: Response) => {
   const page = parseInt(payload.page as string) || 1;
-  const limit = parseInt(payload.limit as string) || 10;
+  const limit = parseInt(payload.limit as string) || 100;
   const offset = (page - 1) * limit;
   const { query, sort } = nestedQueryBuilder(payload, ["name"]);
 

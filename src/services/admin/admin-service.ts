@@ -125,7 +125,7 @@ export const getAdminDetailsService = async (payload: any, res: Response) => {
 
 export const getNewUsersService = async (payload: any) => {
   const page = parseInt(payload.page as string) || 1;
-  const limit = parseInt(payload.limit as string) || 10;
+  const limit = parseInt(payload.limit as string) || 100;
   const offset = (page - 1) * limit;
   let { query, sort } = queryBuilder(payload, ["fullName"]);
   if (payload.duration) {
