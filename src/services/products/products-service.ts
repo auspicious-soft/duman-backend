@@ -94,6 +94,7 @@ export const getBooksService = async (payload: any, id: string, res: Response) =
 };
 
 export const getAllBooksService = async (user: any, payload: any, res: Response) => {
+	console.log('payload: ', payload);
 	const page = parseInt(payload.page as string) || 1;
 	const limit = parseInt(payload.limit as string) || 100;
 	const offset = (page - 1) * limit;
@@ -123,7 +124,8 @@ export const getAllBooksService = async (user: any, payload: any, res: Response)
 	if (payload.orderColumn && payload.order) {
 		sort[payload.orderColumn] = payload.order === "asc" ? 1 : -1;
 	}
-	const favoriteBooks = await favoritesModel.find({ userId: user.id }).select("productId");
+	const favoriteBooks = await favoritesModel.find({ userId: user?.id }).select("productId");
+	console.log('favoriteBooks: ', favoriteBooks);
 	const favoriteBookIds = favoriteBooks.map((f) => f.productId?.toString());
 	const results = await productsModel
 		.find({ ...query, isDeleted: false })
