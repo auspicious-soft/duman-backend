@@ -94,7 +94,6 @@ export const getBooksService = async (payload: any, id: string, res: Response) =
 };
 
 export const getAllBooksService = async (user: any, payload: any, res: Response) => {
-	console.log('payload: ', payload);
 	const page = parseInt(payload.page as string) || 1;
 	const limit = parseInt(payload.limit as string) || 100;
 	const offset = (page - 1) * limit;
@@ -125,7 +124,6 @@ export const getAllBooksService = async (user: any, payload: any, res: Response)
 		sort[payload.orderColumn] = payload.order === "asc" ? 1 : -1;
 	}
 	const favoriteBooks = await favoritesModel.find({ userId: user?.id }).select("productId");
-	console.log('favoriteBooks: ', favoriteBooks);
 	const favoriteBookIds = favoriteBooks.map((f) => f.productId?.toString());
 	const results = await productsModel
 		.find({ ...query, isDeleted: false })
@@ -569,6 +567,19 @@ export const getBookByIdService = async (id: string, res: Response) => {
 export const updateBookService = async (id: string, payload: any, res: Response) => {
 	try {
 		const updatedBook = await productsModel.findByIdAndUpdate(id, payload, { new: true });
+		if (!updatedBook) return errorResponseHandler("Book not found", httpStatusCode.NOT_FOUND, res);
+		return {
+			success: true,
+			message: "Book updated successfully",
+			data: updatedBook,
+		};
+	} catch (error) {
+		return errorResponseHandler("Failed to update book", httpStatusCode.INTERNAL_SERVER_ERROR, res);
+	}
+};
+export const updateDiscountedBookService = async (id: string,  res: Response) => {
+	try {
+		const updatedBook = await productsModel.findByIdAndUpdate(id, {isDiscounted:false, discountPercentage: null}, { new: true });
 		if (!updatedBook) return errorResponseHandler("Book not found", httpStatusCode.NOT_FOUND, res);
 		return {
 			success: true,

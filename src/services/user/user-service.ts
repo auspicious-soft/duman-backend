@@ -270,10 +270,10 @@ export const createUserService = async (payload: any, res: Response) => {
 export const getUserService = async (id: string, res: Response) => {
 	const user = await usersModel.findById(id);
 	if (!user) return errorResponseHandler("User not found", httpStatusCode.NOT_FOUND, res);
-	const totalAmountPaidResult = await ordersModel.aggregate([{ $match: { userId: user._id } }, { $group: { _id: null, totalAmount: { $sum: "$totalAmount" } } }]);
+	const totalAmountPaidResult = await ordersModel.aggregate([{ $match: { userId: user._id, status: "Completed" } }, { $group: { _id: null, totalAmount: { $sum: "$totalAmount" } } }]);
 	const amountPaid = totalAmountPaidResult.length > 0 ? totalAmountPaidResult[0].totalAmount : 0;
 	// Fetch all orders for the user
-	const userOrders = await ordersModel.find({ userId: user._id }).populate({ path: "productIds", model: "products" });
+	const userOrders = await ordersModel.find({ userId: user._id,status:"Completed" }).populate({ path: "productIds", model: "products" });
 
 	// Calculate the number of books purchased by the user
 	const booksPurchasedCount = userOrders.reduce((count, order) => {
@@ -353,7 +353,7 @@ export const getUserProfileDetailService = async (id: string, payload: any, res:
 	if (!user) return errorResponseHandler("User not found", httpStatusCode.NOT_FOUND, res);
 
 	const year = payload.duration;
-	const userOrders = await ordersModel.find({ userId: id }).populate({
+	const userOrders = await ordersModel.find({ userId: id, status: "Completed" }).populate({
 		path: "productIds",
 		populate: [
 			{ path: "authorId", model: "authors" },
