@@ -288,12 +288,11 @@ export const getSubCategoriesForUserService = async (user: any, payload: any, id
     const languages = toArray(payload.language);
     subCategoryBooks = filterBooksByLanguage(subCategoryBooks, languages);
  if (!subCategoryBooks.length) {
-      return errorResponseHandler("No books found for the selected languages", httpStatusCode.NOT_FOUND, res);
+      return errorResponseHandler("No books found for the selected languages", httpStatusCode.BAD_REQUEST, res);
     }
 
     subCategoryBooks = sortBooks(subCategoryBooks, payload.sorting, userData?.productsLanguage,userData?.language);
 
-    console.log('user.id: ', user.id);
     const favoriteBooks = await favoritesModel.find({ userId: user.id }).populate("productId");
     const favoriteIds = favoriteBooks.map((book) => book.productId?._id.toString());
 
@@ -393,7 +392,6 @@ export const getSubCategoriesByCategoryIdService = async (payload: any, category
 };
 
 export const getSubCategoryService = async (ids: any, res: Response) => {
-  console.log('ids: ', ids);
 
     // ✅ Convert comma-separated string to array
     const idsArray = typeof ids === "string" ? ids.split(",") : ids;
@@ -418,7 +416,6 @@ export const getSubCategoryService = async (ids: any, res: Response) => {
   };
 
 export const getSubCategoriesByCategoryIdForUserService = async (payload: any, categoryId: string, res: Response) => {
-  console.log('payload: ', payload);
   const page = parseInt(payload.page as string) || 1;
   const limit = parseInt(payload.limit as string) || 100;
   const offset = (page - 1) * limit;

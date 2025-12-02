@@ -163,9 +163,9 @@ export const getAllBookLivesForUserService = async (payload: any, res: Response)
   }
 
   // Apply sorting to book lives
-  if (payload.sorting) {
-    bookLivesResults = sortBooks(bookLivesResults, payload.sorting, payload.productsLanguage || [], payload.language);
-  }
+  // if (payload.sorting) {
+  //   bookLivesResults = sortBooks(bookLivesResults, payload.sorting, payload.productsLanguage || [], payload.language);
+  // }
 
   // Check if we still have book lives after filtering
   if (!bookLivesResults.length) {

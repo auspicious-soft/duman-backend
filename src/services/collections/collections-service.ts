@@ -319,7 +319,8 @@ export const getAllCollectionsWithBooksService = async (payload: any, res: Respo
         transformedData[keys[index % keys.length]].push(collection);
       });
     }
-
+    
+    console.log('transformedData: ', transformedData);
        return {
       page,
       limit,

@@ -15,7 +15,7 @@ export const generateUserToken = (user: UserDocument) => {
     id: user._id,
     role: user.role,
     email: user.email || undefined,
-    phoneNumber: user.phoneNumber || undefined,
+    phoneNumber: `${user.countryCode}${user.phoneNumber}` || undefined,
   };
 
   return jwt.sign(tokenPayload, process.env.AUTH_SECRET as string);

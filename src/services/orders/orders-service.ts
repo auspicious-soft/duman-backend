@@ -16,7 +16,7 @@ import { readProgressModel } from "src/models/user-reads/read-progress-schema";
 
 export const createOrderService = async (payload: any, res: Response, userInfo: any, user: unknown) => {
 	const session: ClientSession = await mongoose.startSession();
-
+    
 	// helper to safely close the session without double-aborting
 	const safeAbort = async () => {
 		try {
@@ -27,7 +27,11 @@ export const createOrderService = async (payload: any, res: Response, userInfo: 
 
 	try {
 		session.startTransaction();
-
+        const userDetails = await usersModel.findById(userInfo.id).session(session);
+		if(!userDetails){
+			await safeAbort();
+			return errorResponseHandler("User not found", httpStatusCode.NOT_FOUND, res);
+		}
 		// Fetch products for validation
 		const products = await productsModel.find({ _id: { $in: payload.productIds } }).session(session);
 
@@ -86,13 +90,13 @@ export const createOrderService = async (payload: any, res: Response, userInfo: 
 		try {
 			console.log(`Order ${savedOrder.identifier} created successfully. Initializing payment...`);
 
-			let userPhone = userInfo?.phoneNumber;
+			let userPhone = userDetails?.countryCode ? `${userDetails?.countryCode}${userDetails?.phoneNumber}` : undefined;
 			let userEmail = userInfo?.email;
 
 			if (!userPhone || !userEmail) {
 				const user = await usersModel.findById(userInfo.id);
 				if (user) {
-					userPhone = user.phoneNumber;
+					userPhone = user.countryCode ? `${user.countryCode}${user.phoneNumber}` :undefined;
 					userEmail = user.email;
 				}
 			}

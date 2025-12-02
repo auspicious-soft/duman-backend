@@ -268,14 +268,38 @@ export const getBookMarketForUserService = async (user: any, payload: any, res: 
 			{ productId: { $in: matchingProductIds } }, // Search product name
 		];
 	}
+		// const audiobooks = await audiobookChaptersModel
+		// .find({ ...audiobookFilter, isDeleted: false, module: "bookMarket" })
+		// .limit(1)
+		// .populate({
+		// 	path: "productId",
+		// 	populate: [{ path: "authorId", select: "_id name" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }],
+		// });
 
-	const audiobooks = await audiobookChaptersModel
-		.find({ ...audiobookFilter, isDeleted: false, module: "bookMarket" })
-		.limit(1)
-		.populate({
-			path: "productId",
-			populate: [{ path: "authorId", select: "_id name" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }],
-		});
+	const audiobookFilters = searchQuery
+		? {
+				type: "audio&ebook",
+				format: { $nin: ["e-book", null] },
+				isDeleted: false,
+				module: "bookMarket",
+				...nameSearchFilter,
+			}
+		: {
+				type: "audio&ebook",
+				format: { $nin: ["audiobook", null] },
+				isDeleted: false,
+				module: "bookMarket",
+			};
+
+	const audiobooks = await productsModel
+	.find({ ...audiobookFilters  })
+	.limit(1)
+	.populate([
+			{ path: "authorId", select: "name" },
+			{ path: "categoryId", select: "name" },
+		
+		]);
+	console.log('audiobooks: ', audiobooks);
 
 	// Best Sellers with search
 	const bestSellersMatchStage = searchQuery
@@ -465,6 +489,262 @@ export const getBookMarketForUserService = async (user: any, payload: any, res: 
 	};
 };
 
+// export const getBookMarketForUserService = async (user: any, payload: any, res: Response) => {
+// 	// Extract search query from payload
+// 	const searchQuery = payload.description?.trim() || "";
+
+// 	// Build search filter for name fields (multilingual)
+// 	const buildNameSearchFilter = (searchQuery: string) => {
+// 		if (!searchQuery) return {};
+// 		return {
+// 			$or: [{ "name.eng": { $regex: searchQuery, $options: "i" } }, { "name.kaz": { $regex: searchQuery, $options: "i" } }, { "name.rus": { $regex: searchQuery, $options: "i" } }],
+// 		};
+// 	};
+
+// 	const nameSearchFilter = buildNameSearchFilter(searchQuery);
+
+// 	// Categories
+// 	const categories = await categoriesModel.find({ module: "bookMarket", ...nameSearchFilter });
+
+// 	// Collections
+// 	const collections = await getAllCollectionsWithBooksService({ description: searchQuery }, res);
+
+// 	// Publishers
+// 	const publisher = await publishersModel.find(nameSearchFilter).limit(10);
+
+// 	// Authors
+// 	const author = await authorsModel.find({ category: "bookMarket", ...nameSearchFilter }).limit(10);
+
+// 	// Read Progress with search on book name
+// 	const readProgressFilter = searchQuery
+// 		? {
+// 				userId: user.id,
+// 				progress: { $lt: 100 },
+// 				bookId: {
+// 					$in: await productsModel.find({ ...nameSearchFilter, isDeleted: false }).distinct("_id"),
+// 				},
+// 			}
+// 		: { userId: user.id, progress: { $lt: 100 } };
+
+// 	const readProgress = await readProgressModel
+// 		.find({ ...readProgressFilter })
+// 		.limit(2)
+// 		.populate({
+// 			path: "bookId",
+// 			select: "_id name type image",
+// 			populate: [{ path: "authorId", select: "name" }],
+// 		})
+// 		.select("-certificate -createdAt -readSections -updatedAt -__v");
+
+// 	// Audiobooks with search
+// 	const audiobookFilter: any = { lang: payload.lang };
+
+// 	if (searchQuery) {
+// 		// Search in both audiobook chapter name and product name
+// 		const matchingProductIds = await productsModel.find({ ...nameSearchFilter, isDeleted: false }).distinct("_id");
+
+// 		audiobookFilter.$or = [
+// 			{ name: { $regex: searchQuery, $options: "i" } }, // Search audiobook chapter name
+// 			{ productId: { $in: matchingProductIds } }, // Search product name
+// 		];
+// 	}
+
+// 	const audiobooks = await audiobookChaptersModel
+// 		.find({ ...audiobookFilter, isDeleted: false, module: "bookMarket" })
+// 		.limit(1)
+// 		.populate({
+// 			path: "productId",
+// 			populate: [{ path: "authorId", select: "_id name" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }],
+// 		});
+
+// 	// Best Sellers with search
+// 	const bestSellersMatchStage = searchQuery
+// 		? {
+// 				$match: {
+// 					"book.type": "audio&ebook",
+// 					"book.format": { $ne: "audiobook" },
+// 					"book.isDeleted": false,
+// 					$or: [{ "book.name.eng": { $regex: searchQuery, $options: "i" } }, { "book.name.kaz": { $regex: searchQuery, $options: "i" } }, { "book.name.rus": { $regex: searchQuery, $options: "i" } }],
+// 				},
+// 			}
+// 		: {
+// 				$match: {
+// 					"book.type": "audio&ebook",
+// 					"book.format": { $ne: "audiobook" },
+// 					"book.isDeleted": false,
+// 				},
+// 			};
+// 	const favoriteBooks = await favoritesModel.find({ userId: user.id }).select("productId");
+// 	const favoriteBookIds = favoriteBooks.map((f) => f.productId?.toString());
+
+// 	const bestSellers = await ordersModel.aggregate([
+// 		{
+// 			$unwind: "$productIds",
+// 		},
+// 		{
+// 			$group: {
+// 				_id: "$productIds",
+// 				orderCount: { $sum: 1 },
+// 			},
+// 		},
+// 		{
+// 			$sort: { orderCount: -1 },
+// 		},
+// 		{
+// 			$limit: 10,
+// 		},
+// 		{
+// 			$lookup: {
+// 				from: "products",
+// 				localField: "_id",
+// 				foreignField: "_id",
+// 				as: "book",
+// 			},
+// 		},
+// 		{
+// 			$unwind: "$book",
+// 		},
+// 		bestSellersMatchStage,
+// 		{
+// 			$lookup: {
+// 				from: "authors",
+// 				localField: "book.authorId",
+// 				foreignField: "_id",
+// 				as: "book.authors",
+// 			},
+// 		},
+// 		{
+// 			$unwind: {
+// 				path: "$book.authors",
+// 				preserveNullAndEmptyArrays: true,
+// 			},
+// 		},
+// 		{
+// 			$project: {
+// 				_id: 0,
+// 				book: 1,
+// 				orderCount: 1,
+// 			},
+// 		},
+// 	]);
+// 	const bestSellersWithFavorite = bestSellers.map((item) => ({
+// 		...item,
+// 		book: { ...item.book, isFavorite: favoriteBookIds.includes(item.book._id.toString()) },
+// 	}));
+
+// 	// New Books with search
+// 	const newBooksFilter = searchQuery
+// 		? {
+// 				type: "audio&ebook",
+// 				format: { $nin: ["audiobook", null] },
+// 				isDeleted: false,
+// 				module: "bookMarket",
+// 				...nameSearchFilter,
+// 			}
+// 		: {
+// 				type: "audio&ebook",
+// 				format: { $nin: ["audiobook", null] },
+// 				isDeleted: false,
+// 				module: "bookMarket",
+// 			};
+
+// 	const newPodcastsFilter = searchQuery
+// 		? {
+// 				type: "podcast",
+// 				isDeleted: false,
+// 				module: "bookMarket",
+// 				...nameSearchFilter,
+// 			}
+// 		: {
+// 				type: "podcast",
+// 				isDeleted: false,
+// 				module: "bookMarket",
+// 			};
+// 	const newCoursesFilter = searchQuery
+// 		? {
+// 				type: "course",
+// 				isDeleted: false,
+// 				module: "bookMarket",
+// 				...nameSearchFilter,
+// 			}
+// 		: {
+// 				type: "course",
+// 				isDeleted: false,
+// 				module: "bookMarket",
+// 			};
+
+// 	const newvideoLecturesFilter = searchQuery
+// 		? {
+// 				type: "video-lecture",
+// 				module: "bookMarket",
+// 				isDeleted: false,
+// 				...nameSearchFilter,
+// 			}
+// 		: {
+// 				type: "video-lecture",
+// 				module: "bookMarket",
+// 				isDeleted: false,
+// 			};
+
+// 	const newBooks = await productsModel
+// 		.find({ ...newBooksFilter, isDeleted: false })
+// 		.sort({ createdAt: -1 })
+// 		.limit(20)
+// 		.populate([
+// 			{ path: "authorId", select: "name" },
+// 			{ path: "categoryId", select: "name" },
+// 		]);
+
+// 	const newPodcasts = await productsModel
+// 		.find({ ...newPodcastsFilter })
+// 		.sort({ createdAt: -1 })
+// 		.limit(20)
+// 		.populate([
+// 			{ path: "authorId", select: "name" },
+// 			{ path: "categoryId", select: "name" },
+// 		]);
+
+// 	const newVideoLecture = await productsModel
+// 		.find({ ...newvideoLecturesFilter })
+// 		.sort({ createdAt: -1 })
+// 		.limit(20)
+// 		.populate([
+// 			{ path: "authorId", select: "name" },
+// 			{ path: "categoryId", select: "name" },
+// 		]);
+// 	const newCourses = await productsModel
+// 		.find({ ...newCoursesFilter })
+// 		.sort({ createdAt: -1 })
+// 		.limit(20)
+// 		.populate([
+// 			{ path: "authorId", select: "name" },
+// 			{ path: "categoryId", select: "name" },
+// 		]);
+
+// 	const newBooksWithFavorite = newBooks.map((item) => ({
+// 		...item.toObject(),
+// 		isFavorite: favoriteBookIds.includes(item._id.toString()),
+// 	}));
+
+// 	return {
+// 		success: true,
+// 		message: "Book retrieved successfully",
+// 		data: {
+// 			readProgress: readProgress,
+// 			audiobooks: audiobooks,
+// 			categories: categories,
+// 			collections: collections,
+// 			publisher: publisher,
+// 			author: author,
+// 			newBooks: newBooksWithFavorite,
+// 			newPodcasts: newPodcasts,
+// 			newCourses: newCourses,
+// 			newVideoLecture: newVideoLecture,
+// 			bestSellers: bestSellersWithFavorite,
+// 		},
+// 	};
+// };
+
 export const getAllProductsForStocksTabService = async (payload: any, res: Response) => {
 	// const page = parseInt(payload.page as string) || 1;
 	// const limit = parseInt(payload.limit as string) || 10;
@@ -484,6 +764,7 @@ export const getAllProductsForStocksTabService = async (payload: any, res: Respo
 		.select("-__v")
 		.populate([{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }])
 		.lean();
+		 
 	const Courses = await productsModel
 		.find({ type: "course", isDeleted: false, isDiscounted: true }) //TODO--CHANGED
 		.sort(sort)

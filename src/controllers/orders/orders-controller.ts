@@ -14,7 +14,7 @@ export const createOrder =async (req: Request, res: Response) => {
                 userInfo = {
                     id: req.user.id,
                     email: req.user.email,
-                    phoneNumber: req.user.phoneNumber
+                    phoneNumber: req.user.phoneNumber  //TODO: check if countryCode exists
                 };
             }
         } else if ((req as any).currentUser) {

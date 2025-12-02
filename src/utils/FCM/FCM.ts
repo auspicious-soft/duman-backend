@@ -55,6 +55,7 @@ export const sendNotification = async ({
   adminDescription,
   referenceId
 }: SendNotificationParams) => {
+	console.log('userIds-', userIds, "type-", type, "adminTitle-", adminTitle, "adminDescription-", adminDescription, "referenceId-", referenceId);
 // export const sendNotification = async (userIds: any[], type: string, adminTitle?: any, adminDescription?: any, referenceId?: any) => {
 
 	try {
@@ -88,8 +89,8 @@ export const sendNotification = async ({
 					console.error(`❌ Missing adminTitle or adminDescription for admin notification`);
 					continue;
 				}
-				finalTitle = adminTitle[userLanguage] || adminTitle["eng"];
-				finalDescription = adminDescription[userLanguage] || adminDescription["eng"];
+				finalTitle = adminTitle[userLanguage] || adminTitle["eng"] || adminTitle["kaz"] ||adminTitle["rus"];
+				finalDescription = adminDescription[userLanguage] || adminDescription["eng"] || adminDescription["kaz"] || adminDescription["rus"];
     
 			} else {
 				// Use regular notification template
@@ -111,7 +112,8 @@ export const sendNotification = async ({
 
 			notifications.push(notificationDoc);
 			console.log("notifications: ", notifications);
-
+            
+			console.log('userData: ', userData);
 			// Send push notification
 			if (finalTitle && userData.fcmToken) {
 				try {
