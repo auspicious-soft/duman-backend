@@ -19,7 +19,7 @@ export const getHomePageService = async (userData: any, payload: any, res: Respo
 			.limit(5)
 			.populate({
 				path: "bookId",
-				select: "_id name type image",
+				select: "_id name type image format ",
 				populate: [{ path: "authorId", select: "name" }],
 			})
 			.select("-certificate -createdAt -readSections -updatedAt -__v");

@@ -111,9 +111,7 @@ export const sendNotification = async ({
      
 
 			notifications.push(notificationDoc);
-			console.log("notifications: ", notifications);
             
-			console.log('userData: ', userData);
 			// Send push notification
 			if (finalTitle && userData.fcmToken) {
 				try {
