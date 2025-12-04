@@ -286,7 +286,7 @@ export const getBookMarketForUserService = async (user: any, payload: any, res: 
 			}
 		: {
 				type: "audio&ebook",
-				format: { $nin: ["audiobook", null] },
+				format: { $nin: ["e-book", null] },
 				isDeleted: false,
 				module: "bookMarket",
 			};
@@ -299,7 +299,6 @@ export const getBookMarketForUserService = async (user: any, payload: any, res: 
 			{ path: "categoryId", select: "name" },
 		
 		]);
-	console.log('audiobooks: ', audiobooks);
 
 	// Best Sellers with search
 	const bestSellersMatchStage = searchQuery
