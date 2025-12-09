@@ -1134,7 +1134,7 @@ export const getAllAudioBookForUserService = async (payload: any, user: any, res
 	// 	]);
 	//TODO--CHANGED
 	let audiobooks = await productsModel
-		.find({ type: "audio&ebook", format: { $nin: ["e-book", null], isDeleted: false } })
+		.find({ type: "audio&ebook", format: { $nin: ["e-book", null] }, isDeleted: false })
 		.sort({ createdAt: -1 })
 		.skip(offset)
 		.limit(limit)
@@ -1142,7 +1142,7 @@ export const getAllAudioBookForUserService = async (payload: any, user: any, res
 			{ path: "authorId", select: "name" },
 			{ path: "categoryId", select: "name" },
 		]);
-	const totalDataCount = await productsModel.countDocuments({ type: "audio&ebook", format: { $nin: ["e-book", null], isDeleted: false } });
+	const totalDataCount = await productsModel.countDocuments({ type: "audio&ebook", format: { $nin: ["e-book", null] }, isDeleted: false });
 
 	const favoriteBooks = await favoritesModel.find({ userId: user.id }).populate("productId");
 	const favoriteIds = favoriteBooks.filter((book) => book.productId && book.productId._id).map((book) => book.productId._id.toString());
