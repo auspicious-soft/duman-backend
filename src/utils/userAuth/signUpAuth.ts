@@ -92,7 +92,7 @@ export const validateUserForLogin = async (user: any, authType: string, userData
   }
   if (authType === "Email" && user.emailVerified === false) {
     await sendOTPIfNeeded(userData, authType);
-    return errorResponseHandler("Email not verified, verfication email sent to your email", httpStatusCode.BAD_REQUEST, res);
+    return errorResponseHandler("Email not verified, verfication email sent to your email", httpStatusCode.OK, res);
   }
   if (authType === "Whatsapp" && user.whatsappNumberVerified === false) {
     return errorResponseHandler(`Try login from ${user.authType}`, httpStatusCode.BAD_REQUEST, res);
