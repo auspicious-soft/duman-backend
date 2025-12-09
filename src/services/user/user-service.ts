@@ -40,7 +40,7 @@ const sanitizeUser = (user: any): UserDocument => {
 
 export const loginUserService = async (userData: UserDocument, authType: string, res: Response) => {
 	let query = await getSignUpQueryByAuthType(userData, authType);
-
+	let message = "Logged in successfully";
 	let user: any = await usersModel.findOne(query);
 	if (authType === "Apple") {
 		userData.email = query.email;
@@ -61,7 +61,11 @@ export const loginUserService = async (userData: UserDocument, authType: string,
 
 	let validationResponse = await validateUserForLogin(user, authType, userData, res);
 	if (validationResponse) return validationResponse;
-
+	if (authType === "Email" && user.emailVerified === false) {
+		await sendOTPIfNeeded(userData, authType);
+		message = "Email not verified, verfication email sent to your email";
+		// return errorResponseHandler("Email not verified, verfication email sent to your email", httpStatusCode.OK, res);
+	}
 	if (authType === "Email") {
 		let passwordValidationResponse = await validatePassword(userData, user.password, res);
 		if (passwordValidationResponse) return passwordValidationResponse;
@@ -72,7 +76,7 @@ export const loginUserService = async (userData: UserDocument, authType: string,
 	await user.save();
 	return {
 		success: true,
-		message: "Logged in successfully",
+		message: message,
 		data: sanitizeUser(user),
 	};
 };
@@ -98,7 +102,6 @@ const createNewUser = async (userData: any, authType: string) => {
 };
 
 export const signUpService = async (userData: UserDocument, authType: string, res: Response) => {
-
 	if (!authType) {
 		return errorResponseHandler("Auth type is required", httpStatusCode.BAD_REQUEST, res);
 	}
@@ -273,7 +276,7 @@ export const getUserService = async (id: string, res: Response) => {
 	const totalAmountPaidResult = await ordersModel.aggregate([{ $match: { userId: user._id, status: "Completed" } }, { $group: { _id: null, totalAmount: { $sum: "$totalAmount" } } }]);
 	const amountPaid = totalAmountPaidResult.length > 0 ? totalAmountPaidResult[0].totalAmount : 0;
 	// Fetch all orders for the user
-	const userOrders = await ordersModel.find({ userId: user._id,status:"Completed" }).populate({ path: "productIds", model: "products" });
+	const userOrders = await ordersModel.find({ userId: user._id, status: "Completed" }).populate({ path: "productIds", model: "products" });
 
 	// Calculate the number of books purchased by the user
 	const booksPurchasedCount = userOrders.reduce((count, order) => {
@@ -621,7 +624,7 @@ export const updateCurrentUserDetailsService = async (userData: any, payload: an
 	const updatedUser = await usersModel
 		.findByIdAndUpdate(
 			userData.id,
-			{ $set: { email: payload.email, phoneNumber: payload.phoneNumber, firstName: payload.firstName, fullName: payload.fullName, profilePic: payload.profilePic, country: payload.country, dob: payload.dob,countryCode:payload.countryCode } },
+			{ $set: { email: payload.email, phoneNumber: payload.phoneNumber, firstName: payload.firstName, fullName: payload.fullName, profilePic: payload.profilePic, country: payload.country, dob: payload.dob, countryCode: payload.countryCode } },
 			{
 				new: true,
 			}
