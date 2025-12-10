@@ -26,7 +26,11 @@ export const getAllReadingBooksService = async (user: any, payload: any) => {
 	const filteredResult = filterBooksByLanguage(modifiedResults, languages);
 	const sortedResult = sortBooks(filteredResult, payload.sorting, userData?.productsLanguage, userData?.language);
 	const total = sortedResult.length;
-	const paginatedResults = sortedResult.slice(offset, offset + limit);
+	const finialData = sortedResult.map((item) => ({
+		...item,
+		progress: item.progress >item.audiobookProgress ? item.progress : item.audiobookProgress,
+	}));
+	const paginatedResults = finialData.slice(offset, offset + limit);
 
 	if (paginatedResults.length > 0) {
 		return {
