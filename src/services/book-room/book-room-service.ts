@@ -12,7 +12,7 @@ export const getAllReadingBooksService = async (user: any, payload: any) => {
 	const readingBooks = await readProgressModel
 		.find({
 			userId: user.id,
-			$or: [{ progress: { $lt: 100} }, { audiobookProgress: { $lt: 100 } }],
+			$and: [{ progress: { $lt: 100} }, { audiobookProgress: { $lt: 100 } }],
 		})
 		.populate({
 			path: "bookId",
