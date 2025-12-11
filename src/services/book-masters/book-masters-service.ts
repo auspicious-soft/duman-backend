@@ -728,9 +728,13 @@ export const getBookMasterReadProgressService = async (user: any, payload: any, 
   const Books = await bookMastersModel.find({});
   const bookIds = Books.map(book => book.productsId);
 
-  const readProgress = await readProgressModel.find({
+  let readProgress = await readProgressModel.find({
     userId: user.id,
-    bookId: { $in: bookIds }
+    bookId: { $in: bookIds },
+    $and: [
+				{ progress: { $lt: 100, $gte: 0 } },
+				{ audiobookProgress: { $lt: 100, $gte: 0 } }
+			],
   })
   .populate({
     path: "bookId",
@@ -741,7 +745,13 @@ export const getBookMasterReadProgressService = async (user: any, payload: any, 
       { path: "publisherId" },
     ],
   });
-
+readProgress = readProgress.map((item: any) => {
+    const highestProgress = Math.max(item.progress || 0, item.audiobookProgress || 0);
+    return {
+      ...item.toObject(),
+      progress: highestProgress, // overwrite progress
+    };
+  });
 
   return {
     success: true,

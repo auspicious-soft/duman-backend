@@ -239,14 +239,21 @@ export const getBookMarketForUserService = async (user: any, payload: any, res: 
 	const readProgressFilter = searchQuery
 		? {
 				userId: user.id,
-				progress: { $lt: 100 },
+				$and: [
+				{ progress: { $lt: 100, $gte: 0 } },
+				{ audiobookProgress: { $lt: 100, $gte: 0 } }
+			],
 				bookId: {
 					$in: await productsModel.find({ ...nameSearchFilter, isDeleted: false }).distinct("_id"),
 				},
 			}
-		: { userId: user.id, progress: { $lt: 100 } };
+		: { userId: user.id, 
+			$and: [
+				{ progress: { $lt: 100, $gte: 0 } },
+				{ audiobookProgress: { $lt: 100, $gte: 0 } }
+			], };
 
-	const readProgress = await readProgressModel
+	let readProgress = await readProgressModel
 		.find({ ...readProgressFilter })
 		.limit(2)
 		.populate({
@@ -255,7 +262,14 @@ export const getBookMarketForUserService = async (user: any, payload: any, res: 
 			populate: [{ path: "authorId", select: "name" }],
 		})
 		.select("-certificate -createdAt -readSections -updatedAt -__v");
-
+readProgress = readProgress.map((item: any) => {
+	const highestProgress = Math.max(item.progress || 0, item.audiobookProgress || 0);
+    return {
+		...item.toObject(),
+		progress: highestProgress, // overwrite progress
+    };
+});
+console.log('readProgress: ', readProgress);
 	// Audiobooks with search
 	const audiobookFilter: any = { lang: payload.lang };
 

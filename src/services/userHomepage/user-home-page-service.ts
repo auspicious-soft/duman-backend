@@ -13,8 +13,8 @@ export const getHomePageService = async (userData: any, payload: any, res: Respo
 	try {
 		const bannersResponse: any = await getAllBannersService(payload, res);
 		const storiesResponse: any = await getAllStoriesService(payload, res);
-		const readProgress = await readProgressModel
-			.find({ userId: userData.id, isCompleted: false, progress: { $lt: 100 } })
+		let readProgress = await readProgressModel
+			.find({ userId: userData.id, isCompleted: false, $and: [{ progress: { $lt: 100, $gte: 0 } }, { audiobookProgress: { $lt: 100, $gte: 0 } }] })
 			.sort({ updatedAt: -1 })
 			.limit(5)
 			.populate({
@@ -23,10 +23,17 @@ export const getHomePageService = async (userData: any, payload: any, res: Respo
 				populate: [{ path: "authorId", select: "name" }],
 			})
 			.select("-certificate -createdAt -readSections -updatedAt -__v");
+		readProgress = readProgress.map((item: any) => {
+			const highestProgress = Math.max(item.progress || 0, item.audiobookProgress || 0);
+			return {
+				...item.toObject(),
+				progress: highestProgress, // overwrite progress
+			};
+		});
 		const banners = bannersResponse?.data?.length ? bannersResponse.data : [];
 		const stories = storiesResponse?.data?.length ? storiesResponse.data : [];
 		const userdetails = await usersModel.findById(userData.id).select("schoolVoucher firstName fullName email");
-        const userSchoolVoucher = userdetails?.schoolVoucher?.voucherId ? true : false;
+		const userSchoolVoucher = userdetails?.schoolVoucher?.voucherId ? true : false;
 
 		if (!banners.length && !stories.length && !readProgress.length) {
 			return {
@@ -36,7 +43,7 @@ export const getHomePageService = async (userData: any, payload: any, res: Respo
 					banners: [],
 					stories: [],
 					readProgress: [],
-					userSchoolVoucher
+					userSchoolVoucher,
 				},
 			};
 		}
@@ -49,7 +56,7 @@ export const getHomePageService = async (userData: any, payload: any, res: Respo
 				stories,
 				readProgress,
 				userSchoolVoucher,
-				userdetails
+				userdetails,
 			},
 		};
 	} catch (error: any) {
