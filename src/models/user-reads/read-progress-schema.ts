@@ -15,7 +15,7 @@ const readProgressSchema = new mongoose.Schema(
     progress: {
       type: Number,
       default: 0,
-      set: (value: number) => Math.floor(value), 
+      // set: (value: number) => Math.floor(value), 
     },
     audiobookProgress: {
       type: Number,

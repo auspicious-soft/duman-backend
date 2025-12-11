@@ -459,6 +459,7 @@ export const generateCertificateService = async (
 };
 
 export const generateCertificateBothFormatsService = async (data: any, user: any,res:Response) => {
+  console.log('data: ', data);
   try {
     const userDetail: any = await usersModel.findById(user.id);
     if (!userDetail) {
@@ -633,6 +634,7 @@ export const getCourseCertificateService = async (readProgressId: string, userId
 	};
 };
 export const createReadProgressService = async (payload: any,res:Response) => {
+  console.log('payload: ', payload);
 	const readProgress = await readProgressModel.create(payload);
   return {
 		success: true,
