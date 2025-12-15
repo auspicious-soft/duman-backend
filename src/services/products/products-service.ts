@@ -1009,7 +1009,11 @@ export const getBookForUserService = async (id: string, payload: any, user: any,
 		const bookSchoolData = await productsModel.find({ _id: id, publisherId: { $in: publisherObjectIds }, type: "audio&ebook", format: { $nin: ["audiobook", null] } });
 		if (bookSchoolData.length > 0) {
 			isPurchased = true;
-		} else {
+		}
+		else if(bookSchoolData[0]?.price === 0){
+			isPurchased = true;
+		}
+		else {
 			isPurchased = await ordersModel.find({ productIds: { $in: id }, userId: user.id, status: "Completed" });
 		}
 	}
