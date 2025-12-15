@@ -103,7 +103,7 @@ export const createOrderService = async (payload: any, res: Response, userInfo: 
 
 			const modifiedAmount = payload.redeemPoints ? savedOrder.totalAmount - payload.redeemPoints : savedOrder.totalAmount;
 
-			const paymentResponse = await initializePayment(savedOrder.identifier as string, modifiedAmount / 100, `Payment for order ${savedOrder.identifier}`, userPhone, userEmail);
+			const paymentResponse = await initializePayment(savedOrder.identifier as string, modifiedAmount, `Payment for order ${savedOrder.identifier}`, userPhone, userEmail);
 
 			paymentData = paymentResponse;
 
