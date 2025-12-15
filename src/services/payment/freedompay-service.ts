@@ -37,7 +37,8 @@ async function handlePaymentSuccess(order: any, paymentDetails: any) {
 			transactionId: paymentDetails.pg_payment_id,
 			completedAt: new Date(),
 		});
-		const amount = ((Number(paymentDetails.pg_amount) || 0)) / 100; //TODO: confirm if division by 100 is needed
+		const amount = (Number(paymentDetails.pg_amount) || 0) / 100; //TODO: confirm if division by 100 is needed
+		console.log('amount: ', amount);
 		const orderDetails = await ordersModel.findOne({ identifier: order.identifier });
 		await walletHistoryModel.create({ orderId: orderDetails?._id, userId: order.userId, type: "earn", points: amount });
 		await usersModel.findByIdAndUpdate(order.userId, { $inc: { wallet: amount } });
