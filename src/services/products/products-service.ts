@@ -996,6 +996,7 @@ export const getBookForUserService = async (id: string, payload: any, user: any,
 	let isPurchased;
 	const userId = user.id;
 	const schoolVoucher = (await usersModel.findById(userId))?.schoolVoucher;
+
 	if (schoolVoucher) {
 		let results: any[] = [];
 		if (schoolVoucher) {
@@ -1010,16 +1011,15 @@ export const getBookForUserService = async (id: string, payload: any, user: any,
 		if (bookSchoolData.length > 0) {
 			isPurchased = true;
 		}
-		else if(bookSchoolData[0]?.price === 0){
-			isPurchased = true;
-		}
 		else {
 			isPurchased = await ordersModel.find({ productIds: { $in: id }, userId: user.id, status: "Completed" });
 		}
 	}
 
-	const book = await productsModel.findById(id).populate([{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }]);
-
+    const book = await productsModel.findById(id).populate([{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }]);
+    if(book?.price === 0){
+		isPurchased = true;
+	};
 	const readers = await readProgressModel.countDocuments({ bookId: id });
 	if (!book) {
 		return errorResponseHandler("Book not found", httpStatusCode.NOT_FOUND, res);
@@ -1067,8 +1067,8 @@ export const getBookForUserService = async (id: string, payload: any, user: any,
 				relatedBooks: relatedBooks,
 				isPurchased: isPurchased === true || (Array.isArray(isPurchased) && isPurchased.length > 0) ? true : false,
 				isAddedToCart: isAddedToCart.length > 0 ? true : false,
-				favorite: isFavorite ? true : false,
 				readProgress: userReadProgress ? userReadProgress.progress : 0,
+				favorite: isFavorite ? true : false,
 			},
 		};
 	}
