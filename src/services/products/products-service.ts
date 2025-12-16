@@ -1199,7 +1199,7 @@ export const getCourseForUserService = async (id: string, user: any, res: Respon
 	const isFavorite = await favoritesModel.exists({ userId: user.id, productId: id });
 	const isPurchased = await ordersModel.find({ productIds: id, userId: user.id, status: "Completed" });
 	const isAddedToCart = await cartModel.find({ productId: { $in: [id] }, userId: user.id, buyed: "pending" }).lean();
-
+    const productLanguage = await productLanguages(course);
 	return {
 		success: true,
 		message: "Course retrieved successfully",
@@ -1207,6 +1207,7 @@ export const getCourseForUserService = async (id: string, user: any, res: Respon
 			course: {
 				...course.toObject(),
 				lessons: lessonCount > 0 ? lessonCount : 0,
+				productLanguage,
 			},
 			reviewCount: reviewCount > 0 ? reviewCount : 0,
 			relatedCourses: relatedCourses,
