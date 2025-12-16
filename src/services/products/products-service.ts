@@ -65,11 +65,12 @@ export const getBooksService = async (payload: any, id: string, res: Response) =
 			totalDataCount = Object.keys({ productId: id }).length < 1 ? await courseLessonsModel.countDocuments() : await courseLessonsModel.countDocuments({ productId: id });
 			lessons = await courseLessonsModel.find({ productId: id }).skip(offset).limit(limit).select("-__v");
 		}
-		const bookPrice = books[0]?.price;
+		const bookPrice: number = books[0]?.price ?? 0;
 
-		if (!bookPrice) {
-			return errorResponseHandler("Book price not available", httpStatusCode.NOT_FOUND, res);
-		}
+
+		// if (!bookPrice) {
+		// 	return errorResponseHandler("Book price not available", httpStatusCode.NOT_FOUND, res);
+		// }
 
 		const orders = await ordersModel.find({ productIds: id, status: "Completed" });
 		const totalBookSold = orders.length;
@@ -1200,7 +1201,7 @@ export const getCourseForUserService = async (id: string, user: any, res: Respon
 	}else{
 		isPurchased = await ordersModel.find({ productIds: id, userId: user.id, status: "Completed" });
 	}
-		const purchaseFlag = isPurchased === true || (Array.isArray(isPurchased) && isPurchased.length > 0) ? true : false;
+	const purchaseFlag = isPurchased === true || (Array.isArray(isPurchased) && isPurchased.length > 0) ? true : false;
 
 	const relatedCourses = await productsModel.find({ categoryId: { $in: course?.categoryId }, type: "course", _id: { $ne: id } }).populate([{ path: "authorId", select: "name" }]);
 	const reviewCount = await productRatingsModel.countDocuments({ productId: id });

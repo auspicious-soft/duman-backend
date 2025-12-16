@@ -80,7 +80,6 @@ export const getCourseLessonByIdService = async (payload: any, productId: string
 	}
 };
 
-
 export const getCourseLessonByIdForUserService = async (user: any, payload: any, productId: string) => {
 	const page = parseInt(payload.page as string) || 1;
 	const limit = parseInt(payload.limit as string) || 100;
@@ -95,8 +94,7 @@ export const getCourseLessonByIdForUserService = async (user: any, payload: any,
 	let courseLessons = [];
 	const reviewCount = await productRatingsModel.countDocuments({ productId: productId });
 	const readProgress = await readProgressModel.findOne({ userId: user.id, bookId: productId });
-	
-	
+
 	// if (course?.type === "video-lecture" || course?.type === "podcast") {
 	// 	if (course?.file instanceof Map) {
 	// 		const fileForLang = course.file.get(language);
@@ -107,88 +105,92 @@ export const getCourseLessonByIdForUserService = async (user: any, payload: any,
 	// 	console.log('courseLessons: ', courseLessons);
 	// }
 	if (course?.type === "video-lecture" || course?.type === "podcast") {
-	const fileForLang = course?.file?.[language];
+		const fileForLang = course?.file?.[language];
 
-	// Fallback if the specific language file is null
-	// const fallbackLang = ["eng", "kaz", "rus"].find((lang) => course.file?.[lang]);
-	const finalFile = fileForLang 
-	// || (fallbackLang ? course.file[fallbackLang] : null);
+		// Fallback if the specific language file is null
+		// const fallbackLang = ["eng", "kaz", "rus"].find((lang) => course.file?.[lang]);
+		const finalFile = fileForLang;
+		// || (fallbackLang ? course.file[fallbackLang] : null);
 
-	if (finalFile) {
-		courseLessons.push({
-			_id: `${course._id}`, // or use a unique ID
-			lang: language,
-			name: course.name?.[language] || course.name?.eng || "Course Content",
-			productId: productId,
-			srNo: 1,
-			subLessons: [
-				{
-					_id: `${course._id}`, // unique subLesson ID
-					name: course.name?.[language] || course.name?.eng || "Course Content",
-					description: course.description?.[language] || course.description?.eng || "",
-					additionalFiles: [],
-					links: [],
-					file: finalFile,
-					isDone: readProgress?.isCompleted || false,
-				},
-			],
+		if (finalFile) {
+			courseLessons.push({
+				_id: `${course._id}`, // or use a unique ID
+				lang: language,
+				name: course.name?.[language] || course.name?.eng || "Course Content",
+				productId: productId,
+				srNo: 1,
+				subLessons: [
+					{
+						_id: `${course._id}`, // unique subLesson ID
+						name: course.name?.[language] || course.name?.eng || "Course Content",
+						description: course.description?.[language] || course.description?.eng || "",
+						additionalFiles: [],
+						links: [],
+						file: finalFile,
+						isDone: readProgress?.isCompleted || false,
+					},
+				],
+			});
+		}
+	} else {
+		courseLessons = await courseLessonsModel.find({ productId: productId, lang: language }).sort({ srNo: 1 }).lean();
+		const courseReadProgress = await readProgressModel.findOne({ bookId: productId, userId: user.id }).lean();
+
+		if (courseLessons.length === 0 && course?.name) {
+			const languagesToCheck = [payload?.lang, "eng", ...availableLanguages].filter((lang, index, self) => self.indexOf(lang) === index);
+			for (let lang of languagesToCheck) {
+				courseLessons = await courseLessonsModel.find({ productId: productId, lang: lang }).sort({ srNo: 1 }).lean();
+				if (courseLessons.length > 0) break;
+			}
+		}
+
+		if (courseLessons.length === 0) {
+			return {
+				success: false,
+				message: "No lessons found for this course in any of the available languages",
+				data: [],
+			};
+		}
+
+		// Convert read section IDs into a Set for quick lookup
+		const readSectionIds = new Set(courseReadProgress?.readSections.map((subLessons: any) => subLessons.sectionId.toString()) || []);
+
+		courseLessons = courseLessons.map((lesson, index, lessons) => {
+			let isOpen = false;
+			if (lesson.srNo === 1) {
+				isOpen = true; // First lesson is always open
+			} else if (index > 0) {
+				const prevLesson = lessons[index - 1];
+				// Check if all sub-lessons in the previous lesson are either in readSections or have file === null
+				isOpen = prevLesson.subLessons.every((subLesson) => subLesson.file === null || courseReadProgress?.readSections?.some((section) => section.courseLessonId?.toString() === prevLesson._id.toString() && section.sectionId?.toString() === subLesson._id.toString()));
+			}
+			return {
+				...lesson,
+				isOpen,
+				// subLessons: lesson.subLessons.map((subLessons) => ({
+				// 	...subLessons,
+				// 	isDone: subLessons.file === null  ? true : readSectionIds.has(subLessons._id.toString()),
+				// })),
+				subLessons: lesson.subLessons.map((subLesson) => ({
+					...subLesson,
+					isDone: !isOpen ? false : subLesson.file === null ? true : readSectionIds.has(subLesson._id.toString()),
+				})),
+			};
 		});
+
+		// Check if all lessons and sublessons are completed for certificate availability
 	}
-}
-
-	else {
-	
-	courseLessons = await courseLessonsModel.find({ productId: productId, lang: language }).sort({ srNo: 1 }).lean();
-	const courseReadProgress = await readProgressModel.findOne({ bookId: productId, userId: user.id }).lean();
-
-	if (courseLessons.length === 0 && course?.name) {
-		const languagesToCheck = [payload?.lang, "eng", ...availableLanguages].filter((lang, index, self) => self.indexOf(lang) === index);
-		for (let lang of languagesToCheck) {
-			courseLessons = await courseLessonsModel.find({ productId: productId, lang: lang }).sort({ srNo: 1 }).lean();
-			if (courseLessons.length > 0) break;
-		}
-	}
-
-	
-	if (courseLessons.length === 0) {
-		return {
-			success: false,
-			message: "No lessons found for this course in any of the available languages",
-			data: [],
-		};
-	}
-
-	// Convert read section IDs into a Set for quick lookup
-	const readSectionIds = new Set(courseReadProgress?.readSections.map((subLessons: any) => subLessons.sectionId.toString()) || []);
-
-	courseLessons = courseLessons.map((lesson, index, lessons) => {
-		let isOpen = false;
-		if (lesson.srNo === 1) {
-			isOpen = true; // First lesson is always open
-		} else if (index > 0) {
-			const prevLesson = lessons[index - 1];
-			// Check if all sub-lessons in the previous lesson are either in readSections or have file === null
-			isOpen = prevLesson.subLessons.every((subLesson) => subLesson.file === null || courseReadProgress?.readSections?.some((section) => section.courseLessonId?.toString() === prevLesson._id.toString() && section.sectionId?.toString() === subLesson._id.toString()));
-		}
-		return {
-			...lesson,
-			isOpen,
-			// subLessons: lesson.subLessons.map((subLessons) => ({
-			// 	...subLessons,
-			// 	isDone: subLessons.file === null  ? true : readSectionIds.has(subLessons._id.toString()),
-			// })),
-			subLessons: lesson.subLessons.map((subLesson) => ({
-				...subLesson,
-				isDone: !isOpen ? false : subLesson.file === null ? true : readSectionIds.has(subLesson._id.toString()),
-			})),
-		};
-	});
-
-	// Check if all lessons and sublessons are completed for certificate availability
-}
-const certificateAvailable = courseLessons.every((lesson) => lesson.subLessons.every((subLesson) => subLesson.isDone));
+	const certificateAvailable = courseLessons.every((lesson) => lesson.subLessons.every((subLesson) => subLesson.isDone));
 	const isFavorite = await favoritesModel.exists({ userId: user.id, productId: productId });
-	const isPurchased = await ordersModel.find({ productIds: { $in: productId }, userId: user.id, status: "Completed" }).lean();
+	let isPurchased;
+		if(course?.price === 0){
+			isPurchased = true;
+		}else{
+			isPurchased = await ordersModel.find({ productIds: { $in: productId }, userId: user.id, status: "Completed" }).lean();
+		}
+	// const isPurchased = await ordersModel.find({ productIds: { $in: productId }, userId: user.id, status: "Completed" }).lean();
+	const purchaseFlag = isPurchased === true || (Array.isArray(isPurchased) && isPurchased.length > 0) ? true : false;
+
 	const isAddedToCart = await cartModel.find({ productId: { $in: [productId] }, userId: user.id, buyed: "pending" }).lean();
 
 	return {
@@ -199,9 +201,9 @@ const certificateAvailable = courseLessons.every((lesson) => lesson.subLessons.e
 			courseLessons,
 			reviewCount,
 			isFavorite: !!isFavorite,
-			isPurchased: isPurchased.length > 0,
+			isPurchased: purchaseFlag,
 			isAddedToCart: isAddedToCart.length > 0,
-			 certificateAvailable: course && course.type === "course" ? certificateAvailable : false,
+			certificateAvailable: course && course.type === "course" ? certificateAvailable : false,
 		},
 	};
 };

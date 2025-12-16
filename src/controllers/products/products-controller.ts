@@ -45,6 +45,7 @@ export const getBook = async (req: Request, res: Response) => {
 export const getBookforUser = async (req: Request, res: Response) => {
   try {
     const response = await getBookForUserService(req.params.id,req.query,req.user, res);
+    console.log('response: ', response);
     return res.status(httpStatusCode.OK).json(response);
   } catch (error: any) {
     const { code, message } = errorParser(error);
