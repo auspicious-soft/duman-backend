@@ -1200,6 +1200,8 @@ export const getCourseForUserService = async (id: string, user: any, res: Respon
 	}else{
 		isPurchased = await ordersModel.find({ productIds: id, userId: user.id, status: "Completed" });
 	}
+		const purchaseFlag = isPurchased === true || (Array.isArray(isPurchased) && isPurchased.length > 0) ? true : false;
+
 	const relatedCourses = await productsModel.find({ categoryId: { $in: course?.categoryId }, type: "course", _id: { $ne: id } }).populate([{ path: "authorId", select: "name" }]);
 	const reviewCount = await productRatingsModel.countDocuments({ productId: id });
 	const isFavorite = await favoritesModel.exists({ userId: user.id, productId: id });
@@ -1216,7 +1218,7 @@ export const getCourseForUserService = async (id: string, user: any, res: Respon
 			},
 			reviewCount: reviewCount > 0 ? reviewCount : 0,
 			relatedCourses: relatedCourses,
-			isPurchased: isPurchased.length > 0 ? true : false,
+			isPurchased: purchaseFlag,
 			isAddedToCart: isAddedToCart.length > 0 ? true : false,
 			favorite: isFavorite ? true : false,
 		},
