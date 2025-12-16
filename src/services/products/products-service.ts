@@ -1194,10 +1194,15 @@ export const getCourseForUserService = async (id: string, user: any, res: Respon
 	if (!course) {
 		return errorResponseHandler("Book not found", httpStatusCode.NOT_FOUND, res);
 	}
+	let isPurchased;
+	if(course?.price === 0){
+		isPurchased = true;
+	}else{
+		isPurchased = await ordersModel.find({ productIds: id, userId: user.id, status: "Completed" });
+	}
 	const relatedCourses = await productsModel.find({ categoryId: { $in: course?.categoryId }, type: "course", _id: { $ne: id } }).populate([{ path: "authorId", select: "name" }]);
 	const reviewCount = await productRatingsModel.countDocuments({ productId: id });
 	const isFavorite = await favoritesModel.exists({ userId: user.id, productId: id });
-	const isPurchased = await ordersModel.find({ productIds: id, userId: user.id, status: "Completed" });
 	const isAddedToCart = await cartModel.find({ productId: { $in: [id] }, userId: user.id, buyed: "pending" }).lean();
     const productLanguage = await productLanguages(course);
 	return {
