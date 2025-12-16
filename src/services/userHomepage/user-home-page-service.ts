@@ -33,6 +33,7 @@ export const getHomePageService = async (userData: any, payload: any, res: Respo
 		const banners = bannersResponse?.data?.length ? bannersResponse.data : [];
 		const stories = storiesResponse?.data?.length ? storiesResponse.data : [];
 		const userdetails = await usersModel.findById(userData.id).select("schoolVoucher firstName fullName email");
+		console.log('userdetails: ', userdetails);
 		const userSchoolVoucher = userdetails?.schoolVoucher?.voucherId ? true : false;
 
 		if (!banners.length && !stories.length && !readProgress.length) {

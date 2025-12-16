@@ -68,7 +68,10 @@ function generateSignature(params: Record<string, any>, secretKey: string, scrip
 	return hash;
 }
 
-export const initializePayment = async (orderId: string, amount: number, description: string, userPhone?: string, userEmail?: string): Promise<{ redirect_url: string }> => {
+export const initializePayment = async (orderId: string, amount: number, description: string, userPhone?: any, userEmail?: string): Promise<{ redirect_url: string }> => {
+	console.log('userPhone----: ', isNaN(userPhone));
+	console.log('userPhone: ', userPhone);
+	
 	try {
 		const params: Record<string, any> = {
 			pg_merchant_id: freedomPayConfig.merchantId,
@@ -85,7 +88,7 @@ export const initializePayment = async (orderId: string, amount: number, descrip
 			pg_lifetime: freedomPayConfig.lifetime.toString(),
 			pg_testing_mode: freedomPayConfig.testingMode ? "1" : "0",
 			pg_payment_route: "frame",
-			...(userPhone && { pg_user_phone: userPhone }),
+			...(userPhone && !isNaN(userPhone) && { pg_user_phone: userPhone }),
 			...(userEmail && { pg_user_contact_email: userEmail }),
 		};
 
@@ -109,6 +112,7 @@ export const initializePayment = async (orderId: string, amount: number, descrip
 		console.log("parsedResponse: ", parsedResponse);
 
 		const redirectUrl = parsedResponse.response.pg_redirect_url;
+		console.log('redirectUrl: ', redirectUrl);
 		if (redirectUrl) {
 			return { redirect_url: redirectUrl }; // returning object
 		} else {

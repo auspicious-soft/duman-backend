@@ -2,7 +2,7 @@ import { Response } from "express";
 import { errorResponseHandler } from "../../lib/errors/error-response-handler";
 import { httpStatusCode } from "../../lib/constant";
 import { productsModel } from "../../models/products/products-schema";
-import { filterBooksByLanguage, nestedQueryBuilder, queryBuilder, sortBooks, toArray } from "src/utils";
+import { filterBooksByLanguage, nestedQueryBuilder, productLanguages, queryBuilder, sortBooks, toArray } from "src/utils";
 import { deleteFileFromS3 } from "src/config/s3";
 import { productRatingsModel } from "src/models/ratings/ratings-schema";
 import { ordersModel } from "src/models/orders/orders-schema";
@@ -1017,7 +1017,8 @@ export const getBookForUserService = async (id: string, payload: any, user: any,
 	}
 
     const book = await productsModel.findById(id).populate([{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }]);
-    if(book?.price === 0){
+    const productLanguage = await productLanguages(book);
+	if(book?.price === 0){
 		isPurchased = true;
 	};
 	const readers = await readProgressModel.countDocuments({ bookId: id });
@@ -1063,6 +1064,7 @@ export const getBookForUserService = async (id: string, payload: any, user: any,
 					readers: readers > 0 ? readers : 0,
 					chapters: chaptersWithIsRead,
 					language,
+					productLanguage,
 				},
 				relatedBooks: relatedBooks,
 				isPurchased: isPurchased === true || (Array.isArray(isPurchased) && isPurchased.length > 0) ? true : false,
