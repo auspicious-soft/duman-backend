@@ -183,7 +183,7 @@ export const getCourseLessonByIdForUserService = async (user: any, payload: any,
 	const certificateAvailable = courseLessons.every((lesson) => lesson.subLessons.every((subLesson) => subLesson.isDone));
 	const isFavorite = await favoritesModel.exists({ userId: user.id, productId: productId });
 	let isPurchased;
-		if(course?.price === 0){
+		if(course?.price === 0 || course?.discountPercentage===100){
 			isPurchased = true;
 		}else{
 			isPurchased = await ordersModel.find({ productIds: { $in: productId }, userId: user.id, status: "Completed" }).lean();
