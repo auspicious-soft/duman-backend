@@ -1,7 +1,7 @@
 import { Response } from "express";
 import { errorResponseHandler } from "../../lib/errors/error-response-handler";
 import { httpStatusCode } from "../../lib/constant";
-import { queryBuilder } from "src/utils";
+import { filterBooksByLanguage, queryBuilder, sortBooks, toArray } from "src/utils";
 import { ordersModel } from "../../models/orders/orders-schema";
 import { customAlphabet } from "nanoid";
 import { productsModel } from "../../models/products/products-schema";
@@ -12,6 +12,7 @@ import { cartModel } from "src/models/cart/cart-schema";
 import mongoose, { ClientSession } from "mongoose";
 import { discountVouchersModel } from "src/models/discount-vouchers/discount-vouchers-schema";
 import { readProgressModel } from "src/models/user-reads/read-progress-schema";
+import { favoritesModel } from "src/models/product-favorites/product-favorites-schema";
 
 
 export const createOrderService = async (payload: any, res: Response, userInfo: any, user: unknown) => {
@@ -189,6 +190,73 @@ export const updateOrderService = async (id: string, payload: any, res: Response
 		data: updatedOrder,
 	};
 };
+export const getOrderItemsService = async (
+  user: any,
+  payload: any,
+  res: Response
+) => {
+  const userData = await usersModel.findById(user.id);
+
+  const page = parseInt(payload.page as string) || 1;
+  const limit = parseInt(payload.limit as string) || 100;
+  const offset = (page - 1) * limit;
+
+  const orders = await ordersModel
+    .find({ userId: user.id, status: "Completed" })
+    .skip(offset)
+    .limit(limit)
+	.select("-__v -paymentGatewayResponse -paymentMethod")
+    .populate({
+      path: "productIds",
+      select: "-__v",
+      populate: [
+        { path: "authorId", select: "name" },
+        { path: "categoryId", select: "name" },
+        { path: "publisherId", select: "name" },
+      ],
+    });
+
+  if (!orders.length) {
+    return errorResponseHandler("Order not found", httpStatusCode.NOT_FOUND, res);
+  }
+
+  // Get favorite products
+  const favoriteProducts = await favoritesModel
+    .find({ userId: user.id })
+    .populate("productId");
+
+  const favoriteIds = favoriteProducts.map(
+    (fav) => fav.productId?._id.toString()
+  );
+
+  // 🔹 Transform productIds like subCategoryBooks
+  const formattedOrders = orders.map((order) => {
+	  const productsWithFavoriteStatus = order.productIds.map((product: any) => ({
+		  ...product.toObject(),
+		  isFavorite: favoriteIds.includes(product._id.toString()),
+		}));
+		const languages = toArray(payload.language);
+		 const filteredResult = filterBooksByLanguage(productsWithFavoriteStatus, languages);
+		 const sortedResult = sortBooks(filteredResult, payload.sorting, userData?.productsLanguage, user?.language);
+
+    return {
+      ...order.toObject(),
+      books: sortedResult,
+    };
+  });
+
+  const totalOrders = await ordersModel.countDocuments({ userId: user.id });
+
+  return {
+    success: true,
+    message: "Order items retrieved successfully",
+    page,
+    limit,
+    total: totalOrders,
+    data: formattedOrders,
+  };
+};
+
 
 export const getWalletHistoryService = async (userData: any, payload: any, res: Response) => {
 	const user = await usersModel.findById(userData.id);

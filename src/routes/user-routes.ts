@@ -148,6 +148,7 @@ import {
   createOrder,
   getAllOrders,
   getOrder,
+  getOrderItems,
   getWalletHistory,
   updateOrder,
 } from "src/controllers/orders/orders-controller";
@@ -323,6 +324,7 @@ router.get(
 
 // order route
 router.post("/order", createOrder);
+router.get("/order-items", getOrderItems);
 router.get("/order", getAllOrders);
 router.get("/order/:id", getOrder);
 router.put("/order/:id", updateOrder);
