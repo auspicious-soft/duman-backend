@@ -1019,7 +1019,7 @@ export const getBookForUserService = async (id: string, payload: any, user: any,
 
     const book = await productsModel.findById(id).populate([{ path: "authorId" }, { path: "categoryId" }, { path: "subCategoryId" }, { path: "publisherId" }]);
     const productLanguage = await productLanguages(book);
-	if(book?.price === 0){
+	if(book?.price === 0 || book?.discountPercentage===100){
 		isPurchased = true;
 	};
 	const readers = await readProgressModel.countDocuments({ bookId: id });
@@ -1196,7 +1196,7 @@ export const getCourseForUserService = async (id: string, user: any, res: Respon
 		return errorResponseHandler("Book not found", httpStatusCode.NOT_FOUND, res);
 	}
 	let isPurchased;
-	if(course?.price === 0){
+	if(course?.price === 0 || course?.discountPercentage===100){
 		isPurchased = true;
 	}else{
 		isPurchased = await ordersModel.find({ productIds: id, userId: user.id, status: "Completed" });
