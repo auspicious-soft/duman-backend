@@ -190,6 +190,7 @@ export const updateOrderService = async (id: string, payload: any, res: Response
 		data: updatedOrder,
 	};
 };
+
 export const getOrderItemsService = async (
   user: any,
   payload: any,
@@ -201,51 +202,68 @@ export const getOrderItemsService = async (
   const limit = parseInt(payload.limit as string) || 100;
   const offset = (page - 1) * limit;
 
+  // 1️⃣ Fetch orders (ONLY productIds)
   const orders = await ordersModel
     .find({ userId: user.id, status: "Completed" })
     .skip(offset)
     .limit(limit)
-	.select("-__v -paymentGatewayResponse -paymentMethod")
-    .populate({
-      path: "productIds",
-      select: "-__v",
-      populate: [
-        { path: "authorId", select: "name" },
-        { path: "categoryId", select: "name" },
-        { path: "publisherId", select: "name" },
-      ],
-    });
+    .select(" productIds");
 
   if (!orders.length) {
     return errorResponseHandler("Order not found", httpStatusCode.NOT_FOUND, res);
   }
 
-  // Get favorite products
+  // 2️⃣ Collect all unique productIds from orders
+  const allProductIds = [
+    ...new Set(
+      orders.flatMap((order) =>
+        order.productIds.map((id: any) => id.toString())
+      )
+    ),
+  ];
+
+  // 3️⃣ Fetch products from productsModel
+  let products = await productsModel
+    .find({ _id: { $in: allProductIds } })
+    .populate([
+      { path: "authorId", select: "name" },
+      { path: "categoryId", select: "name" },
+      { path: "publisherId", select: "name" },
+    ]);
+
+  // 4️⃣ Get favorites
   const favoriteProducts = await favoritesModel
     .find({ userId: user.id })
-    .populate("productId");
+    .select("productId");
 
-  const favoriteIds = favoriteProducts.map(
-    (fav) => fav.productId?._id.toString()
+  const favoriteIds = favoriteProducts.map((fav) =>
+    fav.productId.toString()
   );
 
-  // 🔹 Transform productIds like subCategoryBooks
-  const formattedOrders = orders.map((order) => {
-	  const productsWithFavoriteStatus = order.productIds.map((product: any) => ({
-		  ...product.toObject(),
-		  isFavorite: favoriteIds.includes(product._id.toString()),
-		}));
-		const languages = toArray(payload.language);
-		 const filteredResult = filterBooksByLanguage(productsWithFavoriteStatus, languages);
-		 const sortedResult = sortBooks(filteredResult, payload.sorting, userData?.productsLanguage, user?.language);
+  // 5️⃣ Attach isFavorite
+  let productsWithFavoriteStatus = products.map((product) => ({
+    ...product.toObject(),
+    isFavorite: favoriteIds.includes(product._id.toString()),
+  }));
 
-    return {
-      ...order.toObject(),
-      books: sortedResult,
-    };
-  });
+  // 6️⃣ Language filter + sorting
+  const languages = toArray(payload.language);
+  productsWithFavoriteStatus = filterBooksByLanguage(
+    productsWithFavoriteStatus,
+    languages
+  );
 
-  const totalOrders = await ordersModel.countDocuments({ userId: user.id });
+  productsWithFavoriteStatus = sortBooks(
+    productsWithFavoriteStatus,
+    payload.sorting,
+    userData?.productsLanguage,
+    user?.language
+  );
+  const paginatedBooks = productsWithFavoriteStatus.slice(
+    offset,
+    offset + limit
+  );
+const  totalOrders = productsWithFavoriteStatus.length;
 
   return {
     success: true,
@@ -253,7 +271,7 @@ export const getOrderItemsService = async (
     page,
     limit,
     total: totalOrders,
-    data: formattedOrders,
+    data: {books:paginatedBooks},
   };
 };
 
