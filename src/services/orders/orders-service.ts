@@ -14,10 +14,9 @@ import { discountVouchersModel } from "src/models/discount-vouchers/discount-vou
 import { readProgressModel } from "src/models/user-reads/read-progress-schema";
 import { favoritesModel } from "src/models/product-favorites/product-favorites-schema";
 
-
 export const createOrderService = async (payload: any, res: Response, userInfo: any, user: unknown) => {
 	const session: ClientSession = await mongoose.startSession();
-    
+
 	// helper to safely close the session without double-aborting
 	const safeAbort = async () => {
 		try {
@@ -28,8 +27,8 @@ export const createOrderService = async (payload: any, res: Response, userInfo: 
 
 	try {
 		session.startTransaction();
-        const userDetails = await usersModel.findById(userInfo.id).session(session);
-		if(!userDetails){
+		const userDetails = await usersModel.findById(userInfo.id).session(session);
+		if (!userDetails) {
 			await safeAbort();
 			return errorResponseHandler("User not found", httpStatusCode.NOT_FOUND, res);
 		}
@@ -45,13 +44,6 @@ export const createOrderService = async (payload: any, res: Response, userInfo: 
 		}
 
 		// If voucher is applied, increment code activation
-		if (payload.voucherId) {
-			await discountVouchersModel
-				.findByIdAndUpdate(payload.voucherId, {
-					$inc: { codeActivated: 1 },
-				})
-				.session(session);
-		}
 
 		// Generate a unique order identifier
 		const identifier = customAlphabet("0123456789", 5);
@@ -66,21 +58,21 @@ export const createOrderService = async (payload: any, res: Response, userInfo: 
 		const savedOrder = await newOrder.save({ session });
 
 		// Handle redeem points, if applicable
-		if (payload.redeemPoints) {
-			await usersModel.findByIdAndUpdate(userInfo.id, { $inc: { wallet: -payload.redeemPoints } }, { session });
+		// if (payload.redeemPoints) {
+		// 	await usersModel.findByIdAndUpdate(userInfo.id, { $inc: { wallet: -payload.redeemPoints } }, { session });
 
-			await walletHistoryModel.create(
-				[
-					{
-						orderId: savedOrder._id,
-						userId: userInfo.id,
-						type: "redeem",
-						points: payload.redeemPoints,
-					},
-				],
-				{ session }
-			);
-		}
+		// 	await walletHistoryModel.create(
+		// 		[
+		// 			{
+		// 				orderId: savedOrder._id,
+		// 				userId: userInfo.id,
+		// 				type: "redeem",
+		// 				points: payload.redeemPoints,
+		// 			},
+		// 		],
+		// 		{ session }
+		// 	);
+		// }
 
 		// Commit transaction
 		await session.commitTransaction();
@@ -97,12 +89,12 @@ export const createOrderService = async (payload: any, res: Response, userInfo: 
 			if (!userPhone || !userEmail) {
 				const user = await usersModel.findById(userInfo.id);
 				if (user) {
-					userPhone = user.countryCode ? `${user.countryCode}${user.phoneNumber}` :undefined;
+					userPhone = user.countryCode ? `${user.countryCode}${user.phoneNumber}` : undefined;
 					userEmail = user.email;
 				}
 			}
 
-			const modifiedAmount = payload.redeemPoints ? savedOrder.totalAmount - payload.redeemPoints : savedOrder.totalAmount;
+			const modifiedAmount = savedOrder.totalAmount;
 
 			const paymentResponse = await initializePayment(savedOrder.identifier as string, modifiedAmount, `Payment for order ${savedOrder.identifier}`, userPhone, userEmail);
 
@@ -191,90 +183,58 @@ export const updateOrderService = async (id: string, payload: any, res: Response
 	};
 };
 
-export const getOrderItemsService = async (
-  user: any,
-  payload: any,
-  res: Response
-) => {
-  const userData = await usersModel.findById(user.id);
+export const getOrderItemsService = async (user: any, payload: any, res: Response) => {
+	const userData = await usersModel.findById(user.id);
 
-  const page = parseInt(payload.page as string) || 1;
-  const limit = parseInt(payload.limit as string) || 100;
-  const offset = (page - 1) * limit;
+	const page = parseInt(payload.page as string) || 1;
+	const limit = parseInt(payload.limit as string) || 100;
+	const offset = (page - 1) * limit;
 
-  // 1️⃣ Fetch orders (ONLY productIds)
-  const orders = await ordersModel
-    .find({ userId: user.id, status: "Completed" })
-    .skip(offset)
-    .limit(limit)
-    .select(" productIds");
+	// 1️⃣ Fetch orders (ONLY productIds)
+	const orders = await ordersModel.find({ userId: user.id, status: "Completed" }).skip(offset).limit(limit).select(" productIds");
 
-  if (!orders.length) {
-    return errorResponseHandler("Order not found", httpStatusCode.NOT_FOUND, res);
-  }
+	if (!orders.length) {
+		return errorResponseHandler("Order not found", httpStatusCode.NOT_FOUND, res);
+	}
 
-  // 2️⃣ Collect all unique productIds from orders
-  const allProductIds = [
-    ...new Set(
-      orders.flatMap((order) =>
-        order.productIds.map((id: any) => id.toString())
-      )
-    ),
-  ];
+	// 2️⃣ Collect all unique productIds from orders
+	const allProductIds = [...new Set(orders.flatMap((order) => order.productIds.map((id: any) => id.toString())))];
 
-  // 3️⃣ Fetch products from productsModel
-  let products = await productsModel
-    .find({ _id: { $in: allProductIds } })
-    .populate([
-      { path: "authorId", select: "name" },
-      { path: "categoryId", select: "name" },
-      { path: "publisherId", select: "name" },
-    ]);
+	// 3️⃣ Fetch products from productsModel
+	let products = await productsModel.find({ _id: { $in: allProductIds } }).populate([
+		{ path: "authorId", select: "name" },
+		{ path: "categoryId", select: "name" },
+		{ path: "publisherId", select: "name" },
+	]);
 
-  // 4️⃣ Get favorites
-  const favoriteProducts = await favoritesModel
-    .find({ userId: user.id })
-    .select("productId");
+	// 4️⃣ Get favorites
+	const favoriteProducts = await favoritesModel.find({ userId: user.id }).select("productId");
 
-  const favoriteIds = favoriteProducts.map((fav) =>
-    fav.productId.toString()
-  );
+	const favoriteIds = favoriteProducts.map((fav) => fav.productId.toString());
 
-  // 5️⃣ Attach isFavorite
-  let productsWithFavoriteStatus = products.map((product) => ({
-    ...product.toObject(),
-    isFavorite: favoriteIds.includes(product._id.toString()),
-  }));
+	// 5️⃣ Attach isFavorite
+	let productsWithFavoriteStatus = products.map((product) => ({
+		...product.toObject(),
+		isFavorite: favoriteIds.includes(product._id.toString()),
+	}));
 
-  // 6️⃣ Language filter + sorting
-  const languages = toArray(payload.language);
-  productsWithFavoriteStatus = filterBooksByLanguage(
-    productsWithFavoriteStatus,
-    languages
-  );
+	// 6️⃣ Language filter + sorting
+	const languages = toArray(payload.language);
+	productsWithFavoriteStatus = filterBooksByLanguage(productsWithFavoriteStatus, languages);
 
-  productsWithFavoriteStatus = sortBooks(
-    productsWithFavoriteStatus,
-    payload.sorting,
-    userData?.productsLanguage,
-    user?.language
-  );
-  const paginatedBooks = productsWithFavoriteStatus.slice(
-    offset,
-    offset + limit
-  );
-const  totalOrders = productsWithFavoriteStatus.length;
+	productsWithFavoriteStatus = sortBooks(productsWithFavoriteStatus, payload.sorting, userData?.productsLanguage, user?.language);
+	const paginatedBooks = productsWithFavoriteStatus.slice(offset, offset + limit);
+	const totalOrders = productsWithFavoriteStatus.length;
 
-  return {
-    success: true,
-    message: "Order items retrieved successfully",
-    page,
-    limit,
-    total: totalOrders,
-    data: {books:paginatedBooks},
-  };
+	return {
+		success: true,
+		message: "Order items retrieved successfully",
+		page,
+		limit,
+		total: totalOrders,
+		data: { books: paginatedBooks },
+	};
 };
-
 
 export const getWalletHistoryService = async (userData: any, payload: any, res: Response) => {
 	const user = await usersModel.findById(userData.id);
@@ -332,10 +292,30 @@ export const createFreeProductOrderService = async (payload: any, res: Response,
 	const products = await productsModel.find({ _id: { $in: payload.productIds } });
 
 	const identifier = customAlphabet("0123456789", 5);
+	const transactionId = customAlphabet("0123456789", 10);
 	payload.identifier = identifier();
-	const newOrder = new ordersModel({ ...payload, userId: userDetails.id, status: "Completed", totalAmount: 0 });
+	const newOrder = new ordersModel({ ...payload,transactionId: transactionId(), redeemPoints: payload.redeemPoints, userId: userDetails.id, status: "Completed", totalAmount: 0 });
 	const savedOrder = await newOrder.save();
+	console.log("savedOrder: ", savedOrder);
+	const redeemPoints = Number(savedOrder.redeemPoints);
+	if (savedOrder.redeemPoints && redeemPoints > 0) {
+		const user = await usersModel.findByIdAndUpdate(savedOrder.userId, { $inc: { wallet: -savedOrder.redeemPoints } });
+		console.log("user: ", user);
 
+		await walletHistoryModel.create([
+			{
+				orderId: savedOrder._id,
+				userId: savedOrder.userId,
+				type: "redeem",
+				points: savedOrder.redeemPoints,
+			},
+		]);
+	}
+	if (savedOrder.voucherId) {
+		await discountVouchersModel.findByIdAndUpdate(savedOrder.voucherId, {
+			$inc: { codeActivated: 1 },
+		});
+	}
 	const cart = await cartModel.findOneAndDelete({ userId: savedOrder.userId });
 
 	return {

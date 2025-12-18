@@ -8,6 +8,7 @@ import { walletHistoryModel } from "src/models/wallet-history/wallet-history-sch
 import { usersModel } from "src/models/user/user-schema";
 import { cartModel } from "src/models/cart/cart-schema";
 import { readProgressModel } from "src/models/user-reads/read-progress-schema";
+import { discountVouchersModel } from "src/models/discount-vouchers/discount-vouchers-schema";
 
 console.log(freedomPayConfig);
 
@@ -69,9 +70,6 @@ function generateSignature(params: Record<string, any>, secretKey: string, scrip
 }
 
 export const initializePayment = async (orderId: string, amount: number, description: string, userPhone?: any, userEmail?: string): Promise<{ redirect_url: string }> => {
-	console.log('userPhone----: ', isNaN(userPhone));
-	console.log('userPhone: ', userPhone);
-	
 	try {
 		const params: Record<string, any> = {
 			pg_merchant_id: freedomPayConfig.merchantId,
@@ -196,6 +194,7 @@ export const processCheckRequest = async (params: Record<string, any>) => {
  * @returns Response to send back to FreedomPay
  */
 export const processResultRequest = async (params: Record<string, any>) => {
+	console.log('params: ', params);
 	try {
 		const orderId = params.pg_order_id;
 		const paymentId = params.pg_payment_id;
@@ -268,10 +267,33 @@ export const processResultRequest = async (params: Record<string, any>) => {
 				bookId: productId,
 				progress: 0,
 			}));
-
+            
 			const readProgress = await readProgressModel.insertMany(readProgressDocs);
-			console.log('readProgress: ', readProgress);
+
+			const redeemPoints = Number(order.redeemPoints);
+			if (order.redeemPoints && redeemPoints > 0) {
+			await usersModel.findByIdAndUpdate(order.userId, { $inc: { wallet: -redeemPoints } });
+
+			await walletHistoryModel.create(
+				[
+					{
+						orderId: order._id,
+						userId: order.userId,
+						type: "redeem",
+						points:  order.redeemPoints,
+					},
+				],
+				
+			);
+		}
+		if (order.voucherId) {
+			await discountVouchersModel
+				.findByIdAndUpdate(order.voucherId, {
+					$inc: { codeActivated: 1 },
+				})
+		}
 			const cart = await cartModel.findOneAndDelete({ userId: order.userId });
+			console.log('cart: ', cart);
 			await order.save();
 			
 			console.log(`Order ${orderId} successfully updated with payment details:`, {
