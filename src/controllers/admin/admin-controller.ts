@@ -4,61 +4,6 @@ import { loginService, newPassswordAfterOTPVerifiedService, forgotPasswordServic
 import { errorParser } from "../../lib/errors/error-response-handler";
 import { httpStatusCode } from "../../lib/constant";
 
-// import { config } from '../../configF/config';
-// // import { IUser, AuthResponse } from '../types/user.types';
-// import { getAllUsers } from './admin-controller';
-// export interface IUser {
-//     identifier: string;
-//     email: string;
-//     password?: string;
-//     name: string;
-//     facebookId?: string;
-//     googleId?: string;
-//     appleId?: string;
-//     whatsappId?: string;
-//     phoneNumber?: string;
-//     role: string;
-//     fullName: string;
-//     planType?: string;
-//     profilePic?: string;
-//     address?: string;
-// }
-
-// export interface AuthResponse {
-//     token: string;
-//     user: IUser;
-// }
-// export class loginController {
-//     private generateToken(user: IUser): string {
-//         return jwt.sign(
-//             { id: user.identifier, email: user.email },
-//             config.jwt.secret,
-//             { expiresIn: config.jwt.expiresIn }
-//         );
-//     }
-
-//     private handleAuthResponse(req: Request, res: Response): void {
-//         const token = this.generateToken(req.user as IUser);
-//         const response: AuthResponse = { token, user: req.user as IUser };
-        
-//         if (req.headers['user-agent']?.includes('Mozilla')) {
-//             res.redirect(`${config.app.webUrl}?token=${token}`);
-//         } else {
-//             res.redirect(`${config.app.mobileScheme}://auth?token=${token}`);
-//         }
-//     }
-
-//     public emailLogin(req: Request, res: Response): void {
-//         const token = this.generateToken(req.user as IUser);
-//         const response: AuthResponse = { token, user: req.user as IUser };
-//         res.json(response);
-//     }
-
-//     public socialCallback(req: Request, res: Response): void {
-//         this.handleAuthResponse(req, res);
-//     }
-// }
-
 //Auth Controllers
 export const login = async (req: Request, res: Response) => {
     try {
