@@ -28,7 +28,11 @@ export const initPayment = async (req: Request, res: Response) => {
     let userPhone, userEmail;
 
     if (user) {
-      userPhone = typeof user !== 'string' && 'phoneNumber' in user ?` ${user.countryCode}${user.phoneNumber}` : undefined;
+      userPhone =
+  typeof user !== "string" && "phoneNumber" in user
+    ? `${user.countryCode}${user.phoneNumber}` // ❌ no space
+    : undefined;
+      // userPhone = typeof user !== 'string' && 'phoneNumber' in user ?` ${user.countryCode}${user.phoneNumber}` : undefined;
       userEmail = typeof user !== 'string' && 'email' in user ? user.email : undefined;
     }
 

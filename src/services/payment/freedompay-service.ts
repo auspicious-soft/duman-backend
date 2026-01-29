@@ -86,7 +86,9 @@ export const initializePayment = async (orderId: string, amount: number, descrip
 			pg_lifetime: freedomPayConfig.lifetime.toString(),
 			pg_testing_mode: freedomPayConfig.testingMode ? "1" : "0",
 			pg_payment_route: "frame",
-			...(userPhone && !isNaN(userPhone) && { pg_user_phone: userPhone }),
+			...(userPhone && { pg_user_phone: userPhone }),
+
+			// ...(userPhone && !isNaN(userPhone) && { pg_user_phone: userPhone }),
 			...(userEmail && { pg_user_contact_email: userEmail }),
 		};
 		
@@ -131,6 +133,7 @@ export const initializePayment = async (orderId: string, amount: number, descrip
 export const processCheckRequest = async (params: Record<string, any>) => {
 	try {
 		const orderId = params.pg_order_id;
+		console.log('orderId: ', orderId);
 		const amount = parseFloat(params.pg_amount);
 
 		// Find the order in the database
