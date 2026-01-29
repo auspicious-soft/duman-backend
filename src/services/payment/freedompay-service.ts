@@ -135,9 +135,11 @@ export const processCheckRequest = async (params: Record<string, any>) => {
 		const orderId = params.pg_order_id;
 		console.log('orderId: ', orderId);
 		const amount = parseFloat(params.pg_amount);
+		console.log('amount: ', amount);
 
 		// Find the order in the database
 		const order = await ordersModel.findOne({ identifier: orderId });
+		console.log('order: ', order);
 
 		if (!order) {
 			const response: Record<string, any> = {
@@ -175,6 +177,7 @@ export const processCheckRequest = async (params: Record<string, any>) => {
 
 		// Generate signature for the response
 		response.pg_sig = generateSignature(response, freedomPayConfig.secretKey, "check.php");
+		console.log('pg_sig: ', response.pg_sig);
 
 		return response;
 	} catch (error) {
