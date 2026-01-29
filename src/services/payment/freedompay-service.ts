@@ -89,7 +89,8 @@ export const initializePayment = async (orderId: string, amount: number, descrip
 			...(userPhone && !isNaN(userPhone) && { pg_user_phone: userPhone }),
 			...(userEmail && { pg_user_contact_email: userEmail }),
 		};
-
+		
+		console.log('params: ', params);
 		params.pg_sig = generateSignature(params, freedomPayConfig.secretKey, "init_payment.php");
 
 		const formData = new FormData();
