@@ -94,6 +94,7 @@ export const initializePayment = async (orderId: string, amount: number, descrip
 		
 		console.log('params: ', params);
 		params.pg_sig = generateSignature(params, freedomPayConfig.secretKey, "init_payment.php");
+		console.log('params.pg_sig: ', params.pg_sig);
 
 		const formData = new FormData();
 		Object.entries(params).forEach(([key, value]) => {
