@@ -100,7 +100,6 @@ export const initializePayment = async (orderId: string, amount: number, descrip
 		Object.entries(params).forEach(([key, value]) => {
 			formData.append(key, value);
 		});
-
 		const response = await axios.post(freedomPayConfig.apiUrl, formData, {
 			headers: {
 				...formData.getHeaders(),
